@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router';
 
 import { api } from '../api/client.js';
 import { useVaultStore } from '../store/vault.js';
-import { createResolver } from './links.js';
+import { createAssetResolver, createResolver } from './links.js';
 import { noteHref } from './paths.js';
 
 export interface NotePreviewProps {
@@ -21,12 +21,22 @@ export interface NotePreviewProps {
 export function NotePreview({ path, content, mode = 'notes', label }: NotePreviewProps) {
   const navigate = useNavigate();
   const notes = useVaultStore((state) => state.notes);
+  const assets = useVaultStore((state) => state.assets);
   const resolver = useMemo(() => createResolver(notes), [notes]);
+  const assetResolver = useMemo(() => createAssetResolver(assets), [assets]);
 
   const html = useMemo(
     () =>
       renderNote(content, {
-        resolveLink: (target) => {
+        resolveLink: (target, kind) => {
+          // An embedded file is an attachment, addressed by name or by a path from the
+          // vault root; only a note is resolved through the link index.
+          if (kind === 'embed') {
+            const asset = assetResolver.resolve(target);
+            if (asset !== null) {
+              return { path: asset, href: api.assetUrl(asset) };
+            }
+          }
           const resolution = resolver.resolve(target, path);
           if (resolution.resolved) {
             return { path: resolution.path, href: noteHref(resolution.path, mode) };
@@ -39,7 +49,7 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
         },
         assetUrl: (vaultPath) => api.assetUrl(vaultPath),
       }).html,
-    [content, mode, path, resolver],
+    [assetResolver, content, mode, path, resolver],
   );
 
   return (

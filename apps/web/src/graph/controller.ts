@@ -8,6 +8,7 @@ import {
   createFrameLoop,
   buildScenePaths,
   drawScene,
+  fitTransform,
   identity,
   pick,
   toGraph,
@@ -47,6 +48,8 @@ export class GraphController {
   #index: NodeIndex | null = null;
   /** Edge and bubble geometry; null after the layout moved. */
   #paths: ScenePaths | null = null;
+  /** Once the reader has panned or zoomed, the view is theirs and is left alone. */
+  #viewHeldByReader = false;
 
   #maxRadius = 0;
   #gesture: Gesture | null = null;
@@ -83,6 +86,10 @@ export class GraphController {
       onTick: () => {
         this.#index = null; // the positions moved
         this.#paths = null;
+        if (!this.#viewHeldByReader) {
+          // While the field spreads out, keep all of it in sight.
+          this.#scene = { ...this.#scene, transform: this.#fitTransform() };
+        }
         this.#loop.request();
       },
       onEnd: () => {
@@ -148,7 +155,8 @@ export class GraphController {
 
   /** Back to the zoom and pan the graph started with. */
   resetView(): void {
-    this.#scene = { ...this.#scene, transform: this.#centreTransform() };
+    this.#viewHeldByReader = false;
+    this.#scene = { ...this.#scene, transform: this.#fitTransform() };
     this.#loop.request();
   }
 
@@ -177,9 +185,8 @@ export class GraphController {
     canvas.removeEventListener('wheel', this.#onWheel);
   }
 
-  #centreTransform(): ViewTransform {
-    // The positional forces pull towards the graph origin, so that is what belongs in the middle.
-    return { k: 1, x: this.#scene.width / 2, y: this.#scene.height / 2 };
+  #fitTransform(): ViewTransform {
+    return fitTransform(this.#scene.nodes, this.#scene.width, this.#scene.height);
   }
 
   #draw(): void {
@@ -266,10 +273,12 @@ export class GraphController {
     this.#downY = event.offsetY;
     const node = this.#pickAt(event.offsetX, event.offsetY);
     if (node) {
+      this.#viewHeldByReader = true;
       this.#gesture = { kind: 'drag', node };
       this.#sim.pin(node, node.x ?? 0, node.y ?? 0);
       this.#sim.hold();
     } else {
+      this.#viewHeldByReader = true;
       this.#gesture = {
         kind: 'pan',
         x0: event.offsetX,
@@ -339,6 +348,7 @@ export class GraphController {
     event.preventDefault();
     const transform = this.#scene.transform;
     const scaled = transform.k * 2 ** wheelDelta(event);
+    this.#viewHeldByReader = true;
     const k1 = Math.min(K_MAX, Math.max(K_MIN, scaled));
     if (k1 === transform.k) {
       return;

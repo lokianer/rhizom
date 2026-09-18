@@ -6,7 +6,7 @@
     <title>Rhizom — networked knowledge, self-hosted</title>
     <meta
       name="description"
-      content="Rhizom is a self-hostable, open-source tool for networked knowledge: a Markdown editor, a local index and a bubble-field graph of the notes in a folder. In early development."
+      content="Rhizom is a self-hostable, open-source tool for networked knowledge: a Markdown editor, a local index and a bubble-field graph of the notes in a folder. The first version reads an Obsidian vault as it is."
     />
     <!-- Without JavaScript the page is always Humus, so both schemes start dark; the script at the
          end of the body keeps these in step with the chosen theme. -->
@@ -16,7 +16,7 @@
     <meta property="og:title" content="Rhizom — networked knowledge, self-hosted" />
     <meta
       property="og:description"
-      content="A self-hostable, open-source tool for networked knowledge. Plain Markdown files, a rebuildable index and a bubble-field graph. In early development."
+      content="A self-hostable, open-source tool for networked knowledge. Plain Markdown files, a rebuildable index and a bubble-field graph. The first version is here."
     />
     <meta property="og:url" content="https://lokianer.github.io/rhizom/" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -85,10 +85,10 @@
         <section class="hero" aria-labelledby="hero-title">
           <h1 id="hero-title">Networked knowledge, kept in plain Markdown files.</h1>
           <p class="hero__lead">
-            Rhizom is a self-hostable, open-source tool for networked knowledge. It will read a
-            folder of Markdown files, index the links between them and draw the vault as a field of
+            Rhizom is a self-hostable, open-source tool for networked knowledge. It reads a folder
+            of Markdown files, indexes the links between them and draws the vault as a field of
             bubbles: notes as circles, folders and tags as colour, links as connections. Every vault
-            will double as a wiki.
+            doubles as a wiki.
           </p>
           <p class="hero__actions">
             <a class="button" href="https://github.com/lokianer/rhizom">View on GitHub</a>
@@ -96,7 +96,10 @@
               >Read the roadmap</a
             >
           </p>
-          <p class="hero__status"><strong>Early development.</strong> Nothing to install yet.</p>
+          <p class="hero__status">
+            <strong>The first version is here.</strong> Open a vault, write, link, search and see
+            the field. Rough edges included — keep a backup of your notes.
+          </p>
 
           <figure class="field">
             <svg
@@ -214,46 +217,111 @@
               files. It stays readable with any editor, with or without Rhizom.
             </li>
             <li>
-              <strong>The index is derived.</strong> SQLite will hold only what can be rebuilt from
-              the files: links, tags, frontmatter, full text. Delete it and it comes back.
+              <strong>The index is derived.</strong> SQLite holds only what can be rebuilt from the
+              files: links, tags, frontmatter, full text. Delete it and it comes back.
             </li>
             <li>
-              <strong>An Obsidian vault will open as it is.</strong> Rhizom will read a folder of
+              <strong>An Obsidian vault opens as it is.</strong> Rhizom reads a folder of
               <code>.md</code> files with <code>[[wikilinks]]</code> directly, with no import and no
               conversion.
             </li>
           </ul>
         </section>
 
+        <section class="section" aria-labelledby="look-title">
+          <h2 id="look-title">A look at it</h2>
+          <div class="shots">
+            <figure class="shot">
+              <img
+                src="./shots/editor.png"
+                width="1440"
+                height="860"
+                loading="lazy"
+                decoding="async"
+                alt="The editor on the left, the same note rendered on the right, the file tree beside them and the backlinks below."
+              />
+              <figcaption>
+                Writing, with the rendered note beside it and every link that points here
+                underneath.
+              </figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./shots/graph.png"
+                width="1440"
+                height="860"
+                loading="lazy"
+                decoding="async"
+                alt="The vault as a field of bubbles, coloured by folder, with the note names beside them."
+              />
+              <figcaption>
+                The same vault as a field: a bubble per note, its size the number of links, its
+                colour the folder or the tag.
+              </figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./shots/wiki.png"
+                width="1440"
+                height="860"
+                loading="lazy"
+                decoding="async"
+                alt="A note as a read-only wiki page in the light theme, with the file tree beside it."
+              />
+              <figcaption>
+                Wiki mode, in the light theme called Kalk: the vault to read rather than to write.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="start-title">
+          <h2 id="start-title">Running it</h2>
+          <p class="section__lead">
+            One container, or one process on a machine you control. Point it at a folder of Markdown
+            files — an Obsidian vault works as it is — and open
+            <code>localhost:3737</code>.
+          </p>
+          <pre class="code"><code>RHIZOM_VAULT=/path/to/your/vault docker compose up</code></pre>
+          <p class="section__note">
+            The index lives beside your notes and can be deleted at any time; the files are never
+            touched by it. Nothing leaves the machine: no telemetry, no account, no cloud.
+            <a href="https://github.com/lokianer/rhizom#quick-start">The full quick start</a> is in
+            the README.
+          </p>
+        </section>
+
         <section class="section" aria-labelledby="will-title">
-          <h2 id="will-title">What Rhizom will do</h2>
+          <h2 id="will-title">What it does, and what comes next</h2>
           <dl class="plans">
             <div class="plans__item">
               <dt>Editor</dt>
-              <dd class="plans__phase">Planned for Phase 1, expanded in Phase 2</dd>
+              <dd class="plans__phase">Here now, expanded in Phase 2</dd>
               <dd>
                 CodeMirror 6 with live preview, <code>[[</code> autocomplete across the whole vault,
-                and links that create the note when it does not exist yet.
+                a rendered pane beside the text, images by drag and drop, and links that offer to
+                create the note when it does not exist yet.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Bubble graph</dt>
-              <dd class="plans__phase">Planned for Phase 1</dd>
+              <dd class="plans__phase">Here now</dd>
               <dd>
                 Bubble size follows link degree, clusters take their colour from folder or tag, a
                 local graph shows the neighbourhood of one note, and any view exports as SVG or PNG.
+                The layout runs in a worker, so the field stays smooth while it settles.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Wiki mode</dt>
-              <dd class="plans__phase">Planned for Phase 1</dd>
+              <dd class="plans__phase">Here now</dd>
               <dd>
                 A read-only view of the whole vault with rendered links, navigation and search.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Self-hosting</dt>
-              <dd class="plans__phase">Planned for Phase 1, desktop installers in Phase 5</dd>
+              <dd class="plans__phase">Here now, desktop installers in Phase 5</dd>
               <dd>
                 One Docker command, or a native process on a machine you control. Installers for
                 Windows, macOS and Linux come later.
@@ -266,9 +334,8 @@
           <h2 id="who-title">Who it is for</h2>
           <ul class="statements" role="list">
             <li>
-              <strong>The self-hosting community.</strong> It will run as one container or one
-              process on your own hardware, with no third-party account and nothing that phones
-              home.
+              <strong>The self-hosting community.</strong> It runs as one container or one process
+              on your own hardware, with no third-party account and nothing that phones home.
             </li>
             <li>
               <strong>Researchers.</strong> Sources, arguments and open questions as linked notes,
@@ -292,13 +359,16 @@
           <h2 id="status-title">Status</h2>
           <div class="status__body">
             <p class="status__note">
-              Phase 0 of six, the foundation, is complete; Phase 1 comes next. Nothing to install
-              yet.
+              Two of six phases are done: the foundation, and the first version you can actually
+              use. Phase 2 adds the knowledge layer — definitions with a glossary, unlinked
+              mentions, transclusion, templates and live query blocks.
             </p>
             <ol class="phases" role="list">
-              <li aria-current="step"><span class="phases__n">0</span> Foundation</li>
-              <li><span class="phases__n">1</span> Write, link, see</li>
-              <li><span class="phases__n">2</span> Knowledge layer and editor</li>
+              <li class="phases__done"><span class="phases__n">0</span> Foundation</li>
+              <li class="phases__done"><span class="phases__n">1</span> Write, link, see</li>
+              <li aria-current="step">
+                <span class="phases__n">2</span> Knowledge layer and editor
+              </li>
               <li><span class="phases__n">3</span> D&amp;D mode</li>
               <li><span class="phases__n">4</span> Sharing, permissions, history</li>
               <li><span class="phases__n">5</span> Desktop and ecosystem</li>
@@ -319,9 +389,7 @@
           Rhizom is free software under the AGPL-3.0. The source lives on
           <a href="https://github.com/lokianer/rhizom">GitHub</a>.
         </p>
-        <p>
-          It will run where you put it. No telemetry, no third-party accounts, no mandatory cloud.
-        </p>
+        <p>It runs where you put it. No telemetry, no third-party accounts, no mandatory cloud.</p>
       </div>
     </footer>
 

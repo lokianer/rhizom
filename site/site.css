@@ -422,6 +422,59 @@ h2 {
   background: var(--rz-surface);
 }
 
+/* The screenshots. One column of wide images; each keeps its own caption so the page still
+   reads without them. */
+
+.section__lead {
+  max-width: var(--rz-measure);
+  margin-bottom: var(--rz-space-4);
+}
+
+.section__note {
+  max-width: var(--rz-measure);
+  margin-top: var(--rz-space-4);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.shots {
+  display: grid;
+  gap: var(--rz-space-7);
+}
+
+.shot {
+  margin: 0;
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface-sunken);
+}
+
+.shot figcaption {
+  margin-top: var(--rz-space-3);
+  max-width: var(--rz-measure);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.code {
+  margin: 0;
+  padding: var(--rz-space-3) var(--rz-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface-sunken);
+  font-family: var(--rz-font-mono);
+  font-size: var(--rz-text-sm);
+  line-height: var(--rz-leading-normal);
+}
+
 .phases {
   display: flex;
   flex-direction: column;
@@ -439,6 +492,11 @@ h2 {
   display: flex;
   align-items: center;
   gap: var(--rz-space-2);
+}
+
+.phases__done .phases__n {
+  border-color: var(--rz-moss-strong);
+  color: var(--rz-moss-strong);
 }
 
 .phases li[aria-current] {

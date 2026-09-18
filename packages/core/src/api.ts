@@ -116,6 +116,13 @@ export interface SaveNoteRequest {
   content: string;
 }
 
+/** `GET /api/assets` — every file in the vault that is not a note. */
+export interface AssetSummary {
+  path: string;
+  size: number;
+  modifiedAt: string;
+}
+
 /** `POST /api/assets` (multipart) */
 export interface UploadResponse {
   /** Vault path of the stored file, ready to embed as `![[...]]`. */

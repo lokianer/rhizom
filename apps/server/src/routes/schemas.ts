@@ -171,6 +171,15 @@ export const SaveNoteBodySchema = Type.Object({
   content: Type.String(),
 });
 
+export const AssetSummarySchema = Type.Object(
+  {
+    path: Type.String(),
+    size: Type.Integer(),
+    modifiedAt: Type.String({ format: 'date-time' }),
+  },
+  { $id: 'AssetSummary' },
+);
+
 export const UploadResponseSchema = Type.Object({
   path: Type.String({ description: 'Vault path of the stored file' }),
 });

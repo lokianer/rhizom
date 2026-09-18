@@ -1,6 +1,7 @@
 // Typed access to the REST API. Every shape comes from @rhizom/core, so the client and the
 // server cannot drift apart; failures arrive as ApiRequestError with the server's message.
 import type {
+  AssetSummary,
   Backlink,
   CreateNoteRequest,
   GraphResponse,
@@ -110,6 +111,8 @@ export const api = {
 
   search: (query: string, options?: RequestOptions) =>
     request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`, options),
+
+  assets: (options?: RequestOptions) => request<AssetSummary[]>('/api/assets', options),
 
   tags: (options?: RequestOptions) => request<TagCount[]>('/api/tags', options),
 

@@ -1,5 +1,6 @@
 export type {
   ApiError,
+  AssetSummary,
   Backlink,
   CreateNoteRequest,
   GraphResponse,

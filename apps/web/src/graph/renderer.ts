@@ -255,6 +255,56 @@ export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene, cached?: 
   drawOverlay(ctx, scene);
 }
 
+/** The view that shows every bubble, with a little air around the field. */
+export function fitTransform(
+  nodes: readonly SimNode[],
+  width: number,
+  height: number,
+  options: { padding?: number; maxScale?: number; minScale?: number } = {},
+): ViewTransform {
+  const padding = options.padding ?? 48;
+  const maxScale = options.maxScale ?? 1.5;
+  const minScale = options.minScale ?? 0.1;
+  const centre = { k: 1, x: width / 2, y: height / 2 };
+  if (nodes.length === 0 || width <= 0 || height <= 0) {
+    return centre;
+  }
+
+  let left = Infinity;
+  let right = -Infinity;
+  let top = Infinity;
+  let bottom = -Infinity;
+  for (const node of nodes) {
+    const x = node.x;
+    const y = node.y;
+    if (x === undefined || y === undefined || !Number.isFinite(x) || !Number.isFinite(y)) {
+      continue; // a node the layout has not placed yet
+    }
+    left = Math.min(left, x - node.r);
+    right = Math.max(right, x + node.r);
+    top = Math.min(top, y - node.r);
+    bottom = Math.max(bottom, y + node.r);
+  }
+  if (!Number.isFinite(left) || !Number.isFinite(top)) {
+    return centre;
+  }
+
+  const fieldWidth = Math.max(right - left, 1);
+  const fieldHeight = Math.max(bottom - top, 1);
+  const usableWidth = Math.max(width - padding * 2, 1);
+  const usableHeight = Math.max(height - padding * 2, 1);
+  // Never magnify a small vault beyond maxScale: three notes should not fill the screen.
+  const k = Math.min(
+    maxScale,
+    Math.max(minScale, Math.min(usableWidth / fieldWidth, usableHeight / fieldHeight)),
+  );
+  return {
+    k,
+    x: width / 2 - ((left + right) / 2) * k,
+    y: height / 2 - ((top + bottom) / 2) * k,
+  };
+}
+
 export type NodeIndex = Quadtree<SimNode>;
 
 /** Coordinates must not move while indexed, so this is rebuilt after the positions change. */

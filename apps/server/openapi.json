@@ -1639,6 +1639,62 @@
       }
     },
     "/api/assets": {
+      "get": {
+        "summary": "List the files in the vault that are not notes",
+        "tags": ["assets"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["path", "size", "modifiedAt"],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "size": {
+                        "type": "integer"
+                      },
+                      "modifiedAt": {
+                        "format": "date-time",
+                        "type": "string"
+                      }
+                    },
+                    "title": "AssetSummary"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Upload a file into assets/",
         "tags": ["assets"],

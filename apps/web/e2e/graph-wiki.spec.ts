@@ -28,6 +28,18 @@ test('wiki mode renders a note read-only and follows its links', async ({ page }
   await expect(page).toHaveURL(/\/notes\/Campaign\/Places\/Silverstadt$/);
 });
 
+test('an embedded image is shown, not a broken link', async ({ page }) => {
+  await page.goto('/wiki/Campaign/Places/Lantern%20Bridge');
+
+  const image = page.getByRole('article').locator('img').first();
+  await expect(image).toBeVisible();
+  await expect(image).toHaveAttribute('src', '/api/assets/assets/tavern.png');
+  // A broken image has no intrinsic width, however visible its alt text is.
+  await expect
+    .poll(async () => image.evaluate((element: { naturalWidth: number }) => element.naturalWidth))
+    .toBeGreaterThan(0);
+});
+
 test('an unknown page falls back to the app', async ({ page }) => {
   const response = await page.goto('/notes/Does/Not/Exist');
 

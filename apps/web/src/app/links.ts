@@ -18,3 +18,33 @@ export function createResolver(notes: readonly NoteSummary[]): LinkResolver {
     resolve: (target, sourcePath) => resolveLinkTarget(target, sourcePath, index),
   };
 }
+
+export interface AssetResolver {
+  /** The vault path of an embedded file, or null when the vault holds no such file. */
+  resolve: (target: string) => string | null;
+}
+
+/**
+ * Attachments are addressed the way Obsidian addresses them: by their file name, wherever
+ * they lie, or by a path from the vault root.
+ */
+export function createAssetResolver(assets: readonly { path: string }[]): AssetResolver {
+  const byPath = new Map<string, string>();
+  const byName = new Map<string, string>();
+  for (const asset of assets) {
+    byPath.set(asset.path.toLowerCase(), asset.path);
+    const name = asset.path.slice(asset.path.lastIndexOf('/') + 1).toLowerCase();
+    // The first file of a name wins, which keeps the answer stable as the vault grows.
+    if (!byName.has(name)) {
+      byName.set(name, asset.path);
+    }
+  }
+  return {
+    resolve: (target) => {
+      const trimmed = target.trim();
+      const relative = trimmed.startsWith('./') ? trimmed.slice(2) : trimmed;
+      const cleaned = relative.toLowerCase();
+      return byPath.get(cleaned) ?? byName.get(cleaned.slice(cleaned.lastIndexOf('/') + 1)) ?? null;
+    },
+  };
+}

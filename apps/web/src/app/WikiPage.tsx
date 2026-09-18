@@ -52,7 +52,12 @@ function WikiView({ path }: { path: string }) {
   return (
     <article className="rz-page rz-wiki" aria-label={t('wiki.label')}>
       <header className="rz-note-header">
-        <h2>{doc.title}</h2>
+        {/* A note that opens with its own title should not have it printed twice. */}
+        {doc.headings.some((heading) => heading.level === 1 && heading.text === doc.title) ? (
+          <p className="rz-muted">{doc.path}</p>
+        ) : (
+          <h2>{doc.title}</h2>
+        )}
         <nav className="rz-note-actions">
           <Link to={noteHref(doc.path)}>{t('wiki.toEditor')}</Link>
         </nav>

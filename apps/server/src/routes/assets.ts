@@ -3,7 +3,9 @@ import fastifyStatic from '@fastify/static';
 
 import type { VaultContext } from '../vault/context.js';
 import { HttpError } from './errors.js';
-import { ErrorSchema, UploadResponseSchema } from './schemas.js';
+import { Type } from '@sinclair/typebox';
+
+import { AssetSummarySchema, ErrorSchema, UploadResponseSchema } from './schemas.js';
 import type { TypedApp } from './typed-app.js';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -26,6 +28,25 @@ export async function registerAssetRoutes(
   }
 
   await app.register(fastifyMultipart, { limits: { files: 1, fileSize: MAX_UPLOAD_BYTES } });
+
+  app.get(
+    '/api/assets',
+    {
+      schema: {
+        tags: ['assets'],
+        summary: 'List the files in the vault that are not notes',
+        response: { 200: Type.Array(AssetSummarySchema), 503: ErrorSchema },
+      },
+    },
+    async () => {
+      const files = await context().vault.listAssets();
+      return files.map((file) => ({
+        path: file.path,
+        size: file.size,
+        modifiedAt: file.modifiedAt.toISOString(),
+      }));
+    },
+  );
 
   app.post(
     '/api/assets',

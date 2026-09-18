@@ -254,7 +254,8 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
       <header className="rz-note-header">
         <h2>{doc.title}</h2>
         <p className="rz-muted">
-          {doc.path} · <SaveStatus state={saveState} message={message} />
+          {doc.path}
+          <SaveStatus state={saveState} message={message} />
         </p>
         <nav className="rz-note-actions">
           <button type="button" aria-pressed={splitView} onClick={toggleSplitView}>
@@ -356,14 +357,24 @@ function SaveStatus({ state, message }: { state: SaveState; message: string }) {
   const { t } = useTranslation();
   switch (state) {
     case 'saving':
-      return <span>{t('editor.saving')}</span>;
+      return <> · {t('editor.saving')}</>;
     case 'saved':
-      return <span>{t('editor.saved')}</span>;
+      return <> · {t('editor.saved')}</>;
     case 'conflict':
-      return <span className="rz-error">{t('editor.conflict')}</span>;
+      return (
+        <>
+          {' '}
+          · <span className="rz-error">{t('editor.conflict')}</span>
+        </>
+      );
     case 'error':
-      return <span className="rz-error">{t('editor.failed', { message })}</span>;
+      return (
+        <>
+          {' '}
+          · <span className="rz-error">{t('editor.failed', { message })}</span>
+        </>
+      );
     default:
-      return null;
+      return null; // nothing to say while the note simply sits there
   }
 }

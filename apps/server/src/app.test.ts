@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type {
+  AssetSummary,
   Backlink,
   GraphResponse,
   HealthResponse,
@@ -317,6 +318,17 @@ describe('vault API', () => {
     expect(
       (await app.inject({ method: 'GET', url: '/api/graph?clusterBy=colour' })).statusCode,
     ).toBe(400);
+  });
+
+  it('lists the files that are not notes', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/assets' });
+
+    expect(response.statusCode).toBe(200);
+    const assets = response.json<AssetSummary[]>();
+    expect(assets.map((asset) => asset.path)).toContain('assets/tavern.png');
+    expect(assets.map((asset) => asset.path)).not.toContain('Home.md');
+    expect(assets.every((asset) => !asset.path.startsWith('.'))).toBe(true);
+    expect(assets[0]?.size).toBeGreaterThan(0);
   });
 
   it('serves vault assets but never hidden files', async () => {
