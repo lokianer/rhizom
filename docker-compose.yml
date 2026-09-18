@@ -1,0 +1,9 @@
+services:
+  rhizom:
+    build: .
+    image: rhizom:local
+    ports:
+      # Bound to the loopback interface by default: there is no login yet. Set RHIZOM_BIND=0.0.0.0
+      # to expose the port on the network, for example behind a reverse proxy.
+      - '${RHIZOM_BIND:-127.0.0.1}:3737:3737'
+    restart: unless-stopped

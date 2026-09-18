@@ -1,0 +1,13 @@
+{
+  "app": {
+    "name": "Rhizom",
+    "tagline": "Networked knowledge from plain Markdown."
+  },
+  "language": {
+    "switch": "Language",
+    "names": {
+      "en": "English",
+      "de": "Deutsch"
+    }
+  }
+}

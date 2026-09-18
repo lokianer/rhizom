@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.vitest/
+playwright-report/
+test-results/
+pnpm-lock.yaml
+CODE_OF_CONDUCT.md

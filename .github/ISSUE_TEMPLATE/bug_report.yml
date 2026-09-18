@@ -1,0 +1,54 @@
+name: Bug report
+description: Something in Rhizom does not work the way it should.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Security problems go through
+        [private vulnerability reporting](https://github.com/lokianer/rhizom/security/advisories/new),
+        not through a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a vault with …
+        2. Click …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How are you running Rhizom, and where?
+      placeholder: |
+        - Rhizom version or commit:
+        - Running via: native (pnpm) / Docker / desktop app
+        - OS and version:
+        - Node version (native only):
+        - Browser and version:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      description: Server output, browser console errors, screenshots. Remove anything private from your notes first.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this bug has not been reported yet.
+          required: true
+        - label: The vault involved contains only Markdown files I am allowed to share details about.

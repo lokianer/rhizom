@@ -1,0 +1,53 @@
+{
+  "name": "rhizom",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Self-hostable tool for networked knowledge: Markdown editor, local index and a bubble-field graph",
+  "license": "AGPL-3.0-only",
+  "author": "Lokianer",
+  "homepage": "https://lokianer.github.io/rhizom/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lokianer/rhizom.git"
+  },
+  "bugs": "https://github.com/lokianer/rhizom/issues",
+  "type": "module",
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0",
+    "pnpm": ">=12.4.1"
+  },
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "dev": "pnpm --recursive --parallel run dev",
+    "build": "tsc -b && pnpm --filter @rhizom/web run build",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --max-warnings 0 --cache --cache-location node_modules/.cache/eslint/",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "pnpm --filter @rhizom/web run e2e",
+    "site:build": "node scripts/build-site.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.8",
+    "simple-git-hooks": "^2.14.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.70.0",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "simple-git-hooks": {
+    "commit-msg": "node ./scripts/commit-msg/cli.mjs \"$1\""
+  }
+}

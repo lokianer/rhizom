@@ -1,0 +1,27 @@
+{
+  "name": "@rhizom/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Rhizom core: shared types, Markdown and link parsing, index logic — UI-free",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc -b --watch",
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

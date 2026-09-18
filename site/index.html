@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rhizom — networked knowledge, self-hosted</title>
+    <meta
+      name="description"
+      content="Rhizom is a self-hostable, open-source tool for networked knowledge: a Markdown editor, a local index and a bubble-field graph of the notes in a folder. In early development."
+    />
+    <!-- Without JavaScript the page is always Humus, so both schemes start dark; the script at the
+         end of the body keeps these in step with the chosen theme. -->
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14110f" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#14110f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Rhizom — networked knowledge, self-hosted" />
+    <meta
+      property="og:description"
+      content="A self-hostable, open-source tool for networked knowledge. Plain Markdown files, a rebuildable index and a bubble-field graph. In early development."
+    />
+    <meta property="og:url" content="https://lokianer.github.io/rhizom/" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      // Restore a saved theme before the first paint so a Kalk reader never sees a dark flash.
+      // Without JavaScript the attribute stays unset and the page renders Humus.
+      (function () {
+        try {
+          var saved = localStorage.getItem('rhizom-theme');
+          if (saved === 'humus' || saved === 'kalk' || saved === 'system') {
+            document.documentElement.setAttribute('data-theme', saved);
+          }
+        } catch (e) {
+          /* Storage unavailable; the default theme applies. */
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="./tokens.css" />
+    <link rel="stylesheet" href="./site.css" />
+    <noscript>
+      <style>
+        .theme-switch {
+          display: none;
+        }
+      </style>
+    </noscript>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="page site-header__row">
+        <span class="wordmark">
+          <svg
+            class="mark"
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <circle class="k1" cx="9" cy="9" r="7" />
+            <circle class="k2" cx="16" cy="11" r="6" />
+            <circle class="k3" cx="11" cy="17" r="5.5" />
+          </svg>
+          Rhizom
+        </span>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md">Roadmap</a>
+          <a href="https://github.com/lokianer/rhizom">GitHub</a>
+        </nav>
+        <div class="theme-switch" role="group" aria-label="Theme">
+          <button type="button" data-set-theme="humus" aria-pressed="true">
+            Humus<span class="visually-hidden"> (dark)</span>
+          </button>
+          <button type="button" data-set-theme="kalk" aria-pressed="false">
+            Kalk<span class="visually-hidden"> (light)</span>
+          </button>
+          <button type="button" data-set-theme="system" aria-pressed="false">System</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="page">
+        <section class="hero" aria-labelledby="hero-title">
+          <h1 id="hero-title">Networked knowledge, kept in plain Markdown files.</h1>
+          <p class="hero__lead">
+            Rhizom is a self-hostable, open-source tool for networked knowledge. It will read a
+            folder of Markdown files, index the links between them and draw the vault as a field of
+            bubbles: notes as circles, folders and tags as colour, links as connections. Every vault
+            will double as a wiki.
+          </p>
+          <p class="hero__actions">
+            <a class="button" href="https://github.com/lokianer/rhizom">View on GitHub</a>
+            <a class="link-quiet" href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md"
+              >Read the roadmap</a
+            >
+          </p>
+          <p class="hero__status"><strong>Early development.</strong> Nothing to install yet.</p>
+
+          <figure class="field">
+            <svg
+              viewBox="0 0 960 400"
+              preserveAspectRatio="xMidYMid slice"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <g class="edges">
+                <!-- moss -->
+                <line x1="150" y1="205" x2="96" y2="168" />
+                <line x1="150" y1="205" x2="108" y2="252" />
+                <line x1="150" y1="205" x2="198" y2="262" />
+                <line x1="150" y1="205" x2="218" y2="170" />
+                <line x1="96" y1="168" x2="56" y2="214" />
+                <line x1="108" y1="252" x2="56" y2="214" />
+                <line x1="198" y1="262" x2="172" y2="306" />
+                <!-- ochre -->
+                <line x1="445" y1="145" x2="382" y2="96" />
+                <line x1="445" y1="145" x2="508" y2="88" />
+                <line x1="445" y1="145" x2="528" y2="178" />
+                <line x1="445" y1="145" x2="384" y2="194" />
+                <line x1="445" y1="145" x2="458" y2="228" />
+                <line x1="508" y1="88" x2="568" y2="118" />
+                <line x1="528" y1="178" x2="568" y2="118" />
+                <line x1="382" y1="96" x2="326" y2="142" />
+                <line x1="384" y1="194" x2="326" y2="142" />
+                <line x1="384" y1="194" x2="458" y2="228" />
+                <!-- rust -->
+                <line x1="752" y1="242" x2="692" y2="292" />
+                <line x1="752" y1="242" x2="812" y2="198" />
+                <line x1="752" y1="242" x2="822" y2="302" />
+                <line x1="692" y1="292" x2="746" y2="334" />
+                <line x1="822" y1="302" x2="746" y2="334" />
+                <line x1="812" y1="198" x2="866" y2="250" />
+                <line x1="822" y1="302" x2="866" y2="250" />
+                <!-- moor -->
+                <line x1="592" y1="322" x2="540" y2="362" />
+                <line x1="592" y1="322" x2="644" y2="358" />
+                <line x1="592" y1="322" x2="626" y2="268" />
+                <line x1="592" y1="322" x2="520" y2="302" />
+                <line x1="540" y1="362" x2="520" y2="302" />
+                <!-- heather -->
+                <line x1="846" y1="82" x2="896" y2="124" />
+                <line x1="846" y1="82" x2="798" y2="44" />
+                <!-- bridges between clusters -->
+                <line x1="218" y1="170" x2="326" y2="142" />
+                <line x1="458" y1="228" x2="520" y2="302" />
+                <line x1="626" y1="268" x2="692" y2="292" />
+                <line x1="568" y1="118" x2="752" y2="242" />
+                <line x1="846" y1="82" x2="812" y2="198" />
+              </g>
+              <!-- Radii follow link degree: hubs 22-32, three links 14-16, two 11-13, one 10, none 8-9 -->
+              <g class="k1">
+                <circle cx="150" cy="205" r="26" />
+                <circle cx="96" cy="168" r="13" />
+                <circle cx="108" cy="252" r="12" />
+                <circle cx="198" cy="262" r="13" />
+                <circle cx="218" cy="170" r="12" />
+                <circle cx="172" cy="306" r="10" />
+                <circle cx="56" cy="214" r="11" />
+              </g>
+              <g class="k2">
+                <circle cx="445" cy="145" r="32" />
+                <circle cx="382" cy="96" r="12" />
+                <circle cx="508" cy="88" r="13" />
+                <circle cx="528" cy="178" r="12" />
+                <circle cx="384" cy="194" r="15" />
+                <circle cx="458" cy="228" r="14" />
+                <circle cx="568" cy="118" r="14" />
+                <circle cx="326" cy="142" r="14" />
+              </g>
+              <g class="k3">
+                <circle cx="752" cy="242" r="24" />
+                <circle cx="692" cy="292" r="15" />
+                <circle cx="812" cy="198" r="16" />
+                <circle cx="822" cy="302" r="14" />
+                <circle cx="746" cy="334" r="11" />
+                <circle cx="866" cy="250" r="11" />
+              </g>
+              <g class="k4">
+                <circle cx="592" cy="322" r="22" />
+                <circle cx="540" cy="362" r="12" />
+                <circle cx="644" cy="358" r="10" />
+                <circle cx="626" cy="268" r="11" />
+                <circle cx="520" cy="302" r="14" />
+              </g>
+              <g class="k6">
+                <circle cx="846" cy="82" r="15" />
+                <circle cx="896" cy="124" r="10" />
+                <circle cx="798" cy="44" r="10" />
+              </g>
+              <g class="k7">
+                <circle cx="302" cy="332" r="9" />
+              </g>
+              <g class="k8">
+                <circle cx="72" cy="66" r="8" />
+              </g>
+              <g class="k5">
+                <circle cx="924" cy="362" r="8" />
+              </g>
+            </svg>
+            <figcaption>
+              An illustration of the idea, not a screenshot: a few clusters of notes, some bridges
+              between them, and a couple of notes nothing links to yet.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="section" aria-labelledby="files-title">
+          <h2 id="files-title">Files first</h2>
+          <ul class="statements" role="list">
+            <li>
+              <strong>The files are the source of truth.</strong> A vault is a folder of Markdown
+              files. It stays readable with any editor, with or without Rhizom.
+            </li>
+            <li>
+              <strong>The index is derived.</strong> SQLite will hold only what can be rebuilt from
+              the files: links, tags, frontmatter, full text. Delete it and it comes back.
+            </li>
+            <li>
+              <strong>An Obsidian vault will open as it is.</strong> Rhizom will read a folder of
+              <code>.md</code> files with <code>[[wikilinks]]</code> directly, with no import and no
+              conversion.
+            </li>
+          </ul>
+        </section>
+
+        <section class="section" aria-labelledby="will-title">
+          <h2 id="will-title">What Rhizom will do</h2>
+          <dl class="plans">
+            <div class="plans__item">
+              <dt>Editor</dt>
+              <dd class="plans__phase">Planned for Phase 1, expanded in Phase 2</dd>
+              <dd>
+                CodeMirror 6 with live preview, <code>[[</code> autocomplete across the whole vault,
+                and links that create the note when it does not exist yet.
+              </dd>
+            </div>
+            <div class="plans__item">
+              <dt>Bubble graph</dt>
+              <dd class="plans__phase">Planned for Phase 1</dd>
+              <dd>
+                Bubble size follows link degree, clusters take their colour from folder or tag, a
+                local graph shows the neighbourhood of one note, and any view exports as SVG or PNG.
+              </dd>
+            </div>
+            <div class="plans__item">
+              <dt>Wiki mode</dt>
+              <dd class="plans__phase">Planned for Phase 1</dd>
+              <dd>
+                A read-only view of the whole vault with rendered links, navigation and search.
+              </dd>
+            </div>
+            <div class="plans__item">
+              <dt>Self-hosting</dt>
+              <dd class="plans__phase">Planned for Phase 1, desktop installers in Phase 5</dd>
+              <dd>
+                One Docker command, or a native process on a machine you control. Installers for
+                Windows, macOS and Linux come later.
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="section" aria-labelledby="who-title">
+          <h2 id="who-title">Who it is for</h2>
+          <ul class="statements" role="list">
+            <li>
+              <strong>The self-hosting community.</strong> It will run as one container or one
+              process on your own hardware, with no third-party account and nothing that phones
+              home.
+            </li>
+            <li>
+              <strong>Researchers.</strong> Sources, arguments and open questions as linked notes,
+              with the shape of a topic visible at a glance.
+            </li>
+            <li>
+              <strong>Authors.</strong> Characters, places and plot threads as a map that grows
+              alongside the manuscript.
+            </li>
+            <li>
+              <strong>Game masters.</strong> A campaign as a vault. A per-vault D&amp;D mode is
+              planned for Phase 3: NPC stat blocks, typed relationships, dice, and sections only the
+              GM can see.
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="status" aria-labelledby="status-title">
+        <div class="page status__row">
+          <h2 id="status-title">Status</h2>
+          <div class="status__body">
+            <p class="status__note">
+              Phase 0 of six, the foundation, is complete; Phase 1 comes next. Nothing to install
+              yet.
+            </p>
+            <ol class="phases" role="list">
+              <li aria-current="step"><span class="phases__n">0</span> Foundation</li>
+              <li><span class="phases__n">1</span> Write, link, see</li>
+              <li><span class="phases__n">2</span> Knowledge layer and editor</li>
+              <li><span class="phases__n">3</span> D&amp;D mode</li>
+              <li><span class="phases__n">4</span> Sharing, permissions, history</li>
+              <li><span class="phases__n">5</span> Desktop and ecosystem</li>
+            </ol>
+            <p>
+              <a href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md"
+                >Read the full roadmap</a
+              >
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="page site-footer__row">
+        <p>
+          Rhizom is free software under the AGPL-3.0. The source lives on
+          <a href="https://github.com/lokianer/rhizom">GitHub</a>.
+        </p>
+        <p>
+          It will run where you put it. No telemetry, no third-party accounts, no mandatory cloud.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var key = 'rhizom-theme';
+        var themes = ['humus', 'kalk', 'system'];
+        var buttons = document.querySelectorAll('[data-set-theme]');
+        var metas = document.querySelectorAll('meta[name="theme-color"]');
+        var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+        // Keep the browser chrome in step with the page background the tokens resolve to.
+        function syncChrome() {
+          var bg = getComputedStyle(root).backgroundColor;
+          for (var j = 0; j < metas.length; j++) {
+            metas[j].setAttribute('content', bg);
+          }
+        }
+
+        function apply(theme, persist) {
+          if (themes.indexOf(theme) < 0) theme = 'humus';
+          root.setAttribute('data-theme', theme);
+
+          for (var i = 0; i < buttons.length; i++) {
+            var pressed = buttons[i].getAttribute('data-set-theme') === theme;
+            buttons[i].setAttribute('aria-pressed', pressed ? 'true' : 'false');
+          }
+
+          syncChrome();
+
+          if (persist) {
+            try {
+              localStorage.setItem(key, theme);
+            } catch (e) {
+              /* Storage unavailable; the choice lasts for this page view only. */
+            }
+          }
+        }
+
+        // The head script has already restored a saved theme; this pass wires the controls.
+        apply(root.getAttribute('data-theme') || 'humus', false);
+
+        for (var k = 0; k < buttons.length; k++) {
+          buttons[k].addEventListener('click', function () {
+            apply(this.getAttribute('data-set-theme'), true);
+          });
+        }
+
+        if (scheme && scheme.addEventListener) {
+          scheme.addEventListener('change', function () {
+            if (root.getAttribute('data-theme') === 'system') syncChrome();
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

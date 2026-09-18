@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a look at the [roadmap](https://github.com/lokianer/rhizom/blob/main/ROADMAP.md) first —
+        many ideas are already planned for a later phase. Requests that fit the roadmap are easiest to act on.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation you are in and what is missing or awkward today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work? Sketches, examples from other tools and Markdown samples are welcome.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Editor
+        - Graph / visualization
+        - Wiki mode
+        - Search and index
+        - Vault compatibility (Obsidian, plain Markdown)
+        - D&D mode
+        - Sharing, permissions, export
+        - Desktop app
+        - Self-hosting (Docker, deployment)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and the roadmap; this is not already planned or requested.
+          required: true

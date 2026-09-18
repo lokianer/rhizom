@@ -1,0 +1,42 @@
+# pnpm 12: every pnpm setting lives in this file (.npmrc is only read for auth and registry).
+# Keys must be documented camelCase names; with packageManager pinned, an unknown key fails
+# the install with ERR_PNPM_UNRECOGNIZED_WORKSPACE_SETTINGS.
+
+packages:
+  - packages/*
+  - apps/*
+
+# Dependency build scripts are blocked until reviewed (strictDepBuilds defaults to true), so
+# every package with an install script needs a decision here. Change decisions with
+# `pnpm approve-builds <pkg>` or `pnpm approve-builds '!<pkg>'`.
+allowBuilds:
+  # postinstall "node install.js" — pulled in by tsx
+  esbuild: true
+  # its postinstall is not needed: the root "prepare" script installs the git hooks
+  simple-git-hooks: false
+
+# One version per shared dependency; workspace packages reference it with "catalog:".
+# strict: `pnpm add` must use the catalog version, so the packages cannot drift apart.
+catalogMode: strict
+catalog:
+  '@fastify/static': ^10.1.4
+  '@playwright/test': ^1.63.0
+  '@types/node': ^22.20.3
+  '@types/react': ^19.3.0
+  '@types/react-dom': ^19.3.0
+  '@vitejs/plugin-react': ^6.1.1
+  # @vitest/coverage-v8 peer-depends on the exact vitest version: bump both together
+  '@vitest/coverage-v8': 5.0.1
+  fastify: ^5.12.5
+  i18next: ^26.4.2
+  pino-pretty: ^13.1.3
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  react-i18next: ^17.0.14
+  tsx: ^4.23.13
+  # typescript-eslint 8.70 supports TypeScript <6.1; TypeScript 7 ships no compiler API yet
+  typescript: ~6.0.3
+  vite: ^8.3.0
+  vitest: 5.0.1
+minimumReleaseAgeExclude:
+  - prettier@3.9.8

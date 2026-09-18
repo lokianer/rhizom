@@ -1,0 +1,74 @@
+/* Base styles: a small reset plus surfaces and typography from tokens.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--rz-font-sans);
+  line-height: var(--rz-leading-normal);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--rz-bg);
+  color: var(--rz-text);
+  font-size: var(--rz-text-md);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--rz-link);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: var(--rz-focus-offset);
+}
+
+::selection {
+  background: var(--rz-selection);
+}
+
+.app-shell {
+  display: grid;
+  gap: var(--rz-space-5);
+  max-width: var(--rz-measure);
+  margin: 0 auto;
+  padding: var(--rz-space-7) var(--rz-space-4);
+}
+
+.app-shell h1 {
+  font-size: var(--rz-text-3xl);
+  line-height: var(--rz-leading-tight);
+  letter-spacing: -0.01em;
+}
+
+.app-shell header p {
+  margin-top: var(--rz-space-2);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-lg);
+}
+
+.language-switch select {
+  padding: var(--rz-space-1) var(--rz-space-2);
+  background: var(--rz-surface);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+}

@@ -1,0 +1,570 @@
+/*
+ * Rhizom landing page.
+ *
+ * Every colour, type size, space, radius and duration comes from tokens.css, which the build
+ * copies next to this file. The only values defined here are the page's own layout widths.
+ *
+ * Layout: a marginalia grid. Section headings sit in a narrow margin column, prose sits in a
+ * column no wider than the reading measure, and the bubble-field figure is the one element
+ * that spans both.
+ */
+
+:root {
+  --site-aside: 11rem;
+  --site-gap: var(--rz-space-7);
+  --site-max: calc(var(--site-aside) + var(--site-gap) + var(--rz-measure));
+}
+
+/* Base */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--rz-bg);
+  color: var(--rz-text);
+  font-family: var(--rz-font-serif);
+  line-height: var(--rz-leading-relaxed);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--rz-text-lg);
+}
+
+::selection {
+  background: var(--rz-selection);
+}
+
+:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: var(--rz-focus-offset);
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* Underlines take the link's own colour so they stay visible in both themes. */
+
+a {
+  color: var(--rz-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+strong {
+  font-weight: 700;
+}
+
+code {
+  font-family: var(--rz-font-mono);
+  font-size: 0.875em;
+}
+
+/* Hidden from sight, still read by assistive technology */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Cluster fills, shared by the wordmark and the bubble field */
+
+.k1 {
+  fill: var(--rz-cluster-1);
+}
+
+.k2 {
+  fill: var(--rz-cluster-2);
+}
+
+.k3 {
+  fill: var(--rz-cluster-3);
+}
+
+.k4 {
+  fill: var(--rz-cluster-4);
+}
+
+.k5 {
+  fill: var(--rz-cluster-5);
+}
+
+.k6 {
+  fill: var(--rz-cluster-6);
+}
+
+.k7 {
+  fill: var(--rz-cluster-7);
+}
+
+.k8 {
+  fill: var(--rz-cluster-8);
+}
+
+/* Page column */
+
+.page {
+  width: 100%;
+  max-width: calc(var(--site-max) + 2 * var(--rz-space-4));
+  margin-inline: auto;
+  padding-inline: var(--rz-space-4);
+}
+
+/* Reading measure. Above 50rem the grid column enforces it; below, the prose blocks do. */
+
+.hero__lead,
+.hero__status,
+.statements,
+.plans,
+.status__body,
+.site-footer__row > p {
+  max-width: var(--rz-measure);
+}
+
+/* Skip link */
+
+.skip-link {
+  position: absolute;
+  top: var(--rz-space-2);
+  left: var(--rz-space-2);
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-radius: var(--rz-radius-sm);
+  background: var(--rz-surface-raised);
+  color: var(--rz-text);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-sm);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* Header. Fonts are set on the controls, not the row: the row is a .page, and .page measures
+   its width in ch of the body font. The theme switch follows the nav in DOM and tab order; on
+   narrow screens it wraps to a second row, right-aligned under the nav, rather than being
+   reordered. The wordmark's auto margin keeps it flush left on its own row. */
+
+.site-header {
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.site-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--rz-space-3) var(--rz-space-5);
+  padding-block: var(--rz-space-4);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+  margin-right: auto;
+  font-family: var(--rz-font-serif);
+  font-size: var(--rz-text-lg);
+}
+
+.mark circle {
+  fill-opacity: 0.85;
+}
+
+.site-nav {
+  display: flex;
+  gap: var(--rz-space-5);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-sm);
+  line-height: var(--rz-leading-normal);
+}
+
+.site-nav a {
+  color: var(--rz-text);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  text-decoration: underline;
+}
+
+/* The group border takes the faint text colour: the only border token that clears 3:1 on the
+   page background in both themes. */
+
+.theme-switch {
+  display: inline-flex;
+  padding: var(--rz-space-1);
+  border: 1px solid var(--rz-text-faint);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface-sunken);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-sm);
+  line-height: var(--rz-leading-normal);
+}
+
+.theme-switch button {
+  appearance: none;
+  padding: var(--rz-space-1) var(--rz-space-2);
+  border: 0;
+  border-radius: var(--rz-radius-sm);
+  background: transparent;
+  color: var(--rz-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--rz-duration-fast) var(--rz-ease),
+    color var(--rz-duration-fast) var(--rz-ease);
+}
+
+.theme-switch button:hover {
+  color: var(--rz-text);
+}
+
+/* The accent ring is the state cue that clears 3:1 in both themes; the raised fill is secondary. */
+
+.theme-switch button[aria-pressed='true'] {
+  background: var(--rz-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--rz-accent-strong);
+  color: var(--rz-text);
+}
+
+/* Hero */
+
+.hero {
+  padding-top: var(--rz-space-7);
+}
+
+h1 {
+  margin: 0 0 var(--rz-space-5);
+  font-size: var(--rz-text-2xl);
+  font-weight: 400;
+  line-height: var(--rz-leading-tight);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.hero__lead {
+  font-size: var(--rz-text-lg);
+  line-height: var(--rz-leading-normal);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rz-space-4) var(--rz-space-5);
+  margin-top: var(--rz-space-6);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.button {
+  display: inline-block;
+  padding: var(--rz-space-3) var(--rz-space-5);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-accent-strong);
+  color: var(--rz-text-inverse);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+/* The fill is already the focus colour, so the ring on this one control takes the text colour. */
+
+.button:focus-visible {
+  outline-color: var(--rz-text);
+}
+
+.link-quiet {
+  color: var(--rz-text);
+}
+
+.hero__status {
+  margin-top: var(--rz-space-6);
+  padding-left: var(--rz-space-3);
+  border-left: 2px solid var(--rz-accent);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.hero__status strong {
+  color: var(--rz-text);
+  font-weight: 600;
+}
+
+/* Bubble field */
+
+.field {
+  margin: var(--rz-space-7) 0 0;
+}
+
+/* On narrow screens the whole drawing would shrink to specks. The minimum height, together with
+   preserveAspectRatio="slice" on the svg, shows a centred crop at a legible scale instead. */
+
+.field svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 15rem;
+}
+
+.field .edges {
+  fill: none;
+  stroke: var(--rz-graph-edge);
+  stroke-width: 1.5;
+}
+
+.field .edges line {
+  vector-effect: non-scaling-stroke;
+}
+
+.field circle {
+  fill-opacity: 0.85;
+  transition: fill-opacity var(--rz-duration-fast) var(--rz-ease);
+}
+
+.field circle:hover {
+  fill-opacity: 1;
+}
+
+.field figcaption {
+  margin-top: var(--rz-space-3);
+  max-width: var(--rz-measure);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+/* Sections */
+
+.section {
+  margin-top: var(--rz-space-8);
+}
+
+/* Two steps above the bold item titles it stacks over on narrow screens; above 50rem the margin
+   column carries the hierarchy and the heading steps down one size. */
+
+h2 {
+  margin: 0 0 var(--rz-space-4);
+  font-size: var(--rz-text-2xl);
+  font-style: italic;
+  font-weight: 400;
+  line-height: var(--rz-leading-tight);
+  text-wrap: balance;
+}
+
+.statements {
+  display: grid;
+  gap: var(--rz-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The track minimum is capped at the container so a large root font size cannot overflow it. */
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--rz-space-5) var(--rz-space-6);
+  margin: 0;
+}
+
+.plans dt {
+  font-weight: 700;
+}
+
+.plans dd {
+  margin: var(--rz-space-2) 0 0;
+}
+
+.plans__phase {
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+/* Status band */
+
+.status {
+  margin-top: var(--rz-space-8);
+  padding-block: var(--rz-space-7);
+  border-top: 1px solid var(--rz-border);
+  border-bottom: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+}
+
+.phases {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rz-space-2) var(--rz-space-5);
+  margin: var(--rz-space-5) 0;
+  padding: 0;
+  list-style: none;
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.phases li {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+}
+
+.phases li[aria-current] {
+  color: var(--rz-text);
+}
+
+.phases__n {
+  display: inline-grid;
+  place-items: center;
+  width: var(--rz-space-5);
+  height: var(--rz-space-5);
+  border: 1px solid currentColor;
+  border-radius: var(--rz-radius-full);
+  font-size: var(--rz-text-sm);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.phases li[aria-current] .phases__n {
+  border-color: var(--rz-accent-strong);
+  background: var(--rz-accent-strong);
+  color: var(--rz-text-inverse);
+}
+
+@media (min-width: 40rem) {
+  .phases {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(3, auto);
+    justify-content: start;
+    column-gap: var(--rz-space-7);
+  }
+}
+
+/* Footer. As in the header, the font sits on the paragraphs so the .page row keeps its measure. */
+
+.site-footer {
+  padding-block: var(--rz-space-6) var(--rz-space-8);
+}
+
+.site-footer p {
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.site-footer p + p {
+  margin-top: var(--rz-space-2);
+}
+
+.site-footer a {
+  color: var(--rz-text);
+}
+
+/* Marginalia grid on wider screens */
+
+@media (min-width: 50rem) {
+  .hero,
+  .section,
+  .status__row,
+  .site-footer__row {
+    display: grid;
+    grid-template-columns: var(--site-aside) minmax(0, var(--rz-measure));
+    column-gap: var(--site-gap);
+  }
+
+  .hero {
+    padding-top: var(--rz-space-8);
+  }
+
+  h1 {
+    font-size: var(--rz-text-3xl);
+  }
+
+  .hero__lead {
+    font-size: var(--rz-text-xl);
+  }
+
+  .hero > h1,
+  .hero > .hero__lead,
+  .hero > .hero__actions,
+  .section > :not(h2),
+  .status__body,
+  .site-footer__row > p {
+    grid-column: 2;
+  }
+
+  .hero__status {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    align-self: start;
+    margin-top: 0;
+  }
+
+  .field {
+    grid-column: 1 / -1;
+  }
+
+  /* A margin, not padding, so the caption keeps its full measure beside the aside column. */
+
+  .field figcaption {
+    margin-left: calc(var(--site-aside) + var(--site-gap));
+  }
+
+  h2 {
+    grid-column: 1;
+    margin-bottom: 0;
+    font-size: var(--rz-text-xl);
+  }
+}
+
+/* Forced colours (Windows High Contrast) drop backgrounds and shadows, so the two state cues
+   become outlines and borders. The system colour keyword is the one non-token colour here. */
+
+@media (forced-colors: active) {
+  .theme-switch button[aria-pressed='true'] {
+    outline: 2px solid ButtonText;
+    outline-offset: -2px;
+  }
+
+  .theme-switch button[aria-pressed='true']:focus-visible {
+    outline-offset: var(--rz-focus-offset);
+  }
+
+  .phases li[aria-current] .phases__n {
+    border-width: 2px;
+  }
+}

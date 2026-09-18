@@ -1,0 +1,133 @@
+/*
+ * Rhizom design tokens.
+ *
+ * Two themes share one vocabulary: "Humus" (dark, earthy — the default) and "Kalk" (light,
+ * chalky). Every colour token is written once with both variants via light-dark(); the active
+ * variant follows `color-scheme`, which the theme attribute on <html> controls:
+ *
+ *   (none) or data-theme="humus"  → Humus (dark)
+ *   data-theme="kalk"             → Kalk (light)
+ *   data-theme="system"           → whichever the operating system prefers
+ *
+ * Type, spacing, radii and motion are theme-independent.
+ *
+ * Cluster colours are the default graph palette. Users can override them per folder or tag in
+ * the settings or with a `color:` frontmatter key; the legend reads from the same tokens.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces — soil and bark / chalk and paper */
+  --rz-bg: light-dark(#f4f1ea, #14110f);
+  --rz-surface: light-dark(#fbf9f4, #1c1815);
+  --rz-surface-raised: light-dark(#ffffff, #26211d);
+  --rz-surface-sunken: light-dark(#ebe6dc, #0f0d0b);
+  --rz-border: light-dark(#d9d2c5, #3a322c);
+  --rz-border-strong: light-dark(#bfb6a6, #4d433b);
+
+  /* Text */
+  --rz-text: light-dark(#23201c, #e8e1d6);
+  --rz-text-muted: light-dark(#5f584f, #bcb3a6);
+  --rz-text-faint: light-dark(#8c8479, #8a8075);
+  --rz-text-inverse: light-dark(#f4f1ea, #14110f);
+
+  /* Accents — moss, ochre, rust */
+  --rz-moss: light-dark(#5c7a45, #7f9d61);
+  --rz-moss-strong: light-dark(#4a6636, #97b578);
+  --rz-ochre: light-dark(#9a7420, #c9a24b);
+  --rz-ochre-strong: light-dark(#7d5d16, #ddb85f);
+  --rz-rust: light-dark(#9a4530, #b5573b);
+  --rz-rust-strong: light-dark(#7f3726, #cc6a4c);
+
+  --rz-accent: var(--rz-ochre);
+  --rz-accent-strong: var(--rz-ochre-strong);
+  --rz-link: var(--rz-moss-strong);
+  --rz-link-missing: var(--rz-rust-strong);
+  --rz-selection: light-dark(rgb(154 116 32 / 22%), rgb(201 162 75 / 30%));
+  --rz-focus-ring: var(--rz-ochre-strong);
+
+  /* Semantic */
+  --rz-success: var(--rz-moss);
+  --rz-warning: var(--rz-ochre);
+  --rz-danger: var(--rz-rust);
+
+  /* Graph — edges in mycelium white on Humus, warm grey on Kalk; bubbles from the cluster palette */
+  --rz-graph-bg: var(--rz-bg);
+  --rz-graph-edge: light-dark(rgb(35 32 28 / 22%), rgb(236 229 218 / 32%));
+  --rz-graph-edge-active: light-dark(rgb(35 32 28 / 60%), rgb(236 229 218 / 75%));
+  --rz-graph-label: var(--rz-text);
+  --rz-graph-label-halo: var(--rz-bg);
+
+  --rz-cluster-1: light-dark(#5c7a45, #7f9d61); /* moss */
+  --rz-cluster-2: light-dark(#9a7420, #c9a24b); /* ochre */
+  --rz-cluster-3: light-dark(#9a4530, #b5573b); /* rust */
+  --rz-cluster-4: light-dark(#3f6e5c, #5f8f7c); /* moor */
+  --rz-cluster-5: light-dark(#b3762e, #d8a15a); /* amber */
+  --rz-cluster-6: light-dark(#7a4f68, #9c6b8a); /* heather */
+  --rz-cluster-7: light-dark(#6f7f5a, #a3b28c); /* lichen */
+  --rz-cluster-8: light-dark(#6b4f38, #8c6a4f); /* bark */
+
+  /* Typography — calm and study-like; system faces until a self-hosted font is chosen */
+  --rz-font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --rz-font-serif: ui-serif, Georgia, 'Times New Roman', 'Noto Serif', serif;
+  --rz-font-mono:
+    ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+
+  --rz-text-xs: 0.75rem;
+  --rz-text-sm: 0.875rem;
+  --rz-text-md: 1rem;
+  --rz-text-lg: 1.125rem;
+  --rz-text-xl: 1.375rem;
+  --rz-text-2xl: 1.75rem;
+  --rz-text-3xl: 2.25rem;
+
+  --rz-leading-tight: 1.25;
+  --rz-leading-normal: 1.5;
+  --rz-leading-relaxed: 1.65;
+
+  --rz-measure: 68ch;
+
+  /* Spacing — 4px base */
+  --rz-space-1: 0.25rem;
+  --rz-space-2: 0.5rem;
+  --rz-space-3: 0.75rem;
+  --rz-space-4: 1rem;
+  --rz-space-5: 1.5rem;
+  --rz-space-6: 2rem;
+  --rz-space-7: 3rem;
+  --rz-space-8: 4rem;
+
+  /* Shape and depth — flat by default, one soft shadow for floating surfaces */
+  --rz-radius-sm: 0.25rem;
+  --rz-radius-md: 0.5rem;
+  --rz-radius-lg: 0.75rem;
+  --rz-radius-full: 999px;
+  --rz-shadow-floating: 0 12px 32px light-dark(rgb(35 32 28 / 18%), rgb(0 0 0 / 45%));
+
+  /* Motion — short and restrained */
+  --rz-duration-fast: 120ms;
+  --rz-duration-normal: 200ms;
+  --rz-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Focus — always visible, never removed */
+  --rz-focus-outline: 2px solid var(--rz-focus-ring);
+  --rz-focus-offset: 2px;
+}
+
+:root[data-theme='kalk'] {
+  color-scheme: light;
+}
+
+:root[data-theme='system'] {
+  color-scheme: light dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rz-duration-fast: 0ms;
+    --rz-duration-normal: 0ms;
+  }
+}

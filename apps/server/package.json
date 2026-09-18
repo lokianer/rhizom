@@ -1,0 +1,29 @@
+{
+  "name": "@rhizom/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Rhizom REST API (Fastify) that also serves the built web app",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -b",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/static": "catalog:",
+    "@rhizom/core": "workspace:*",
+    "fastify": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "pino-pretty": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

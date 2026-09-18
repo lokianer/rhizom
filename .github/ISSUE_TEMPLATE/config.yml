@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/lokianer/rhizom/security/advisories/new
+    about: Private report that reaches only the maintainer. Please do not open a public issue for security problems.
+  - name: Roadmap
+    url: https://github.com/lokianer/rhizom/blob/main/ROADMAP.md
+    about: What is planned for which phase.
