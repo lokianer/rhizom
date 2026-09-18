@@ -6,20 +6,31 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
-    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+    "node": "^22.22.0 || ^24.0.0 || >=26.0.0"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -b",
     "start": "node dist/server.js",
+    "openapi": "tsx src/bin/export-openapi.ts && prettier --write openapi.json",
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/multipart": "catalog:",
+    "@fastify/sensible": "catalog:",
     "@fastify/static": "catalog:",
+    "@fastify/swagger": "catalog:",
+    "@fastify/swagger-ui": "catalog:",
+    "@fastify/type-provider-typebox": "catalog:",
     "@rhizom/core": "workspace:*",
+    "@sinclair/typebox": "catalog:",
+    "better-sqlite3": "catalog:",
+    "chokidar": "catalog:",
+    "drizzle-orm": "catalog:",
     "fastify": "catalog:"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
     "pino-pretty": "catalog:",
     "tsx": "catalog:",

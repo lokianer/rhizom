@@ -28,11 +28,16 @@ FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3737
+# The notes live in /vault (mount your folder there); the rebuildable index goes to /data.
+ENV RHIZOM_VAULT_DIR=/vault
+ENV RHIZOM_DATA_DIR=/data
 WORKDIR /app
+RUN mkdir -p /vault /data && chown node:node /vault /data
 
 COPY --from=build /app/package.json /app/pnpm-workspace.yaml ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/core/package.json ./packages/core/
+COPY --from=build /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=build /app/packages/core/dist ./packages/core/dist
 COPY --from=build /app/apps/server/package.json ./apps/server/
 COPY --from=build /app/apps/server/node_modules ./apps/server/node_modules

@@ -10,3 +10,6 @@
 *.webp binary
 *.woff binary
 *.woff2 binary
+
+# Example vault: test data, kept byte-for-byte (one note is CRLF, one has a BOM)
+examples/vault/** -text

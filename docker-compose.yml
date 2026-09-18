@@ -6,4 +6,13 @@ services:
       # Bound to the loopback interface by default: there is no login yet. Set RHIZOM_BIND=0.0.0.0
       # to expose the port on the network, for example behind a reverse proxy.
       - '${RHIZOM_BIND:-127.0.0.1}:3737:3737'
+    volumes:
+      # Your notes. Set RHIZOM_VAULT to the folder with your Markdown files; the example vault
+      # from the repository is the default. The container reads and writes as user 1000.
+      - '${RHIZOM_VAULT:-./examples/vault}:/vault'
+      # The search index. It is derived from the notes and can be thrown away at any time.
+      - rhizom-data:/data
     restart: unless-stopped
+
+volumes:
+  rhizom-data:

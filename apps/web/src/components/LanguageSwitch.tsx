@@ -11,7 +11,7 @@ export function LanguageSwitch() {
   const current = i18n.resolvedLanguage ?? i18n.language;
 
   return (
-    <div className="language-switch">
+    <div className="rz-field">
       <label htmlFor={id}>{t('language.switch')}</label>{' '}
       <select
         id={id}

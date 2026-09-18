@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400" font-family="Georgia, serif">
+  <title>Silverstadt, working map after session 9</title>
+  <desc>North is up. The Selle runs west to east; the tide comes in from the east.</desc>
+  <rect width="640" height="400" fill="#f3ead6"/>
+  <!-- high ground: the Bellward -->
+  <path d="M 40 40 L 330 40 L 330 150 Q 260 190 180 170 Q 110 160 40 120 Z" fill="#e2d5b3" stroke="#8a7a55" stroke-width="1.5"/>
+  <text x="120" y="80" font-size="18" fill="#3d3420">The Bellward</text>
+  <rect x="210" y="95" width="22" height="22" fill="#8a7a55"/>
+  <text x="238" y="112" font-size="11" fill="#3d3420">hour tower</text>
+  <rect x="150" y="120" width="36" height="20" fill="none" stroke="#8a7a55" stroke-width="1.2"/>
+  <text x="150" y="152" font-size="11" fill="#3d3420">Bell Square</text>
+  <rect x="270" y="125" width="34" height="18" fill="#c9a24b" stroke="#8a7a55"/>
+  <text x="268" y="158" font-size="11" fill="#3d3420">Municipal Archive</text>
+  <!-- Tidewater piers -->
+  <path d="M 340 40 L 600 40 L 600 175 Q 500 205 340 165 Z" fill="#e8dfc4" stroke="#8a7a55" stroke-width="1.5"/>
+  <text x="420" y="80" font-size="18" fill="#3d3420">Tidewater</text>
+  <g stroke="#8a7a55" stroke-width="3">
+    <line x1="380" y1="170" x2="380" y2="205"/>
+    <line x1="430" y1="178" x2="430" y2="212"/>
+    <line x1="480" y1="185" x2="480" y2="218"/>
+    <line x1="530" y1="188" x2="530" y2="220"/>
+  </g>
+  <text x="470" y="236" font-size="10" fill="#3d3420">third pier: Brannoc</text>
+  <circle cx="560" cy="150" r="6" fill="none" stroke="#1f2a44" stroke-width="2" stroke-dasharray="3 2"/>
+  <text x="500" y="135" font-size="11" fill="#1f2a44">Sunken Archive (below)</text>
+  <!-- the river Selle -->
+  <path d="M 0 200 Q 160 180 320 215 Q 480 250 640 235 L 640 290 Q 480 305 320 270 Q 160 235 0 250 Z" fill="#9fb8c8" stroke="#5e7d92" stroke-width="1.5"/>
+  <text x="60" y="230" font-size="14" font-style="italic" fill="#2f4858">the Selle</text>
+  <text x="560" y="275" font-size="10" fill="#2f4858">tide from the east</text>
+  <!-- Lantern Bridge: seven arches -->
+  <rect x="296" y="196" width="24" height="90" fill="#7a6a48" stroke="#3d3420"/>
+  <g fill="none" stroke="#f3ead6" stroke-width="1.2">
+    <path d="M 300 210 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 222 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 234 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 246 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 258 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 270 a 8 8 0 0 1 16 0"/>
+    <path d="M 300 282 a 8 8 0 0 1 16 0"/>
+  </g>
+  <circle cx="308" cy="192" r="3" fill="#c9a24b"/>
+  <text x="326" y="243" font-size="12" fill="#3d3420">Lantern Bridge</text>
+  <text x="326" y="257" font-size="10" fill="#3d3420">The Cracked Bell, 3rd pier</text>
+  <!-- Lantern Quay, south bank -->
+  <path d="M 40 300 Q 200 285 360 305 Q 500 322 600 300 L 600 370 L 40 370 Z" fill="#dfd4b0" stroke="#8a7a55" stroke-width="1.5"/>
+  <text x="120" y="345" font-size="18" fill="#3d3420">Lantern Quay</text>
+  <g stroke="#6b8b3a" stroke-width="1.5" fill="none">
+    <path d="M 520 320 l 0 -18 M 528 322 l 0 -22 M 536 320 l 0 -16 M 544 323 l 0 -20"/>
+  </g>
+  <text x="470" y="345" font-size="11" fill="#3d3420">reed beds (Wren)</text>
+  <!-- the Undercroft, marked as a dashed hint only -->
+  <path d="M 200 165 Q 250 230 300 260" fill="none" stroke="#1f2a44" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="210" y="290" font-size="10" fill="#1f2a44">culvert (Undercroft)</text>
+  <!-- compass -->
+  <g transform="translate(590 60)">
+    <line x1="0" y1="18" x2="0" y2="-18" stroke="#3d3420" stroke-width="1.5"/>
+    <polygon points="0,-22 -4,-12 4,-12" fill="#3d3420"/>
+    <text x="-4" y="34" font-size="12" fill="#3d3420">N</text>
+  </g>
+  <text x="40" y="390" font-size="9" fill="#8a7a55">drawn after session 9, not updated since</text>
+</svg>

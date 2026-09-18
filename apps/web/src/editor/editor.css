@@ -1,0 +1,52 @@
+/*
+ * What EditorView.theme cannot express: the host element's layout and the keyframes of the
+ * upload marker. Every colour still comes from the design tokens.
+ */
+
+.rz-editor {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.rz-editor .cm-editor {
+  flex: 1;
+  min-height: 0;
+}
+
+.rz-editor .cm-rz-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--rz-space-2) 0;
+  border-radius: var(--rz-radius-md);
+}
+
+/* While a dropped or pasted file uploads, a dot holds its place in the text. */
+.rz-editor .cm-rz-upload {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-accent);
+  vertical-align: baseline;
+  animation: rz-editor-pulse 1.2s var(--rz-ease) infinite;
+}
+
+@keyframes rz-editor-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rz-editor .cm-rz-upload {
+    animation: none;
+  }
+}

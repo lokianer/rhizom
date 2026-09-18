@@ -1,0 +1,17 @@
+/*
+ * The canvas fills its container, which owns the size. Padding or a border would shift
+ * pointer offsetX/offsetY against the drawing surface, so both stay at zero; the colours
+ * come from the tokens and are read back through the palette probe, not from here.
+ */
+
+.rz-graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--rz-graph-bg);
+  /* The canvas pans and zooms itself; without this, touch drags scroll the page instead. */
+  touch-action: none;
+  cursor: grab;
+}

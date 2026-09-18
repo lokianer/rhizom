@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Rhizom",
-    "tagline": "Vernetztes Wissen aus reinem Markdown."
+    "tagline": "Vernetztes Wissen aus reinem Markdown.",
+    "skipToContent": "Zum Inhalt springen"
   },
   "language": {
     "switch": "Sprache",
@@ -9,5 +10,120 @@
       "en": "English",
       "de": "Deutsch"
     }
+  },
+  "theme": {
+    "switch": "Design",
+    "humus": "Humus",
+    "kalk": "Kalk",
+    "system": "System"
+  },
+  "sidebar": {
+    "toggle": "Seitenleiste umschalten",
+    "files": "Dateien",
+    "search": "Suche",
+    "tags": "Schlagwörter",
+    "empty": "In diesem Tresor liegen noch keine Notizen."
+  },
+  "tree": {
+    "label": "Tresor",
+    "newNote": "Neue Notiz",
+    "notes_one": "{{count}} Notiz",
+    "notes_other": "{{count}} Notizen"
+  },
+  "search": {
+    "placeholder": "Alle Notizen durchsuchen",
+    "label": "Suche",
+    "hint": "Mindestens zwei Zeichen eingeben.",
+    "noResults": "Nichts gefunden für „{{query}}“.",
+    "results_one": "{{count}} Treffer",
+    "results_other": "{{count}} Treffer"
+  },
+  "tags": {
+    "label": "Schlagwörter",
+    "empty": "Keine Schlagwörter in diesem Tresor.",
+    "count_one": "{{count}} Notiz",
+    "count_other": "{{count}} Notizen",
+    "filter": "Graph nach {{tag}} filtern"
+  },
+  "note": {
+    "loading": "Wird geladen…",
+    "missing": "Diese Notiz gibt es noch nicht.",
+    "create": "{{path}} anlegen",
+    "delete": "In den Papierkorb",
+    "confirmDelete": "{{name}} in den Papierkorb verschieben?",
+    "nameLabel": "Name",
+    "namePlaceholder": "Ordner/Notizname",
+    "createButton": "Anlegen",
+    "cancel": "Abbrechen",
+    "inFolder": "in {{folder}}",
+    "atRoot": "im Wurzelordner"
+  },
+  "editor": {
+    "label": "Notiz bearbeiten",
+    "saving": "Wird gespeichert…",
+    "saved": "Gespeichert",
+    "failed": "Speichern fehlgeschlagen: {{message}}",
+    "conflict": "Diese Notiz wurde auf der Festplatte geändert. Neu laden oder die Datei überschreiben.",
+    "reload": "Neu laden",
+    "overwrite": "Überschreiben",
+    "uploadFailed": "{{name}} konnte nicht hochgeladen werden: {{message}}",
+    "preview": "Vorschau"
+  },
+  "backlinks": {
+    "label": "Rückverweise",
+    "empty": "Noch verweist keine Notiz hierher.",
+    "count_one": "{{count}} Rückverweis",
+    "count_other": "{{count}} Rückverweise",
+    "outgoing": "Verweise aus dieser Notiz",
+    "unresolved": "Fehlt"
+  },
+  "graph": {
+    "label": "Graph des Tresors",
+    "title": "Graph",
+    "clusterBy": "Färben nach",
+    "folder": "Ordner",
+    "tag": "Schlagwort",
+    "depth": "Tiefe",
+    "wholeVault": "Ganzer Tresor",
+    "depthOf": "{{count}} Schritt um die offene Notiz",
+    "depthOf_other": "{{count}} Schritte um die offene Notiz",
+    "exportSvg": "Als SVG exportieren",
+    "exportPng": "Als PNG exportieren",
+    "empty": "Keine verknüpften Notizen vorhanden.",
+    "nodes_one": "{{count}} Notiz",
+    "nodes_other": "{{count}} Notizen",
+    "edges_one": "{{count}} Verweis",
+    "edges_other": "{{count}} Verweise",
+    "resetView": "Ansicht zurücksetzen"
+  },
+  "wiki": {
+    "title": "Wiki",
+    "label": "Nur-Lese-Ansicht",
+    "toEditor": "Diese Notiz bearbeiten",
+    "toWiki": "Als Wiki lesen"
+  },
+  "palette": {
+    "open": "Befehlspalette öffnen",
+    "label": "Befehlspalette",
+    "placeholder": "Notiz springen oder Befehl ausführen",
+    "commands": "Befehle",
+    "notes": "Notizen",
+    "empty": "Nichts passt dazu.",
+    "commandNames": {
+      "newNote": "Neue Notiz",
+      "toggleTheme": "Design wechseln",
+      "openGraph": "Graph öffnen",
+      "openWiki": "Als Wiki lesen",
+      "search": "Alle Notizen durchsuchen",
+      "rebuild": "Index neu aufbauen",
+      "toggleSidebar": "Seitenleiste umschalten",
+      "togglePreview": "Vorschau umschalten"
+    }
+  },
+  "status": {
+    "loading": "Tresor wird geladen…",
+    "error": "Server nicht erreichbar: {{message}}",
+    "retry": "Erneut versuchen",
+    "noVault": "Kein Tresor konfiguriert. RHIZOM_VAULT_DIR setzen und den Server neu starten."
   }
 }

@@ -1,0 +1,320 @@
+/* Sidebar panels: file tree, search, tags, and the backlinks panel under a note. Every colour
+   comes from tokens.css, so both themes are covered by one set of rules. */
+
+.rz-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rz-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-panel-action {
+  font-size: var(--rz-text-sm);
+  padding: var(--rz-space-1) var(--rz-space-2);
+}
+
+.rz-panel-empty,
+.rz-panel-status {
+  padding: var(--rz-space-2) var(--rz-space-3);
+  color: var(--rz-text-muted);
+}
+
+.rz-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- file tree --------------------------------------------------------------------------- */
+
+.rz-tree-scroll {
+  --rz-tree-row-height: 30px;
+
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.rz-tree [role='treeitem']:focus-visible {
+  outline: none;
+}
+
+.rz-tree [role='treeitem']:focus-visible > .rz-tree-row {
+  outline: var(--rz-focus-outline);
+  outline-offset: calc(var(--rz-focus-offset) * -1);
+}
+
+.rz-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-1);
+  height: var(--rz-tree-row-height);
+  padding-inline-end: var(--rz-space-2);
+  cursor: default;
+  user-select: none;
+}
+
+.rz-tree-row:hover {
+  background: var(--rz-surface);
+}
+
+.rz-tree-row-note {
+  cursor: pointer;
+}
+
+.rz-tree-row-active {
+  background: var(--rz-surface-raised);
+  box-shadow: inset 2px 0 0 var(--rz-accent);
+}
+
+.rz-tree-twisty {
+  flex: none;
+  width: 1em;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  text-align: center;
+}
+
+.rz-tree-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-tree-row-folder .rz-tree-label {
+  font-weight: 600;
+}
+
+.rz-tree-count {
+  flex: none;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.rz-tree-add {
+  flex: none;
+  visibility: hidden;
+  border: 0;
+  background: none;
+  color: var(--rz-text-muted);
+  line-height: 1;
+  padding: 0 var(--rz-space-1);
+}
+
+.rz-tree-row:hover .rz-tree-add {
+  visibility: visible;
+}
+
+.rz-tree-add:hover {
+  color: var(--rz-text);
+}
+
+/* --- search ------------------------------------------------------------------------------ */
+
+.rz-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.rz-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--rz-space-2) var(--rz-space-3);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: var(--rz-space-1);
+  align-content: start;
+}
+
+.rz-hit {
+  display: grid;
+  gap: var(--rz-space-1);
+  padding: var(--rz-space-2);
+  border-radius: var(--rz-radius-sm);
+  color: var(--rz-text);
+  text-decoration: none;
+}
+
+.rz-hit:hover {
+  background: var(--rz-surface);
+}
+
+.rz-hit[aria-current='page'] {
+  background: var(--rz-surface-raised);
+  box-shadow: inset 2px 0 0 var(--rz-accent);
+}
+
+.rz-hit-title {
+  font-weight: 600;
+}
+
+.rz-hit-folder {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+}
+
+.rz-hit-snippet {
+  color: var(--rz-text-muted);
+  line-height: var(--rz-leading-normal);
+  overflow-wrap: anywhere;
+}
+
+/* --- tags -------------------------------------------------------------------------------- */
+
+.rz-tag-groups {
+  list-style: none;
+  margin: 0;
+  padding: var(--rz-space-3);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: var(--rz-space-4);
+  align-content: start;
+}
+
+.rz-tag-group-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--rz-space-2);
+  margin-bottom: var(--rz-space-2);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-tag-total {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  font-weight: 400;
+}
+
+.rz-tag-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-2);
+}
+
+.rz-tag-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  border-radius: var(--rz-radius-full);
+  padding: var(--rz-space-1) var(--rz-space-3);
+  color: var(--rz-text-muted);
+}
+
+.rz-tag-chip[aria-pressed='true'] {
+  background: var(--rz-selection);
+  border-color: var(--rz-accent);
+  color: var(--rz-text);
+}
+
+.rz-tag-count {
+  font-size: var(--rz-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--rz-text-muted);
+}
+
+/* --- backlinks --------------------------------------------------------------------------- */
+
+.rz-backlinks {
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  max-height: 30vh;
+  overflow: auto;
+}
+
+.rz-backlinks-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-backlinks-count,
+.rz-badge {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  font-weight: 400;
+}
+
+.rz-backlinks-subtitle {
+  margin-top: var(--rz-space-4);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-backlink-list,
+.rz-link-list {
+  list-style: none;
+  margin: var(--rz-space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-3);
+}
+
+.rz-link-list {
+  gap: var(--rz-space-2);
+}
+
+.rz-backlink-contexts {
+  list-style: none;
+  margin: var(--rz-space-1) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-1);
+}
+
+.rz-backlink-context {
+  color: var(--rz-text-muted);
+  border-left: 2px solid var(--rz-border-strong);
+  padding-left: var(--rz-space-3);
+  overflow-wrap: anywhere;
+}
+
+.rz-note-link {
+  color: var(--rz-link);
+  text-decoration: none;
+}
+
+.rz-note-link:hover {
+  text-decoration: underline;
+}
+
+.rz-link-missing {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  color: var(--rz-link-missing);
+}
+
+.rz-badge {
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  padding: 0 var(--rz-space-1);
+}

@@ -1,0 +1,262 @@
+import { describe, expect, it } from 'vitest';
+
+import { parseNote } from './parse.js';
+import { renderNote, type RenderOptions, type RenderedLink } from './render.js';
+
+const VAULT = new Set(['Silverstadt.md', 'Factions/Harbour Guild.md', 'Templates/NPC.md']);
+
+function resolveLink(target: string): RenderedLink {
+  const withExtension = /\.(md|markdown)$/i.test(target) ? target : `${target}.md`;
+  if (VAULT.has(withExtension)) {
+    return { path: withExtension, href: `/wiki/${withExtension}` };
+  }
+  return { path: null, href: `/new/${target}` };
+}
+
+function options(overrides: Partial<RenderOptions> = {}): RenderOptions {
+  return {
+    resolveLink,
+    assetUrl: (vaultPath) => `/files/${vaultPath}`,
+    ...overrides,
+  };
+}
+
+function render(markdown: string, overrides: Partial<RenderOptions> = {}): string {
+  return renderNote(markdown, options(overrides)).html;
+}
+
+describe('renderNote: wikilinks', () => {
+  it('renders a resolved link with the target as its text', () => {
+    expect(render('See [[Silverstadt]].')).toBe(
+      '<p>See <a href="/wiki/Silverstadt.md" class="rz-wikilink">Silverstadt</a>.</p>',
+    );
+  });
+
+  it('marks an unresolved link and keeps the raw target for creating the note', () => {
+    expect(render('See [[New Note]].')).toBe(
+      '<p>See <a href="/new/New%20Note" class="rz-wikilink rz-wikilink-missing" ' +
+        'data-target="New Note">New Note</a>.</p>',
+    );
+  });
+
+  it('shows the alias, also when the resolver offers a label', () => {
+    const label = (): RenderedLink => ({ path: 'Silverstadt.md', href: '/w', label: 'The City' });
+    expect(render('[[Silverstadt|the city]]')).toContain('>the city</a>');
+    expect(render('[[Silverstadt|the city]]', { resolveLink: label })).toContain('>the city</a>');
+    expect(render('[[Silverstadt]]', { resolveLink: label })).toContain('>The City</a>');
+  });
+
+  it('turns a heading reference into a fragment slugged like the heading id', () => {
+    const html = render('[[Silverstadt#The Docks]]\n\n## The Docks');
+    expect(html).toContain('href="/wiki/Silverstadt.md#the-docks"');
+    expect(html).toContain('<h2 id="the-docks">The Docks</h2>');
+  });
+
+  it('keeps a block reference in the visible text', () => {
+    expect(render('[[Silverstadt#^blk1]]')).toContain('>Silverstadt#^blk1</a>');
+  });
+
+  it('resolves a link into the same note', () => {
+    expect(render('[[#Loot]]')).toContain('data-target=""');
+  });
+
+  it('links folder paths and passes the folder path to the resolver', () => {
+    const seen: string[] = [];
+    render('[[Factions/Harbour Guild|guild]]', {
+      resolveLink: (target) => {
+        seen.push(target);
+        return resolveLink(target);
+      },
+    });
+    expect(seen).toEqual(['Factions/Harbour Guild']);
+  });
+});
+
+describe('renderNote: embeds', () => {
+  it('renders an image embed through assetUrl', () => {
+    expect(render('![[assets/tavern.png]]')).toBe(
+      '<p><img src="/files/assets/tavern.png" alt="assets/tavern.png"></p>',
+    );
+  });
+
+  it('reads Obsidian embed sizes and keeps a real alias as the alt text', () => {
+    expect(render('![[tavern.png|320x200]]')).toContain('width="320" height="200"');
+    expect(render('![[tavern.png|320]]')).toContain('width="320"');
+    expect(render('![[tavern.png|320]]')).not.toContain('height=');
+    expect(render('![[tavern.png|A tavern]]')).toContain('alt="A tavern"');
+  });
+
+  it('links other vault files instead of embedding them', () => {
+    expect(render('![[Handouts/Map.pdf]]')).toBe(
+      '<p><a href="/files/Handouts/Map.pdf" class="rz-embed-file">Handouts/Map.pdf</a></p>',
+    );
+  });
+
+  it('replaces a standalone note embed with the rendered body', () => {
+    const html = render('Before\n\n![[Templates/NPC]]\n\nAfter', {
+      renderEmbeddedNote: (path) => `<p>body of ${path}</p>`,
+    });
+    expect(html).toContain(
+      '<div class="rz-embed" data-path="Templates/NPC.md"><p>body of Templates/NPC.md</p></div>',
+    );
+    expect(html).not.toContain('data-embed');
+  });
+
+  it('falls back to a link without a renderer, when the renderer declines or inline', () => {
+    expect(render('![[Templates/NPC]]')).toBe(
+      '<p><a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
+    );
+    expect(render('![[Templates/NPC]]', { renderEmbeddedNote: () => undefined })).toContain(
+      '<a href="/wiki/Templates/NPC.md" class="rz-wikilink">',
+    );
+    expect(render('text ![[Templates/NPC]]', { renderEmbeddedNote: () => '<p>x</p>' })).toBe(
+      '<p>text <a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
+    );
+    expect(render('![[No Such Note]]', { renderEmbeddedNote: () => '<p>x</p>' })).toContain(
+      'rz-wikilink-missing',
+    );
+  });
+
+  it('treats a note name with a dot as a note, not as a file', () => {
+    expect(render('![[v1.2 draft]]')).toContain('class="rz-wikilink rz-wikilink-missing"');
+  });
+
+  it('never embeds a plain link that stands on its own line', () => {
+    expect(render('[[Templates/NPC]]', { renderEmbeddedNote: () => '<p>x</p>' })).toBe(
+      '<p><a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
+    );
+  });
+});
+
+describe('renderNote: Markdown links and images', () => {
+  it('routes a relative Markdown note link like a wikilink', () => {
+    expect(render('[the city](Silverstadt.md#The%20Docks)')).toBe(
+      '<p><a href="/wiki/Silverstadt.md#the-docks" class="rz-wikilink">the city</a></p>',
+    );
+    expect(render('[soon](Notes/Later.md)')).toContain(
+      'rz-wikilink-missing" data-target="Notes/Later.md"',
+    );
+  });
+
+  it('leaves external links and non-note targets alone', () => {
+    expect(render('[home](https://example.com)')).toBe(
+      '<p><a href="https://example.com">home</a></p>',
+    );
+    expect(render('[anchor](#loot)')).toBe('<p><a href="#loot">anchor</a></p>');
+    // A broken escape is kept as written instead of throwing.
+    expect(render('[half](Silverstadt%zz.md)')).toContain('data-target="Silverstadt%zz.md"');
+    expect(render('[sheet](Handouts/Map.pdf)')).toBe('<p><a href="Handouts/Map.pdf">sheet</a></p>');
+  });
+
+  it('sends a relative Markdown image through assetUrl, decoded', () => {
+    const seen: string[] = [];
+    const html = render('![map](assets/silverstadt%20map.svg)', {
+      assetUrl: (vaultPath) => {
+        seen.push(vaultPath);
+        return `/files/${vaultPath}`;
+      },
+    });
+    expect(seen).toEqual(['assets/silverstadt map.svg']);
+    // The URL is percent-encoded again on the way into the HTML.
+    expect(html).toBe('<p><img src="/files/assets/silverstadt%20map.svg" alt="map"></p>');
+    expect(render('![remote](https://example.com/a.png)')).toContain(
+      'src="https://example.com/a.png"',
+    );
+  });
+});
+
+describe('renderNote: Markdown dialect', () => {
+  it('keeps GFM tables, task lists, strikethrough and autolinks', () => {
+    const html = render(
+      '| a | b |\n| - | - |\n| 1 | 2 |\n\n- [ ] open\n- [x] done\n\n~~gone~~ https://example.com',
+    );
+    expect(html).toContain('<table>');
+    expect(html).toContain('<th>a</th>');
+    expect(html).toContain('<input type="checkbox" disabled>');
+    expect(html).toContain('<input type="checkbox" checked disabled>');
+    expect(html).toContain('<del>gone</del>');
+    expect(html).toContain('<a href="https://example.com">https://example.com</a>');
+  });
+
+  it('keeps footnote anchors pointing at their definitions', () => {
+    const html = render('Text[^1]\n\n[^1]: The note.');
+    expect(html).toContain('href="#user-content-fn-1"');
+    expect(html).toContain('<li id="user-content-fn-1">');
+    expect(html).toContain('id="footnote-label"');
+    expect(html).not.toContain('user-content-user-content');
+  });
+
+  it('never renders the frontmatter', () => {
+    const html = render('---\ntitle: Mira\nsecret: hidden\n---\n\n# Mira\n');
+    expect(html).toBe('<h1 id="mira">Mira</h1>');
+  });
+
+  it('leaves wikilink syntax inside code untouched', () => {
+    const html = render('`[[Silverstadt]]`\n\n```md\n[[Silverstadt]]\n```\n');
+    expect(html).toContain('<code>[[Silverstadt]]</code>');
+    expect(html).toContain('<code class="language-md">[[Silverstadt]]\n</code>');
+    expect(html).not.toContain('rz-wikilink');
+  });
+
+  it('is deterministic', () => {
+    const markdown = '# A\n\n[[Silverstadt]] ![[tavern.png]]\n';
+    expect(render(markdown)).toBe(render(markdown));
+  });
+});
+
+describe('renderNote: headings', () => {
+  const NOTE = '# Mira\n\nText.\n\n## Loot\n\n### Rare Loot\n\n## Loot\n';
+
+  it('reports level, text, slug and 1-based line', () => {
+    expect(renderNote(NOTE, options()).headings).toEqual([
+      { level: 1, text: 'Mira', slug: 'mira', line: 1 },
+      { level: 2, text: 'Loot', slug: 'loot', line: 5 },
+      { level: 3, text: 'Rare Loot', slug: 'rare-loot', line: 7 },
+      { level: 2, text: 'Loot', slug: 'loot-1', line: 9 },
+    ]);
+  });
+
+  it('gives every heading the reported id, duplicates included', () => {
+    const html = render(NOTE);
+    expect(html).toContain('<h2 id="loot">Loot</h2>');
+    expect(html).toContain('<h2 id="loot-1">Loot</h2>');
+    expect(html).toContain('<h3 id="rare-loot">Rare Loot</h3>');
+  });
+
+  it('agrees with parseNote, also for headings that contain links', () => {
+    const markdown = '## See [[Silverstadt|the city]]\n\n## See [[Silverstadt|the city]]\n';
+    expect(renderNote(markdown, options()).headings).toEqual(
+      parseNote(markdown, { fallbackTitle: 'x' }).headings,
+    );
+  });
+});
+
+describe('renderNote: sanitising', () => {
+  it('drops raw HTML instead of rendering it', () => {
+    const html = render('<script>alert(1)</script>\n\n<div onclick="x()">block</div>\n');
+    expect(html).not.toContain('<script');
+    expect(html).not.toContain('alert(1)');
+    expect(html).not.toContain('onclick');
+  });
+
+  it('drops inline HTML but keeps its text', () => {
+    const html = render('A <img src=x onerror=alert(1)> and <b>bold</b> text.');
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('onerror');
+    expect(html).toBe('<p>A  and bold text.</p>');
+  });
+
+  it('removes hrefs and sources with a dangerous protocol', () => {
+    expect(render('[click](javascript:alert(1))')).toBe('<p><a>click</a></p>');
+    expect(render('![x](data:text/html;base64,PHN2Zz4=)')).toBe('<p><img alt="x"></p>');
+  });
+
+  it('keeps only the class names and data attributes this renderer emits', () => {
+    const html = render('[[New Note]] and ![[Handouts/Map.pdf]]', {
+      resolveLink: () => ({ path: null, href: 'javascript:alert(1)' }),
+    });
+    expect(html).toContain('class="rz-wikilink rz-wikilink-missing"');
+    expect(html).toContain('class="rz-embed-file"');
+    expect(html).not.toContain('javascript:');
+  });
+});

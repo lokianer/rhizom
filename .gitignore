@@ -29,3 +29,6 @@ Thumbs.db
 
 # Local vaults used while developing
 /vaults/
+
+# The derived SQLite index (RHIZOM_DATA_DIR); rebuilt from the notes at any time
+data/

@@ -6,3 +6,7 @@ playwright-report/
 test-results/
 pnpm-lock.yaml
 CODE_OF_CONDUCT.md
+examples/vault/
+
+# Local tooling caches
+.impeccable/

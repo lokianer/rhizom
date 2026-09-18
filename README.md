@@ -8,8 +8,9 @@ bubble-field visualization in the style of the Sinus-Milieu studies — notes as
 coloured by folder or tag, links as connections. Every vault automatically becomes a navigable
 wiki.
 
-> **Status: early development.** Phase 0 (foundation) of a six-phase [roadmap](ROADMAP.md) is
-> complete; there is nothing to use yet. Watch the repository or the
+> **Status: early development.** Phase 1 of a six-phase [roadmap](ROADMAP.md) brings the MVP:
+> open a vault, write, link, search, and see the bubble field. Expect rough edges, and keep a
+> backup of your notes. Watch the repository or the
 > [project page](https://lokianer.github.io/rhizom/) for progress.
 
 ## Principles
@@ -23,47 +24,66 @@ wiki.
 - **For people who think in connections:** the self-hosting community, researchers, authors, and
   D&D game masters.
 
-## What Rhizom will do
+## What Rhizom does, and will do
 
-Planned features by phase; see the [roadmap](ROADMAP.md) for details.
+Phase 1 is what you can run today; the later phases are planned. See the
+[roadmap](ROADMAP.md) for details.
 
 | Area           | Highlights                                                                                             | Phase |
 | -------------- | ------------------------------------------------------------------------------------------------------ | ----- |
-| Editor         | CodeMirror 6 with live preview, `[[` autocomplete with fuzzy search, create notes from missing links   | 1     |
-| Bubble graph   | Size by link degree, clusters by folder or tag, local graph, tag filters, SVG/PNG export               | 1     |
-| Wiki mode      | Read-only view of the whole vault with rendered links, navigation and full-text search                 | 1     |
+| Editor         | CodeMirror 6 with live preview, `[[` autocomplete with fuzzy search, create notes from missing links   | 1 ✓   |
+| Bubble graph   | Size by link degree, clusters by folder or tag, local graph, tag filters, SVG/PNG export               | 1 ✓   |
+| Wiki mode      | Read-only view of the whole vault with rendered links, navigation and full-text search                 | 1 ✓   |
 | Knowledge      | Definitions with glossary and hover tooltips, unlinked mentions, transclusion, templates, query blocks | 2     |
 | Milieu axes    | Two freely named axes; drag a note and its frontmatter values follow                                   | 2     |
 | D&D mode       | NPC stat blocks, typed relationships, alignment chart, dice, GM-only sections — enabled per vault      | 3     |
 | Sharing        | Multi-user permissions, publish flag per note, static HTML export, version history, PWA                | 4     |
 | Desktop & more | Electron installers, CLI, OpenAPI docs, theme system, spaced repetition, maps, fantasy calendar        | 5     |
 
-_Screenshots and a short demo GIF will appear here once the MVP exists._
+Everything is reachable from the keyboard: <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>P</kbd> opens the
+command palette, <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>S</kbd> saves at once (notes autosave
+anyway), and the file tree, search results and palette are usable without a mouse.
+
+_Screenshots and a short demo GIF will appear here once the interface has settled._
 
 ## Quick start
 
-Nothing to run yet beyond the foundation. Once Phase 1 lands, this section will read:
+Rhizom serves one vault: a folder of Markdown files, for example an existing Obsidian vault.
+Notes are read and written as files; the SQLite index next to them can be deleted at any time.
 
 **With Docker (one command):**
 
 ```
-docker compose up
+RHIZOM_VAULT=/path/to/your/vault docker compose up
 ```
 
-Then open <http://localhost:3737>. The container is published on the loopback interface only —
-there is no login yet — so set `RHIZOM_BIND=0.0.0.0` to reach it from other machines, ideally
-behind a reverse proxy.
+Then open <http://localhost:3737>. Without `RHIZOM_VAULT` the container serves the example
+vault from `examples/vault`. The container reads and writes your notes as user 1000 and keeps
+its index in a named volume (`rhizom-data`) that can be deleted at any time. The port is
+published on the loopback interface only — there is no login yet — so set
+`RHIZOM_BIND=0.0.0.0` to reach it from other machines, ideally behind a reverse proxy.
 
-**Natively** (Node ≥ 22.13 and [pnpm 12](https://pnpm.io/installation)):
+**Natively** (Node ≥ 22.22 and [pnpm 12](https://pnpm.io/installation)):
 
 ```
 pnpm install
 pnpm build
-NODE_ENV=production pnpm --filter @rhizom/server start
+RHIZOM_VAULT_DIR=/path/to/your/vault NODE_ENV=production pnpm --filter @rhizom/server start
 ```
 
-The server listens on `localhost:3737`; `PORT`, `HOST`, `LOG_LEVEL` and `NODE_ENV` configure
-it (on Windows PowerShell, set variables with `$env:NODE_ENV = 'production'`).
+The server listens on `localhost:3737` and is configured through environment variables (on
+Windows PowerShell, set them with `$env:RHIZOM_VAULT_DIR = 'C:\notes'`):
+
+| Variable           | Default                             | Meaning                                                             |
+| ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
+| `RHIZOM_VAULT_DIR` | `examples/vault` outside production | The folder with your notes                                          |
+| `RHIZOM_DATA_DIR`  | `./data`                            | Where the SQLite index lives; it is derived data and safe to delete |
+| `PORT`, `HOST`     | `3737`, `localhost`                 | Where to listen                                                     |
+| `LOG_LEVEL`        | `info`                              | pino log level                                                      |
+| `NODE_ENV`         | —                                   | `production` turns off the example-vault fallback and pretty logs   |
+
+The REST API is documented at <http://localhost:3737/api/docs>; the OpenAPI document is served
+at `/api/openapi.json` and committed as [`apps/server/openapi.json`](apps/server/openapi.json).
 
 ## Development
 

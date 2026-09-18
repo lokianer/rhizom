@@ -13,17 +13,34 @@
     "e2e": "playwright test"
   },
   "devDependencies": {
+    "@codemirror/autocomplete": "catalog:",
+    "@codemirror/commands": "catalog:",
+    "@codemirror/lang-markdown": "catalog:",
+    "@codemirror/language": "catalog:",
+    "@codemirror/search": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@lezer/common": "catalog:",
+    "@lezer/highlight": "catalog:",
+    "@lezer/markdown": "catalog:",
     "@playwright/test": "catalog:",
+    "@rhizom/core": "workspace:*",
+    "@types/d3-force": "catalog:",
+    "@types/d3-quadtree": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "d3-force": "catalog:",
+    "d3-quadtree": "catalog:",
     "i18next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "catalog:",
+    "react-router": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zustand": "catalog:"
   }
 }

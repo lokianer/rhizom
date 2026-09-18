@@ -1,0 +1,293 @@
+{
+  "description": "What a checker should find when it indexes examples/vault. Paths are vault paths: forward slashes, relative to the vault root, NFC-normalised, with extension.",
+  "vault": "vault",
+  "notes": {
+    "count": 37,
+    "byFolder": {
+      "": 1,
+      "Campaign": 1,
+      "Campaign/NPCs": 6,
+      "Campaign/Places": 4,
+      "Campaign/Factions": 3,
+      "Campaign/Quests": 3,
+      "Campaign/Sessions": 3,
+      "Research": 9,
+      "Daily": 5,
+      "Templates": 2
+    },
+    "ignored": [
+      ".obsidian/app.json",
+      ".obsidian/appearance.json",
+      ".obsidian/core-plugins.json",
+      ".trash/Old idea.md"
+    ],
+    "ignoredNoteWithBrokenLink": {
+      "path": ".trash/Old idea.md",
+      "link": "Bell Tower Heist",
+      "note": "Only shows up as unresolved if a tool wrongly indexes .trash/"
+    },
+    "assets": [
+      "assets/silverstadt-map.svg",
+      "assets/tavern.png",
+      "Campaign/notes.txt",
+      "Campaign/stats.csv"
+    ],
+    "maxTotalBytes": 307200
+  },
+  "unresolvedLinks": {
+    "targets": ["The Ashen Codex", "Lady Vermillion", "Research/Graph Layout Algorithms"],
+    "sources": {
+      "The Ashen Codex": [
+        "Campaign/Sessions/Session 13 – Ashes and Ink.md",
+        "Research/Personal knowledge management.md"
+      ],
+      "Lady Vermillion": [
+        "Campaign/Sessions/Session 13 – Ashes and Ink.md",
+        "Research/Personal knowledge management.md"
+      ],
+      "Research/Graph Layout Algorithms": ["Research/Graph visualisation.md"]
+    },
+    "note": "Exactly these three targets and nothing else. A link to an alias, to a heading, to an asset, or with spaces inside the brackets must not be counted as unresolved."
+  },
+  "ambiguousBasename": {
+    "name": "Archive",
+    "candidates": ["Campaign/Places/Archive.md", "Research/Archive.md"],
+    "linkedBareFrom": ["Home.md", "Campaign/Places/Sunken Archive.md", "Research/Archive.md"],
+    "note": "A bare [[Archive]] is ambiguous by design. It must resolve to one of the candidates (same folder first, then shortest path) and never be reported as broken."
+  },
+  "aliasLinks": [
+    { "target": "Mira Voss", "resolvesTo": "Campaign/NPCs/Mira's Ledger.md" },
+    { "target": "Mira", "resolvesTo": "Campaign/NPCs/Mira's Ledger.md" },
+    { "target": "Captain Thane", "resolvesTo": "Campaign/NPCs/Aldric Thane.md" },
+    { "target": "Drowned Library", "resolvesTo": "Campaign/Places/Sunken Archive.md" }
+  ],
+  "spacedWikilink": {
+    "from": "Home.md",
+    "raw": "[[ Silverstadt ]]",
+    "resolvesTo": "Campaign/Places/Silverstadt.md"
+  },
+  "folderPathLinks": [
+    {
+      "from": "Home.md",
+      "raw": "[[Campaign/Places/Silverstadt]]",
+      "resolvesTo": "Campaign/Places/Silverstadt.md"
+    },
+    {
+      "from": "Home.md",
+      "raw": "[[Campaign/Campaign|Campaign]]",
+      "resolvesTo": "Campaign/Campaign.md"
+    },
+    { "from": "Home.md", "raw": "[[Research/Archive]]", "resolvesTo": "Research/Archive.md" }
+  ],
+  "headingLinks": [
+    {
+      "from": "Home.md",
+      "raw": "[[Session 12 – The Sunken Archive#Loot]]",
+      "resolvesTo": "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+      "heading": "Loot"
+    },
+    {
+      "from": "Campaign/Places/Lantern Bridge.md",
+      "raw": "[[Silverstadt#Districts]]",
+      "resolvesTo": "Campaign/Places/Silverstadt.md",
+      "heading": "Districts"
+    },
+    {
+      "from": "Daily/2026-09-16.md",
+      "raw": "[[Personal knowledge management#Capture]]",
+      "resolvesTo": "Research/Personal knowledge management.md",
+      "heading": "Capture"
+    }
+  ],
+  "markdownLinks": [
+    {
+      "from": "Home.md",
+      "href": "Campaign/Places/Sunken%20Archive.md",
+      "resolvesTo": "Campaign/Places/Sunken Archive.md"
+    }
+  ],
+  "externalLinks": [
+    {
+      "from": "Research/Graph visualisation.md",
+      "href": "https://help.obsidian.md/plugins/graph",
+      "syntax": "[text](url)"
+    },
+    {
+      "from": "Research/Mycorrhizal networks.md",
+      "href": "https://en.wikipedia.org/wiki/Mycorrhizal_network",
+      "syntax": "<url>"
+    }
+  ],
+  "embeds": [
+    {
+      "from": "Home.md",
+      "raw": "![[silverstadt-map.svg]]",
+      "resolvesTo": "assets/silverstadt-map.svg",
+      "kind": "image"
+    },
+    {
+      "from": "Campaign/Places/Lantern Bridge.md",
+      "raw": "![[tavern.png]]",
+      "resolvesTo": "assets/tavern.png",
+      "kind": "image"
+    },
+    {
+      "from": "Campaign/Campaign.md",
+      "raw": "![[Templates/NPC]]",
+      "resolvesTo": "Templates/NPC.md",
+      "kind": "note"
+    },
+    {
+      "from": "Campaign/Sessions/Session 13 – Ashes and Ink.md",
+      "raw": "![[Session 12 – The Sunken Archive#Loot]]",
+      "resolvesTo": "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+      "heading": "Loot",
+      "kind": "heading"
+    },
+    {
+      "from": "Campaign/Places/Silverstadt.md",
+      "raw": "![map](assets/silverstadt-map.svg)",
+      "resolvesTo": "assets/silverstadt-map.svg",
+      "kind": "markdown-image"
+    }
+  ],
+  "specialFiles": {
+    "crlf": "Research/Zettelkasten.md",
+    "bom": "Research/Sinus-Milieus.md",
+    "empty": "Daily/Scratch.md",
+    "long": { "path": "Research/Personal knowledge management.md", "minBytes": 15000 },
+    "invalidFrontmatter": "Campaign/Quests/The Missing Bellringer.md",
+    "emptyFrontmatter": "Campaign/Places/Archive.md",
+    "commaSeparatedTags": "Research/v2.0 Notes.md",
+    "folderNote": { "path": "Campaign/Campaign.md", "color": "#c9a24b" },
+    "umlautInName": "Research/Über die Wurzeln.md",
+    "apostropheInName": "Campaign/NPCs/Mira's Ledger.md",
+    "dotInName": "Research/v2.0 Notes.md",
+    "enDashInName": "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+    "templatesWithPlaceholders": ["Templates/NPC.md", "Templates/Session.md"]
+  },
+  "frontmatter": {
+    "Campaign/Campaign.md": {
+      "title": "Silverstadt",
+      "color": "#c9a24b",
+      "sessions_played": 13,
+      "active": true,
+      "party": { "level": 6, "size": 4, "shared_gold": 1240 },
+      "started": "2026-03-14"
+    },
+    "Campaign/NPCs/Aldric Thane.md": {
+      "type": "npc",
+      "race": "human",
+      "alive": true,
+      "age": 47,
+      "aliases": ["Captain Thane"]
+    },
+    "Research/v2.0 Notes.md": {
+      "tags": "research, meta, research/pkm",
+      "tagsParsedAs": ["research", "meta", "research/pkm"]
+    },
+    "Campaign/Places/Archive.md": {},
+    "Campaign/Quests/The Missing Bellringer.md": {
+      "error": "unclosed double quote in the title field; the note must still index with its H1 as title"
+    }
+  },
+  "tags": {
+    "mustExist": [
+      "campaign",
+      "campaign/silverstadt",
+      "campaign/silverstadt/npcs",
+      "research",
+      "research/pkm",
+      "daily",
+      "session",
+      "quest",
+      "faction",
+      "moc"
+    ],
+    "mustNotExist": [
+      "not-a-tag",
+      "fenced-not-a-tag",
+      "count",
+      "research/pkm,",
+      "campaign/silverstadt/npcs."
+    ],
+    "inlineEdgeCases": {
+      "startOfLine": { "path": "Campaign/Campaign.md", "tag": "campaign" },
+      "nested": { "path": "Campaign/NPCs/Sable.md", "tag": "campaign/silverstadt/npcs" },
+      "followedByPunctuation": { "path": "Research/Zettelkasten.md", "tag": "research/pkm" },
+      "insideCodeSpan": {
+        "path": "Research/Personal knowledge management.md",
+        "text": "`#not-a-tag`"
+      },
+      "insideFencedBlock": {
+        "path": "Research/Personal knowledge management.md",
+        "text": "#fenced-not-a-tag"
+      }
+    },
+    "countsPerNote": {
+      "campaign": 2,
+      "campaign/silverstadt": 13,
+      "campaign/silverstadt/npcs": 7,
+      "daily": 4,
+      "faction": 3,
+      "meta": 2,
+      "moc": 1,
+      "npc/ally": 1,
+      "npc/antagonist": 1,
+      "npc/contact": 1,
+      "npc/neutral": 1,
+      "npc/patron": 1,
+      "npc/rival": 1,
+      "place/city": 1,
+      "place/dungeon": 1,
+      "place/landmark": 1,
+      "quest": 2,
+      "research": 9,
+      "research/networks": 1,
+      "research/pkm": 4,
+      "research/rhizome": 2,
+      "research/visualisation": 2,
+      "session": 4
+    },
+    "note": "countsPerNote counts a note once per tag, frontmatter and inline combined. The Missing Bellringer contributes no tags because its frontmatter does not parse."
+  },
+  "titles": {
+    "Home.md": "Home",
+    "Campaign/Campaign.md": "Silverstadt",
+    "Campaign/Quests/The Missing Bellringer.md": "The Missing Bellringer",
+    "Campaign/NPCs/Mira's Ledger.md": "Mira's Ledger",
+    "Daily/Scratch.md": "Scratch",
+    "Research/Sinus-Milieus.md": "Sinus-Milieus",
+    "Research/Über die Wurzeln.md": "Über die Wurzeln",
+    "Templates/NPC.md": "{{title}}"
+  },
+  "titleRule": "frontmatter title, else the first level-1 heading, else the file name without extension",
+  "featureLocations": {
+    "callout": [
+      "Campaign/Places/Sunken Archive.md",
+      "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+      "Campaign/NPCs/Corvin Marsh.md"
+    ],
+    "mermaid": ["Campaign/Quests/Recover the Tidewater Charts.md"],
+    "fencedCodeWithLanguage": [
+      "Research/Graph visualisation.md",
+      "Research/Personal knowledge management.md"
+    ],
+    "footnotes": ["Research/Rhizomes.md", "Research/Personal knowledge management.md"],
+    "htmlComment": [
+      "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+      "Research/Zettelkasten.md"
+    ],
+    "escapedBrackets": ["Research/Personal knowledge management.md"],
+    "headingLevel4": ["Research/Personal knowledge management.md"],
+    "tables": [
+      "Campaign/Campaign.md",
+      "Campaign/Sessions/Session 12 – The Sunken Archive.md",
+      "Research/Graph visualisation.md"
+    ],
+    "taskLists": ["Campaign/Quests/A Debt to Mira.md", "Daily/2026-09-18.md"],
+    "strikethrough": ["Campaign/NPCs/Mira's Ledger.md", "Research/Archive.md"],
+    "horizontalRule": ["Research/Über die Wurzeln.md"],
+    "blockquote": ["Research/Rhizomes.md", "Research/Mycorrhizal networks.md"]
+  }
+}

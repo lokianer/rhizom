@@ -37,8 +37,9 @@ not used (removed from Node 25+, and it cannot run pnpm 11+). All pnpm settings 
 
 ## 2026-09-18 — Node versions
 
-`engines.node` is `^22.13.0 || ^24.0.0 || >=26.0.0`: ESLint 10 needs ≥ 22.13, Vitest 5
-excludes Node 25 (EOL since June 2026), and pnpm enforces the root `engines` field on install.
+`engines.node` is `^22.22.0 || ^24.0.0 || >=26.0.0`: ESLint 10 needs ≥ 22.13, react-router 8
+needs ≥ 22.22, Vitest 5 excludes Node 25 (EOL since June 2026), and pnpm enforces the root
+`engines` field on install.
 CI runs Node 22 and 24 on all three operating systems; Node 26 joins the matrix once it becomes
 LTS (2026-10-28). `@types/node` follows the 22 line so code cannot rely on newer APIs.
 `.node-version` says `24` for developers.
@@ -169,3 +170,152 @@ flow. Pages is configured with source "GitHub Actions" (set via the API on 2026-
 Security reports go through GitHub's private vulnerability reporting (enabled on the repository
 on 2026-09-18); Code of Conduct reports go to the maintainer via GitHub. No e-mail address is
 published in the repository.
+
+## 2026-09-18 — Phase 1: vault configuration
+
+The server serves exactly one vault, configured by `RHIZOM_VAULT_DIR` (absolute, or relative to
+the working directory). The Docker image sets `/vault` and docker-compose mounts `RHIZOM_VAULT` (default:
+`./examples/vault`) there. In development, when the variable is unset and `NODE_ENV` is not `production`, the
+server falls back to the repository's `examples/vault` and logs that it did. There is no folder
+picker in the web UI in Phase 1: choosing arbitrary server paths from a browser without
+authentication (Phase 4) would expose the host file system; the desktop app (Phase 5) gets a
+native picker. Switching vaults means restarting with another path.
+
+## 2026-09-18 — Phase 1: note identity and link resolution
+
+A note is identified by its vault path: POSIX separators, relative to the vault root,
+NFC-normalised, with extension (`Campaign/NPCs/Mira.md`). Paths must pass `isSafeVaultPath`
+(no traversal, no characters or names Windows refuses) before anything touches the file
+system. Only `.md`/`.markdown` files are notes; `.obsidian/`, `.trash/`, `.git/` and other
+dot-folders are ignored; everything else under the vault is an asset that can be embedded and
+served. Wikilinks resolve as in Obsidian: exact path (with or without extension,
+case-insensitive) first, then a unique note name anywhere in the vault; an ambiguous name
+prefers the source note's folder, then the shortest path, and is flagged as ambiguous.
+Unresolved links keep the text as written; clicking one creates the note — bare names at the
+vault root, folder paths as written. All of this lives in `packages/core` (`paths.ts`,
+`wikilink.ts`, `resolve.ts`) so server and web share one behaviour.
+
+## 2026-09-18 — Phase 1: index shape and rebuild strategy
+
+SQLite holds only derived data: notes (path, name, title, folder, modification time, size,
+content hash, frontmatter as JSON, word count), links (source, resolved target or null, raw
+target, kind, alias, heading, line), tags, headings, and an FTS5 table over title and body for
+search with snippets. The title is frontmatter `title`, else the first level-1 heading, else
+the file name. The schema version lives in `PRAGMA user_version`; on a mismatch the database
+file is deleted and rebuilt from the files instead of migrated — the index is disposable by
+design (rule 2), which keeps migration tooling out of Phase 1. Indexing is incremental: a file
+is re-parsed when its size or modification time differs from the stored values; a full rebuild
+is available from the API. External changes reach the index through the file watcher,
+debounced into batches.
+
+## 2026-09-18 — Phase 1: REST API shape
+
+Resources under `/api`: `vault` (info), `tree`, `notes` (list, create) and `notes/{path}`
+(read, save, delete) with `backlinks`, `search?q=`, `tags`, `graph` and
+`graph/local?path=&depth=`, `assets` (upload) plus read-only serving of vault assets,
+`index/rebuild`, and `events` (server-sent events with index changes so open clients refresh).
+Every route carries a JSON schema, from which the OpenAPI document is generated, committed to
+the repository and served at `/api/openapi.json` with a UI at `/api/docs`. Errors always have
+the shape `{statusCode, error, message}`. Request and response types live in
+`packages/core/src/api.ts` so the web client and the server share them.
+
+## 2026-09-18 — Phase 1: editing semantics
+
+Saves are whole-document `PUT`s carrying the content hash the client loaded as `If-Match`; a
+mismatch answers 412, so nothing written outside Rhizom is overwritten silently. The editor
+autosaves with a short debounce. Files are written atomically (temporary file, then rename) and
+keep the original line endings and byte order mark. Deleting a note moves it to `.trash/`
+(Obsidian's convention) rather than removing it. Renaming and moving notes are not part of
+Phase 1: doing it right means rewriting links across the vault, which is scheduled for Phase 2
+together with unlinked mentions.
+
+## 2026-09-18 — Phase 1: where the index lives
+
+The SQLite file goes to `RHIZOM_DATA_DIR` (default `./data`, `/data` in Docker) as
+`index.sqlite`, never into the vault. A vault is often a Git repository or a synced folder;
+a database with a write-ahead log inside it would be committed or synced and would show up in
+Obsidian as a stray file. Because the index is derived data, the folder can be deleted at any
+time and is rebuilt on the next start.
+
+## 2026-09-18 — Phase 1: no drizzle-kit, no migrations
+
+Drizzle ORM provides typed queries; the schema itself is hand-written DDL in
+`apps/server/src/store/database.ts`. drizzle-kit cannot express the FTS5 virtual table and its
+triggers, and migrations are pointless for a database that is deleted and rebuilt whenever
+`PRAGMA user_version` does not match.
+
+## 2026-09-18 — Phase 1: live updates through server-sent events
+
+Open clients learn about index changes from `GET /api/events` (server-sent events with
+`indexed`, `removed` and `rebuilt` payloads and a heartbeat comment every 25 seconds) rather
+than a WebSocket. The traffic is one-directional, `EventSource` reconnects on its own, and
+plain HTTP passes reverse proxies without extra configuration.
+
+## 2026-09-18 — Phase 1: the OpenAPI document is committed
+
+`pnpm --filter @rhizom/server openapi` generates `apps/server/openapi.json` from the route
+schemas, and a test fails when the file is stale. API changes therefore show up in pull
+request diffs, and the document can be used by clients and tools without a running server.
+
+## 2026-09-18 — Phase 1: the web app's own state
+
+React Router 8 in data mode (`createBrowserRouter` plus `RouterProvider` from `react-router/dom`;
+the `react-router-dom` package is gone in version 8) with two splat routes, `notes/*` and
+`wiki/*`. Note URLs carry no `.md`: a URL that looks like a file is refused by the history
+fallback of `vite preview` and of most static hosts, and the extension is added back with
+`ensureMarkdownExtension`. Interface state (theme, sidebar, expanded folders, graph settings)
+lives in a Zustand store persisted to localStorage; the vault data (notes, tree, tags) lives in
+a second store that server-sent index events refresh. There is no data-fetching library: a
+typed `fetch` wrapper over the contracts in `packages/core/src/api.ts`, with AbortController for
+the searches and `If-Match` for the saves, is all Phase 1 needs, and a cache would be a second
+source of truth next to the index.
+
+## 2026-09-18 — Phase 1: editing and saving in the browser
+
+The editor is CodeMirror 6 configured by hand (the `codemirror` meta package only re-exports a
+fixed extension list). Live preview hides Markdown syntax except on the lines the selection
+touches: a viewport-scoped view plugin for inline marks and line classes, and a state field for
+anything spanning a line break, because CodeMirror refuses block decorations from a plugin.
+Wikilinks are a Lezer inline parser rather than regular expressions, so `[[…]]` inside code
+stays literal. Edits autosave after a short pause and flush when the note is closed; every save
+carries the hash the document was loaded with, and a 412 offers reloading or overwriting.
+
+## 2026-09-18 — Phase 1: wiki mode renders in the core package
+
+`renderNote` (Markdown to sanitised HTML with the vault's links resolved) lives in
+`packages/core`, not in the web app: the static export and the desktop app of later phases need
+the same output, and the renderer must agree with the indexer about titles, headings and link
+targets. The HTML is sanitised with rehype-sanitize and only the classes and data attributes
+the renderer emits are allowed, so a note can hold raw HTML without it becoming live markup.
+
+## 2026-09-18 — Phase 1: end-to-end tests run against a real server
+
+Playwright starts an actual Rhizom server on a throwaway copy of `examples/vault`
+(`apps/web/e2e/serve.mjs`), so the tests exercise the REST API, the index and the file writes
+rather than a mock. In CI that server also serves the built web app, which covers the
+production bundle and the history fallback; locally the Vite dev server proxies `/api` to it.
+
+## 2026-09-18 — Phase 1: the graph layout runs in a worker
+
+One force tick over a few thousand notes costs tens of milliseconds, and on the main thread
+that froze the canvas for the whole time the layout took to settle. The simulation therefore
+runs in a worker (`apps/web/src/graph/layout.worker.ts`), which sends positions back as a
+transferable array; the page keeps the node objects it draws and hit-tests, and pinning a
+dragged bubble is a message rather than a field assignment. Large fields also drop the
+collision force and use a coarser Barnes–Hut approximation, which only the layout notices.
+
+Measured on a vault of 5,000 generated notes (Chromium, 1440 × 900, device pixel ratio 2):
+2,000 notes with 17,250 links draw at 107 fps while panning and 120 fps at rest; the full
+5,000 notes with 43,293 links at 25–39 fps while panning. Caching the quiet part of the
+picture as a bitmap and blitting it during a pan was tried and dropped: it makes the dense
+case slower, because the copy of a viewport-sized bitmap costs more than redrawing the lines.
+Note that headless Chromium rasterises the canvas in software and reports roughly a tenth of
+these numbers, so it is no measure of how the graph feels.
+
+## 2026-09-18 — Phase 1: a missing link opens the note, it does not write it
+
+Clicking a link whose target does not exist navigates to that note and offers to create it,
+rather than writing the file on the spot. A stray click in a vault of somebody's own notes
+should not leave a file behind, and the path the link would create is worth seeing before it
+exists. The same page appears when a URL points at a note that is not there, so the two ways
+of arriving at a missing note look the same.

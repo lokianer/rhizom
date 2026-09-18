@@ -1,3 +1,7 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { buildApp } from './app.js';
 
 /** Reads an environment variable; blank values count as unset. */
@@ -18,6 +22,17 @@ if (!/^\d{1,5}$/.test(rawPort) || Number(rawPort) < 1 || Number(rawPort) > 65535
 }
 const port = Number(rawPort);
 
+// The vault: RHIZOM_VAULT_DIR, or the repository's example vault while developing.
+const exampleVault = fileURLToPath(new URL('../../../examples/vault', import.meta.url));
+const configuredVault = env('RHIZOM_VAULT_DIR', '');
+let vaultDir = configuredVault === '' ? '' : resolve(configuredVault);
+let vaultNote = '';
+if (vaultDir === '' && !isProduction && existsSync(exampleVault)) {
+  vaultDir = exampleVault;
+  vaultNote = 'RHIZOM_VAULT_DIR is not set; using the example vault from the repository';
+}
+const dataDir = resolve(env('RHIZOM_DATA_DIR', 'data'));
+
 // Pretty logs only where a person reads them: outside production, on a terminal, and only when
 // the development-only pino-pretty transport is actually installed.
 const prettyLogs = !isProduction && process.stdout.isTTY === true && canResolve('pino-pretty');
@@ -32,7 +47,17 @@ const app = await buildApp({
         },
       }
     : { level },
+  ...(vaultDir === '' ? {} : { vault: { dir: vaultDir, dataDir } }),
 });
+
+if (vaultNote !== '') {
+  app.log.warn(vaultNote);
+}
+if (vaultDir === '') {
+  app.log.warn('No vault configured: set RHIZOM_VAULT_DIR to the folder with your notes');
+} else {
+  app.log.info(`Vault: ${vaultDir} (index in ${dataDir})`);
+}
 
 try {
   await app.listen({ port, host });

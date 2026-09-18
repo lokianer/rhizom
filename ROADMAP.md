@@ -4,7 +4,7 @@ Rhizom is built in strict phases. Every phase ends in a runnable state with gree
 Windows, macOS and Linux, updated documentation and clean, atomic commits — and then stops
 for review before the next phase begins. Features from later phases are never pulled forward.
 
-Status: **Phase 0 complete — waiting for review before Phase 1.**
+Status: **Phase 1 in progress** (Phase 0 complete).
 
 ## Phase 0 — Foundation
 
@@ -25,19 +25,19 @@ Status: **Phase 0 complete — waiting for review before Phase 1.**
 
 ## Phase 1 — MVP: write, link, see
 
-- [ ] Open a vault: choose a folder; the indexer builds the SQLite index (notes, links, tags,
+- [x] Open a vault: choose a folder; the indexer builds the SQLite index (notes, links, tags,
       frontmatter); chokidar keeps it current when files change outside Rhizom (e.g. via Git)
-- [ ] REST API: note CRUD, search, backlinks, graph data
-- [ ] Editor: CodeMirror 6 with live preview (Markdown syntax only visible on the cursor line),
+- [x] REST API: note CRUD, search, backlinks, graph data
+- [x] Editor: CodeMirror 6 with live preview (Markdown syntax only visible on the cursor line),
       `[[` autocomplete with fuzzy search across all notes, clicking a non-existent link creates
       the note, images via drag & drop into `assets/`
-- [ ] File tree, backlinks panel, global full-text search (FTS5) with hit preview,
+- [x] File tree, backlinks panel, global full-text search (FTS5) with hit preview,
       command palette (Ctrl/Cmd + P)
-- [ ] Bubble graph: bubble size = link degree; cluster colouring by folder or tag; zoom/pan;
+- [x] Bubble graph: bubble size = link degree; cluster colouring by folder or tag; zoom/pan;
       click opens the note; local graph mode (depth 1–3); filter by tags; export the view as
       SVG/PNG
-- [ ] Wiki mode: read-only view of the whole vault with rendered links, navigation and search
-- [ ] Acceptance criterion: a real Obsidian vault can be opened and used in full
+- [x] Wiki mode: read-only view of the whole vault with rendered links, navigation and search
+- [x] Acceptance criterion: a real Obsidian vault can be opened and used in full
 
 ## Phase 2 — Knowledge layer and editor expansion
 

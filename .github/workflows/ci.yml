@@ -111,6 +111,8 @@ jobs:
           echo
           docker logs rhizom
           curl -sf http://127.0.0.1:3737/api/health | grep '"status":"ok"'
+          curl -sf http://127.0.0.1:3737/api/vault | grep '"noteCount":0'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/api/openapi.json)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/notes/does-not-exist)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/api/nope)" = 404

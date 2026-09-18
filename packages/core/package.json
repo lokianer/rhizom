@@ -20,6 +20,24 @@
     "build": "tsc -b",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@types/hast": "catalog:",
+    "@types/mdast": "catalog:",
+    "github-slugger": "catalog:",
+    "mdast-util-from-markdown": "catalog:",
+    "mdast-util-to-string": "catalog:",
+    "micromark-util-symbol": "catalog:",
+    "micromark-util-types": "catalog:",
+    "rehype-sanitize": "catalog:",
+    "rehype-stringify": "catalog:",
+    "remark-frontmatter": "catalog:",
+    "remark-gfm": "catalog:",
+    "remark-parse": "catalog:",
+    "remark-rehype": "catalog:",
+    "unified": "catalog:",
+    "unist-util-visit": "catalog:",
+    "yaml": "catalog:"
+  },
   "devDependencies": {
     "typescript": "catalog:",
     "vitest": "catalog:"

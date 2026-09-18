@@ -1,0 +1,34 @@
+import { createBrowserRouter } from 'react-router';
+import { RouterProvider } from 'react-router/dom';
+
+import { HomePage } from './HomePage.js';
+import { Layout } from './Layout.js';
+import { NotePage } from './NotePage.js';
+
+// Created once at module level: a data router must not live in React state.
+const router = createBrowserRouter([
+  {
+    path: '/',
+    Component: Layout,
+    children: [
+      { index: true, Component: HomePage },
+      // Splat routes: the note path keeps its slashes, without the .md extension.
+      { path: 'notes/*', Component: NotePage },
+      // The graph brings the force layout, the wiki the Markdown renderer; both are loaded
+      // when someone goes there rather than on the first page.
+      {
+        path: 'wiki/*',
+        lazy: async () => ({ Component: (await import('./WikiPage.js')).WikiPage }),
+      },
+      {
+        path: 'graph',
+        lazy: async () => ({ Component: (await import('./GraphPage.js')).GraphPage }),
+      },
+      { path: '*', Component: HomePage },
+    ],
+  },
+]);
+
+export function App() {
+  return <RouterProvider router={router} />;
+}

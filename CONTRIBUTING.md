@@ -7,7 +7,7 @@ agreed first.
 
 ## Prerequisites
 
-- Node.js 22.13+ or 24 (see `.node-version`)
+- Node.js 22.22+ or 24 (see `.node-version`)
 - pnpm 12 — install it with `npm install -g pnpm@12.4.2` or the
   [standalone installer](https://pnpm.io/installation); the exact version is pinned in
   `package.json` and pnpm switches to it automatically once you have any pnpm ≥ 11.10

@@ -1,0 +1,10 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "attachmentFolderPath": "assets",
+  "showUnsupportedFiles": true,
+  "trashOption": "local",
+  "strictLineBreaks": false,
+  "readableLineLength": true
+}

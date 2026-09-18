@@ -1,0 +1,93 @@
+/* The command palette: a modal dialog near the top of the window, over a dimmed page. */
+
+.rz-palette {
+  margin: 10vh auto auto;
+  width: min(36rem, 92vw);
+  padding: 0;
+  border: 1px solid var(--rz-border-strong);
+  border-radius: var(--rz-radius-lg);
+  background: var(--rz-surface-raised);
+  color: var(--rz-text);
+  box-shadow: var(--rz-shadow-floating);
+}
+
+.rz-palette::backdrop {
+  background: light-dark(rgb(35 32 28 / 35%), rgb(0 0 0 / 55%));
+}
+
+.rz-palette-box {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.rz-palette-input {
+  border: 0;
+  border-bottom: 1px solid var(--rz-border);
+  border-radius: 0;
+  background: none;
+  padding: var(--rz-space-3) var(--rz-space-4);
+  font-size: var(--rz-text-lg);
+}
+
+.rz-palette-input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--rz-accent);
+}
+
+.rz-palette-empty {
+  padding: var(--rz-space-4);
+  color: var(--rz-text-muted);
+}
+
+.rz-palette-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--rz-space-2) 0;
+}
+
+.rz-palette-section {
+  padding: var(--rz-space-2) var(--rz-space-4) var(--rz-space-1);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rz-palette-option {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-3);
+  padding: var(--rz-space-2) var(--rz-space-4);
+  cursor: pointer;
+}
+
+.rz-palette-option-active {
+  background: var(--rz-surface);
+  box-shadow: inset 2px 0 0 var(--rz-accent);
+}
+
+.rz-palette-label {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-palette-detail {
+  flex: 1;
+  min-width: 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-palette-option mark {
+  background: none;
+  color: var(--rz-accent-strong);
+  font-weight: 600;
+}

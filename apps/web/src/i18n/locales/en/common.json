@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Rhizom",
-    "tagline": "Networked knowledge from plain Markdown."
+    "tagline": "Networked knowledge from plain Markdown.",
+    "skipToContent": "Skip to content"
   },
   "language": {
     "switch": "Language",
@@ -9,5 +10,120 @@
       "en": "English",
       "de": "Deutsch"
     }
+  },
+  "theme": {
+    "switch": "Theme",
+    "humus": "Humus",
+    "kalk": "Kalk",
+    "system": "System"
+  },
+  "sidebar": {
+    "toggle": "Toggle sidebar",
+    "files": "Files",
+    "search": "Search",
+    "tags": "Tags",
+    "empty": "This vault has no notes yet."
+  },
+  "tree": {
+    "label": "Vault",
+    "newNote": "New note",
+    "notes_one": "{{count}} note",
+    "notes_other": "{{count}} notes"
+  },
+  "search": {
+    "placeholder": "Search all notes",
+    "label": "Search",
+    "hint": "Type at least two characters.",
+    "noResults": "Nothing found for \"{{query}}\".",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results"
+  },
+  "tags": {
+    "label": "Tags",
+    "empty": "No tags in this vault.",
+    "count_one": "{{count}} note",
+    "count_other": "{{count}} notes",
+    "filter": "Filter the graph by {{tag}}"
+  },
+  "note": {
+    "loading": "Loading…",
+    "missing": "This note does not exist yet.",
+    "create": "Create {{path}}",
+    "delete": "Move to trash",
+    "confirmDelete": "Move {{name}} to the trash?",
+    "nameLabel": "Name",
+    "namePlaceholder": "Folder/Note name",
+    "createButton": "Create",
+    "cancel": "Cancel",
+    "inFolder": "in {{folder}}",
+    "atRoot": "at the vault root"
+  },
+  "editor": {
+    "label": "Note editor",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "failed": "Could not save: {{message}}",
+    "conflict": "This note changed on disk. Reload it or overwrite the file.",
+    "reload": "Reload from disk",
+    "overwrite": "Overwrite",
+    "uploadFailed": "Could not upload {{name}}: {{message}}",
+    "preview": "Preview"
+  },
+  "backlinks": {
+    "label": "Backlinks",
+    "empty": "No note links here yet.",
+    "count_one": "{{count}} backlink",
+    "count_other": "{{count}} backlinks",
+    "outgoing": "Links from this note",
+    "unresolved": "Missing"
+  },
+  "graph": {
+    "label": "Graph of the vault",
+    "title": "Graph",
+    "clusterBy": "Colour by",
+    "folder": "Folder",
+    "tag": "Tag",
+    "depth": "Depth",
+    "wholeVault": "Whole vault",
+    "depthOf": "{{count}} step around the open note",
+    "depthOf_other": "{{count}} steps around the open note",
+    "exportSvg": "Export as SVG",
+    "exportPng": "Export as PNG",
+    "empty": "No linked notes to show.",
+    "nodes_one": "{{count}} note",
+    "nodes_other": "{{count}} notes",
+    "edges_one": "{{count}} link",
+    "edges_other": "{{count}} links",
+    "resetView": "Reset the view"
+  },
+  "wiki": {
+    "title": "Wiki",
+    "label": "Read-only view",
+    "toEditor": "Edit this note",
+    "toWiki": "Read as wiki"
+  },
+  "palette": {
+    "open": "Open the command palette",
+    "label": "Command palette",
+    "placeholder": "Jump to a note or run a command",
+    "commands": "Commands",
+    "notes": "Notes",
+    "empty": "Nothing matches.",
+    "commandNames": {
+      "newNote": "New note",
+      "toggleTheme": "Switch theme",
+      "openGraph": "Open the graph",
+      "openWiki": "Read as wiki",
+      "search": "Search all notes",
+      "rebuild": "Rebuild the index",
+      "toggleSidebar": "Toggle the sidebar",
+      "togglePreview": "Toggle the preview"
+    }
+  },
+  "status": {
+    "loading": "Loading the vault…",
+    "error": "Could not reach the server: {{message}}",
+    "retry": "Try again",
+    "noVault": "No vault is configured. Set RHIZOM_VAULT_DIR and restart the server."
   }
 }
