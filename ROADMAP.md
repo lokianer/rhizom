@@ -50,7 +50,7 @@ changes only with a documented migration.
       maintained, alphabetical glossary page
 - [x] Unlinked mentions with a one-click "Link all" action
 - [x] Transclusion: `![[Note]]` and `![[Note#Heading]]`
-- [x] Templates + slash commands (`/table`, `/definition`, `/date`, `/time`) with variables
+- [ ] Templates + slash commands (`/table`, `/definition`, `/date`, `/time`) with variables
       (`{{date}}`, `{{title}}`, `{{time}}`, `{{path}}`, `{{cursor}}`, `{{roll:1d100}}`); the
       templates themselves are the notes in the vault's template folder. `/npc` belongs to the
       D&D module in Phase 3, where the NPC template lives.

@@ -144,8 +144,6 @@ describe('vault API', () => {
       root.slice(root.lastIndexOf(process.platform === 'win32' ? '\\' : '/') + 1),
     );
     expect(body.indexedAt).toMatch(/^\d{4}-/);
-    // This vault has no Templates folder and no Obsidian settings, so it has no templates.
-    expect(body.templates).toEqual({ folder: null, dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm' });
   });
 
   it('lists the tree and the notes', async () => {
