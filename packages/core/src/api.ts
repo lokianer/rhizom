@@ -18,6 +18,19 @@ export interface VaultInfo {
   noteCount: number;
   /** When the index was last (re)built, or null while the first build is running. */
   indexedAt: string | null;
+  /** Where this vault keeps its templates, and what its placeholders default to. */
+  templates: TemplateSettings;
+}
+
+/**
+ * The template folder as the vault itself declares it — the operator's setting, Obsidian's own
+ * `templates.json`, or a folder called Templates — and the formats `{{date}}` and `{{time}}`
+ * mean where they name none. `folder` is null when the vault has no templates.
+ */
+export interface TemplateSettings {
+  folder: string | null;
+  dateFormat: string;
+  timeFormat: string;
 }
 
 export interface Heading {

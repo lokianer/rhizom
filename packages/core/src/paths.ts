@@ -63,6 +63,18 @@ export function noteNameOf(path: string): string {
   return segment.replace(MARKDOWN_EXTENSION, '');
 }
 
+/**
+ * Whether a note lies in this folder, or in a folder below it. Compared case-folded, because a
+ * setting that says `Templates` has to find `templates/` on a system that does not care and on
+ * one that does.
+ */
+export function isInFolder(path: string, folder: string | null): boolean {
+  if (folder === null || folder === '') {
+    return false;
+  }
+  return path.toLowerCase().startsWith(`${folder.toLowerCase()}/`);
+}
+
 /** The folder part of a vault path; empty for notes at the vault root. */
 export function folderOf(path: string): string {
   const slash = path.lastIndexOf('/');

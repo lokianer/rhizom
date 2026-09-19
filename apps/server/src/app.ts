@@ -15,7 +15,7 @@ import { HttpError, registerErrorHandler } from './routes/errors.js';
 import { registerGraphRoutes } from './routes/graph.js';
 import { registerMaintenanceRoutes } from './routes/maintenance.js';
 import { registerNoteRoutes } from './routes/notes.js';
-import { HealthSchema } from './routes/schemas.js';
+import { HealthSchema, TreeEntrySchema } from './routes/schemas.js';
 import { registerMentionRoutes } from './routes/mentions.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerTermRoutes } from './routes/terms.js';
@@ -45,6 +45,8 @@ export interface BuildAppOptions {
     dataDir: string;
     /** Watch the vault for external changes (default true). */
     watch?: boolean;
+    /** Template folder, when the operator would rather say than let the vault decide. */
+    templateDir?: string;
   };
 }
 
@@ -72,6 +74,12 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         { name: 'index', description: 'Index maintenance and live events' },
       ],
     },
+    // A schema is published under its own `$id`. Without this every shared schema arrives as
+    // `def-0`, which is a name no reader of the contract can do anything with.
+    refResolver: {
+      buildLocalReference: (json, _baseUri, _fragment, index) =>
+        typeof json.$id === 'string' ? json.$id : `def-${String(index)}`,
+    },
   });
   await app.register(fastifySwaggerUi, { routePrefix: '/api/docs' });
 
@@ -88,6 +96,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       dir: options.vault.dir,
       dataDir: options.vault.dataDir,
       watch: options.vault.watch ?? true,
+      ...(options.vault.templateDir === undefined
+        ? {}
+        : { templateDir: options.vault.templateDir }),
       onLog: (message) => {
         app.log.info(message);
       },
@@ -105,6 +116,11 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     }
     return context;
   };
+
+  // The folder tree is the one schema that refers to itself. Registered by name, so the
+  // published contract carries a definition the `$ref` can actually reach: an OpenAPI document
+  // with a dangling reference is one no generator can read.
+  app.addSchema(TreeEntrySchema);
 
   registerNoteRoutes(app, requireContext);
   registerSearchRoutes(app, requireContext);

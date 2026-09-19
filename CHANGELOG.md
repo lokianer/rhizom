@@ -69,6 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The notes have one door. `/api/assets/*` served the vault folder statically, so a note could
+  be read through it as well — which the listing beside it never offered, and which would go
+  around any lock a later phase puts on `/api/notes/*`.
+- The published API document has no dangling reference any more: the folder tree, the one schema
+  that refers to itself, is now registered by name and carried in `components.schemas`, where a
+  validator or a client generator can reach it. Shared schemas are published under their own
+  names rather than as `def-0`.
 - A hard-wrapped paragraph counts as one block of plain text, so a search snippet no longer
   breaks mid-sentence.
 - A heading that contains a wikilink reads as the page shows it: `## See [[Silverstadt|the

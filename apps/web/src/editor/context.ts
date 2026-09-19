@@ -1,21 +1,60 @@
 // Everything the extensions need to know about the app, in one facet. The React component
 // reconfigures it through a compartment when the note list changes; the callbacks live in a
 // mutable box instead, so a parent re-render never has to rebuild the editor.
-import { Facet } from '@codemirror/state';
+import { Facet, type EditorState } from '@codemirror/state';
 import {
   createNoteIndex,
   parseWikilink,
   resolveLinkTarget,
   type NoteIndex,
   type NoteSummary,
+  type TemplateSettings,
   type TermMatcher,
 } from '@rhizom/core';
+
+// Anything whose text is not prose. A term inside a link would give the same word two things to
+// do, and one inside code is not a mention of anything.
+export const NOT_PROSE: ReadonlySet<string> = new Set([
+  'CodeBlock',
+  'CodeText',
+  'Comment',
+  'CommentBlock',
+  'FencedCode',
+  'HTMLBlock',
+  'HTMLTag',
+  'Image',
+  'InlineCode',
+  'Link',
+  'URL',
+  'WikiEmbed',
+  'WikiLink',
+]);
+
+/**
+ * Where the frontmatter block ends. The editor's Markdown parser does not know about it, so its
+ * keys and values are ordinary text to the syntax tree — and `aliases: [Mira]` is not a mention
+ * of Mira.
+ */
+export function frontmatterEnd(state: EditorState): number {
+  if (state.doc.lines < 2 || state.doc.line(1).text.trim() !== '---') {
+    return 0;
+  }
+  for (let number = 2; number <= state.doc.lines; number += 1) {
+    const line = state.doc.line(number);
+    if (line.text.trim() === '---') {
+      return line.to;
+    }
+  }
+  return 0;
+}
 
 export interface EditorHandlers {
   onChange: (content: string) => void;
   onSave: (content: string) => void;
   onOpenLink: (target: string) => void;
   onUpload: (file: File) => Promise<string>;
+  /** The Markdown of another note, for inserting a template. */
+  onReadNote: (path: string) => Promise<string>;
 }
 
 export interface EditorContextValue {
@@ -25,6 +64,12 @@ export interface EditorContextValue {
   readonly index: NoteIndex;
   /** The terms the vault defines, for marking them and explaining them on hover. */
   readonly terms: TermMatcher;
+  /** Where this vault keeps its templates, and what its placeholders default to. */
+  readonly templates: TemplateSettings;
+  /** What the slash menu calls each built-in command, translated; keyed by command id. */
+  readonly commandLabels: Readonly<Record<string, string>>;
+  /** BCP 47 tag for the month and weekday names a template writes into the note. */
+  readonly locale: string;
   readonly handlers: { current: EditorHandlers };
 }
 

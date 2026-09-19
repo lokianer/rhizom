@@ -66,7 +66,14 @@
     "reload": "Reload from disk",
     "overwrite": "Overwrite",
     "uploadFailed": "Could not upload {{name}}: {{message}}",
-    "preview": "Preview"
+    "templateFailed": "Could not read {{name}}: {{message}}",
+    "preview": "Preview",
+    "slash": {
+      "table": "Table",
+      "definition": "Mark as a definition",
+      "date": "Today's date",
+      "time": "The time now"
+    }
   },
   "backlinks": {
     "label": "Backlinks",

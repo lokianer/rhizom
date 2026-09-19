@@ -11,12 +11,16 @@ const context: EditorContextValue = {
   notes: [],
   index: buildNoteIndex([]),
   terms: createTermMatcher([]),
+  templates: { folder: 'Templates', dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm' },
+  commandLabels: {},
+  locale: 'en',
   handlers: {
     current: {
       onChange: () => undefined,
       onSave: () => undefined,
       onOpenLink: () => undefined,
       onUpload: () => Promise.resolve(''),
+      onReadNote: () => Promise.resolve(''),
     },
   },
 };

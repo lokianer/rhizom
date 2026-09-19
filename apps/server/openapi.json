@@ -6,7 +6,53 @@
     "version": "0.1.0"
   },
   "components": {
-    "schemas": {}
+    "schemas": {
+      "TreeEntry": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": ["type", "name", "path", "children"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["folder"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TreeEntry"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["type", "name", "path", "title"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["note"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
   },
   "paths": {
     "/api/health": {
@@ -48,7 +94,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["name", "noteCount", "indexedAt"],
+                  "required": ["name", "noteCount", "indexedAt", "templates"],
                   "properties": {
                     "name": {
                       "description": "Folder name of the vault",
@@ -67,6 +113,31 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "templates": {
+                      "type": "object",
+                      "required": ["folder", "dateFormat", "timeFormat"],
+                      "properties": {
+                        "folder": {
+                          "description": "Vault path of the template folder, or null when the vault has none",
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "dateFormat": {
+                          "description": "What {{date}} means without a format of its own",
+                          "type": "string"
+                        },
+                        "timeFormat": {
+                          "description": "What {{time}} means without a format of its own",
+                          "type": "string"
+                        }
+                      }
                     }
                   }
                 }
@@ -111,50 +182,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "required": ["type", "name", "path", "children"],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": ["folder"]
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "path": {
-                            "type": "string"
-                          },
-                          "children": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/def-0"
-                            }
-                          }
-                        }
-                      },
-                      {
-                        "type": "object",
-                        "required": ["type", "name", "path", "title"],
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": ["note"]
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "path": {
-                            "type": "string"
-                          },
-                          "title": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    ],
-                    "title": "TreeEntry"
+                    "$ref": "#/components/schemas/TreeEntry"
                   }
                 }
               }
@@ -251,8 +279,7 @@
                       "backlinkCount": {
                         "type": "integer"
                       }
-                    },
-                    "title": "NoteSummary"
+                    }
                   }
                 }
               }
@@ -402,8 +429,7 @@
                             "minimum": 0,
                             "type": "integer"
                           }
-                        },
-                        "title": "Heading"
+                        }
                       }
                     }
                   }
@@ -942,8 +968,7 @@
                       "line": {
                         "type": "integer"
                       }
-                    },
-                    "title": "NoteLink"
+                    }
                   }
                 }
               }
@@ -1036,8 +1061,7 @@
                       "line": {
                         "type": "integer"
                       }
-                    },
-                    "title": "Backlink"
+                    }
                   }
                 }
               }
@@ -1149,8 +1173,7 @@
                           "score": {
                             "type": "number"
                           }
-                        },
-                        "title": "SearchHit"
+                        }
                       }
                     },
                     "total": {
@@ -1231,8 +1254,7 @@
                       "count": {
                         "type": "integer"
                       }
-                    },
-                    "title": "TagCount"
+                    }
                   }
                 }
               }
@@ -1295,8 +1317,7 @@
                         "description": "The note's first block as plain text",
                         "type": "string"
                       }
-                    },
-                    "title": "GlossaryEntry"
+                    }
                   }
                 }
               }
@@ -1426,12 +1447,10 @@
                                   "description": "False when the words break across a line",
                                   "type": "boolean"
                                 }
-                              },
-                              "title": "Mention"
+                              }
                             }
                           }
-                        },
-                        "title": "MentionGroup"
+                        }
                       }
                     },
                     "truncated": {
@@ -1533,8 +1552,7 @@
                             "type": "integer"
                           }
                         }
-                      },
-                      "title": "MentionWrite"
+                      }
                     }
                   }
                 }
@@ -2087,8 +2105,7 @@
                         "format": "date-time",
                         "type": "string"
                       }
-                    },
-                    "title": "AssetSummary"
+                    }
                   }
                 }
               }

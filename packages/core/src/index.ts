@@ -21,6 +21,7 @@ export type {
   SearchHit,
   SearchResponse,
   TagCount,
+  TemplateSettings,
   TreeEntry,
   UploadResponse,
   VaultInfo,
@@ -58,6 +59,7 @@ export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from '
 export {
   ensureMarkdownExtension,
   folderOf,
+  isInFolder,
   isSafeVaultPath,
   noteNameOf,
   toVaultPath,
@@ -80,6 +82,13 @@ export {
   type TermMatcher,
   type VaultTerm,
 } from './terms.js';
+export {
+  expandTemplate,
+  formatDate,
+  roll,
+  type ExpandedTemplate,
+  type TemplateContext,
+} from './template.js';
 export { parseWikilink, type WikilinkTarget } from './wikilink.js';
 export {
   renderNote,

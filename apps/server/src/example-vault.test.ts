@@ -4,12 +4,20 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createTermMatcher, glossaryTerms, type LinkKind, type NoteLink } from '@rhizom/core';
+import {
+  createTermMatcher,
+  expandTemplate,
+  glossaryTerms,
+  isInFolder,
+  type LinkKind,
+  type NoteLink,
+} from '@rhizom/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { syncVault } from './store/sync.js';
 import { VaultIndex } from './store/vault-index.js';
 import { openVault, type Vault } from './vault/files.js';
+import { readTemplateSettings } from './vault/templates.js';
 
 interface LinkExpectation {
   from: string;
@@ -48,6 +56,7 @@ interface Manifest {
     emptyFrontmatter: string;
     commaSeparatedTags: string;
     folderNote: { path: string; color: string };
+    templatesWithPlaceholders: string[];
   };
   frontmatter: Record<string, Record<string, unknown>>;
   tags: { mustExist: string[]; mustNotExist: string[]; countsPerNote: Record<string, number> };
@@ -134,6 +143,30 @@ describe('the example vault', () => {
       expect(index.getNote(ignored)).toBeUndefined();
     }
     expect(notes.some((note) => note.path.startsWith('.'))).toBe(false);
+  });
+
+  it('finds the templates where the vault says they are, and fills them in', async () => {
+    const settings = readTemplateSettings(vault.root);
+    expect(settings).toEqual({
+      folder: 'Templates',
+      dateFormat: 'YYYY-MM-DD',
+      timeFormat: 'HH:mm',
+    });
+
+    for (const path of manifest.specialFiles.templatesWithPlaceholders) {
+      expect(isInFolder(path, settings.folder)).toBe(true);
+      const { content } = await vault.readNote(path);
+      const { text } = expandTemplate(content, {
+        title: 'Session 13',
+        now: new Date(2026, 8, 17),
+        dateFormat: settings.dateFormat,
+        timeFormat: settings.timeFormat,
+      });
+      // The two placeholders a vault's own templates use, and nothing left unfilled.
+      expect(text).toContain('# Session 13');
+      expect(text).toContain('"2026-09-17"');
+      expect(text).not.toContain('{{');
+    }
   });
 
   it('lists the attachments as assets', async () => {

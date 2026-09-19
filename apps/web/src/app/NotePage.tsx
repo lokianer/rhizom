@@ -1,6 +1,6 @@
 // One open note: loaded from the server, edited in CodeMirror, saved with the hash it was
 // loaded with, and reloaded when the file changes on disk while nothing is unsaved.
-import { createTermMatcher, type NoteDocument } from '@rhizom/core';
+import { createTermMatcher, type NoteDocument, type TemplateSettings } from '@rhizom/core';
 import {
   lazy,
   Suspense,
@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
-import { MarkdownEditor } from '../editor/index.js';
+import { MarkdownEditor, SLASH_COMMANDS } from '../editor/index.js';
 import { BacklinksPanel, MentionsPanel } from '../panels/index.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
@@ -23,6 +23,13 @@ import { createResolver } from './links.js';
 import type { OutletContext } from './outlet.js';
 import { noteHref, notePathFromParam } from './paths.js';
 import { revisionElsewhere, revisionOf } from './useIndexEvents.js';
+
+/** A vault that has not said where its templates are; frozen, so the editor sees one identity. */
+const NO_TEMPLATES: TemplateSettings = Object.freeze({
+  folder: null,
+  dateFormat: 'YYYY-MM-DD',
+  timeFormat: 'HH:mm',
+});
 
 // The preview brings the whole Markdown renderer, which someone who only writes never needs.
 const NotePreview = lazy(async () => ({ default: (await import('./NotePreview.js')).NotePreview }));
@@ -51,10 +58,11 @@ interface NoteViewProps extends OutletContext {
 }
 
 function NoteView({ path, revisions }: NoteViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const notes = useVaultStore((state) => state.notes);
   const terms = useVaultStore((state) => state.terms);
+  const templates = useVaultStore((state) => state.info?.templates) ?? NO_TEMPLATES;
   const refreshVault = useVaultStore((state) => state.refresh);
   const splitView = useUiStore((state) => state.splitView);
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
@@ -78,6 +86,11 @@ function NoteView({ path, revisions }: NoteViewProps) {
   // Memoised on the term list, not on the context: the vault store replaces every array after
   // each save, and rebuilding the matcher would rebuild every decoration layer with it.
   const matcher = useMemo(() => createTermMatcher(terms), [terms]);
+  // The slash menu reads its labels here, because a CodeMirror extension has no translator.
+  const commandLabels = useMemo(
+    () => Object.fromEntries(SLASH_COMMANDS.map((id) => [id, t(`editor.slash.${id}`)])),
+    [t],
+  );
 
   const applyLoaded = useCallback((loaded: NoteDocument) => {
     hashRef.current = loaded.hash;
@@ -317,12 +330,30 @@ function NoteView({ path, revisions }: NoteViewProps) {
           externalContent={externalContent}
           notes={notes}
           terms={matcher}
+          templates={templates}
+          commandLabels={commandLabels}
+          locale={i18n.language}
           ariaLabel={t('editor.label')}
           onChange={scheduleSave}
           onSave={(content) => {
             void save(content);
           }}
           onOpenLink={openTarget}
+          onReadNote={async (target) => {
+            try {
+              return (await api.note(target)).content;
+            } catch (error) {
+              // The editor puts the typed command back; this says why nothing was inserted.
+              setSaveState('error');
+              setMessage(
+                t('editor.templateFailed', {
+                  name: target,
+                  message: error instanceof Error ? error.message : String(error),
+                }),
+              );
+              throw error;
+            }
+          }}
           onUpload={async (file) => {
             try {
               return (await api.uploadAsset(file)).path;

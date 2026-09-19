@@ -26,6 +26,7 @@ import { editorContext } from './context.js';
 import { fileUpload } from './imageDrop.js';
 import { wikilinkClicks } from './links.js';
 import { imagePreview, livePreviewMarks } from './livePreview.js';
+import { slashCompletion, slashTemplates } from './slash.js';
 import { editorTheme, markdownHighlight } from './theme.js';
 import { wikilinkExtension } from './wikilink.js';
 
@@ -62,6 +63,8 @@ export function baseExtensions(): Extension {
       completeHTMLTags: false,
     }),
     markdownLanguage.data.of({ autocomplete: wikilinkCompletion }),
+    markdownLanguage.data.of({ autocomplete: slashCompletion }),
+    slashTemplates,
     syntaxHighlighting(markdownHighlight),
     autocompletion({ activateOnTypingDelay: 0, icons: false }),
     closeBrackets(),

@@ -9,6 +9,7 @@ import type { IndexEvent } from '@rhizom/core';
 import { indexPaths, syncVault, type SyncResult } from '../store/sync.js';
 import { VaultIndex } from '../store/vault-index.js';
 import { openVault, type Vault } from './files.js';
+import { readTemplateSettings, type TemplateSettings } from './templates.js';
 import { watchVault, type VaultWatcher } from './watcher.js';
 
 export interface VaultContextOptions {
@@ -18,6 +19,8 @@ export interface VaultContextOptions {
   dataDir: string;
   /** Watch the folder for external changes (default true). */
   watch?: boolean;
+  /** Template folder, where the operator would rather say than let the vault decide. */
+  templateDir?: string;
   onWatchError?: (error: unknown) => void;
   onLog?: (message: string) => void;
 }
@@ -30,6 +33,11 @@ export interface VaultContext {
   indexPaths(paths: readonly string[]): Promise<void>;
   /** Full incremental sync of the whole vault. */
   rebuild(): Promise<SyncResult>;
+  /**
+   * Where this vault keeps its templates, read afresh: the folder can appear, and Obsidian can
+   * be told about it, while Rhizom is running.
+   */
+  templates(): TemplateSettings;
   close(): Promise<void>;
 }
 
@@ -55,6 +63,9 @@ export async function openVaultContext(options: VaultContextOptions): Promise<Va
       if (result.removed.length > 0) {
         events.emit('index', { type: 'removed', paths: result.removed });
       }
+    },
+    templates() {
+      return readTemplateSettings(vault.root, options.templateDir);
     },
     async rebuild() {
       const result = await syncVault(vault, index);

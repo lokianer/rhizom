@@ -66,9 +66,14 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     () => {
-      const { vault, index } = context();
-      const stats = index.stats();
-      return { name: vault.name, noteCount: stats.noteCount, indexedAt: stats.indexedAt };
+      const ctx = context();
+      const stats = ctx.index.stats();
+      return {
+        name: ctx.vault.name,
+        noteCount: stats.noteCount,
+        indexedAt: stats.indexedAt,
+        templates: ctx.templates(),
+      };
     },
   );
 
@@ -78,7 +83,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       schema: {
         tags,
         summary: 'Folder tree of the vault',
-        response: { 200: Type.Array(TreeEntrySchema), 503: ErrorSchema },
+        response: { 200: Type.Array(Type.Ref(TreeEntrySchema)), 503: ErrorSchema },
       },
     },
     () => context().index.tree(),

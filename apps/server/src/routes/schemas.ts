@@ -17,11 +17,23 @@ export const HealthSchema = Type.Object({
   version: Type.String(),
 });
 
+export const TemplateSettingsSchema = Type.Object(
+  {
+    folder: Type.Union([Type.String(), Type.Null()], {
+      description: 'Vault path of the template folder, or null when the vault has none',
+    }),
+    dateFormat: Type.String({ description: 'What {{date}} means without a format of its own' }),
+    timeFormat: Type.String({ description: 'What {{time}} means without a format of its own' }),
+  },
+  { $id: 'TemplateSettings' },
+);
+
 export const VaultInfoSchema = Type.Object(
   {
     name: Type.String({ description: 'Folder name of the vault' }),
     noteCount: Type.Integer(),
     indexedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+    templates: TemplateSettingsSchema,
   },
   { $id: 'VaultInfo' },
 );

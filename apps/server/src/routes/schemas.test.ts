@@ -26,6 +26,7 @@ import type {
   SearchHit,
   SearchResponse,
   TagCount,
+  TemplateSettings,
   TreeEntry,
   UploadResponse,
   VaultInfo,
@@ -56,6 +57,7 @@ import type {
   SearchHitSchema,
   SearchResponseSchema,
   TagCountSchema,
+  TemplateSettingsSchema,
   TreeEntrySchema,
   UploadResponseSchema,
   VaultInfoSchema,
@@ -100,6 +102,7 @@ type Checked = [
   Pair<SearchResponse, Static<typeof SearchResponseSchema>>,
   Pair<TagCount, Static<typeof TagCountSchema>>,
   Pair<TreeEntry, Static<typeof TreeEntrySchema>>,
+  Pair<TemplateSettings, Static<typeof TemplateSettingsSchema>>,
   Pair<GraphResponse, Static<typeof GraphSchema>>,
   Pair<CreateNoteRequest, Static<typeof CreateNoteBodySchema>>,
   Pair<SaveNoteRequest, Static<typeof SaveNoteBodySchema>>,
@@ -144,8 +147,9 @@ describe('API contracts', () => {
       true,
       true,
       true,
+      true,
     ];
-    expect(checked).toHaveLength(25);
+    expect(checked).toHaveLength(26);
   });
 
   it('has teeth: the comparison rejects a shape that only looks the same', () => {

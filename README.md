@@ -89,13 +89,14 @@ RHIZOM_VAULT_DIR=/path/to/your/vault NODE_ENV=production pnpm --filter @rhizom/s
 
 On Windows PowerShell, set them with `$env:RHIZOM_VAULT_DIR = 'C:\notes'`.
 
-| Variable           | Default                             | Meaning                                                             |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| `RHIZOM_VAULT_DIR` | `examples/vault` outside production | The folder with your notes                                          |
-| `RHIZOM_DATA_DIR`  | `./data`                            | Where the SQLite index lives; it is derived data and safe to delete |
-| `PORT`, `HOST`     | `3737`, `localhost`                 | Where to listen                                                     |
-| `LOG_LEVEL`        | `info`                              | pino log level                                                      |
-| `NODE_ENV`         | —                                   | `production` turns off the example-vault fallback and pretty logs   |
+| Variable              | Default                             | Meaning                                                             |
+| --------------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| `RHIZOM_VAULT_DIR`    | `examples/vault` outside production | The folder with your notes                                          |
+| `RHIZOM_DATA_DIR`     | `./data`                            | Where the SQLite index lives; it is derived data and safe to delete |
+| `RHIZOM_TEMPLATE_DIR` | the vault's own setting             | The folder templates live in, when the vault does not say           |
+| `PORT`, `HOST`        | `3737`, `localhost`                 | Where to listen                                                     |
+| `LOG_LEVEL`           | `info`                              | pino log level                                                      |
+| `NODE_ENV`            | —                                   | `production` turns off the example-vault fallback and pretty logs   |
 
 The REST API is documented at <http://localhost:3737/api/docs>; the OpenAPI document is served at
 `/api/openapi.json` and committed as [`apps/server/openapi.json`](apps/server/openapi.json).

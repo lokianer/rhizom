@@ -66,7 +66,14 @@
     "reload": "Neu laden",
     "overwrite": "Überschreiben",
     "uploadFailed": "{{name}} konnte nicht hochgeladen werden: {{message}}",
-    "preview": "Vorschau"
+    "templateFailed": "{{name}} konnte nicht gelesen werden: {{message}}",
+    "preview": "Vorschau",
+    "slash": {
+      "table": "Tabelle",
+      "definition": "Als Definition kennzeichnen",
+      "date": "Datum von heute",
+      "time": "Uhrzeit jetzt"
+    }
   },
   "backlinks": {
     "label": "Rückverweise",

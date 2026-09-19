@@ -10,25 +10,7 @@ import type { DecorationSet, Tooltip, ViewUpdate } from '@codemirror/view';
 import type { SyntaxNode, Tree } from '@lezer/common';
 import type { TermMatch } from '@rhizom/core';
 
-import { editorContext, type EditorContextValue } from './context.js';
-
-// Anything whose text is not prose. A term inside a link would give the same word two things to
-// do, and one inside code is not a mention of anything.
-const NOT_PROSE: ReadonlySet<string> = new Set([
-  'CodeBlock',
-  'CodeText',
-  'Comment',
-  'CommentBlock',
-  'FencedCode',
-  'HTMLBlock',
-  'HTMLTag',
-  'Image',
-  'InlineCode',
-  'Link',
-  'URL',
-  'WikiEmbed',
-  'WikiLink',
-]);
+import { editorContext, frontmatterEnd, NOT_PROSE, type EditorContextValue } from './context.js';
 
 /** One mark per defining note, so a document full of one term allocates one decoration. */
 const marks = new Map<string, Decoration>();
@@ -41,24 +23,6 @@ function markFor(path: string): Decoration {
   const made = Decoration.mark({ class: 'cm-rz-term', attributes: { 'data-rz-term': path } });
   marks.set(path, made);
   return made;
-}
-
-/**
- * Where the frontmatter block ends. The editor's Markdown parser does not know about it, so its
- * keys and values are ordinary text to the syntax tree — and `aliases: [Mira]` is not a mention
- * of Mira.
- */
-function frontmatterEnd(state: EditorState): number {
-  if (state.doc.lines < 2 || state.doc.line(1).text.trim() !== '---') {
-    return 0;
-  }
-  for (let number = 2; number <= state.doc.lines; number += 1) {
-    const line = state.doc.line(number);
-    if (line.text.trim() === '---') {
-      return line.to;
-    }
-  }
-  return 0;
 }
 
 /** Both ends are checked: a match may begin in prose and run into a link, or the other way. */

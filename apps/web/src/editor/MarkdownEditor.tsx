@@ -1,6 +1,6 @@
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import type { NoteSummary, TermMatcher } from '@rhizom/core';
+import type { NoteSummary, TemplateSettings, TermMatcher } from '@rhizom/core';
 import { useEffect, useMemo, useRef, type JSX } from 'react';
 
 import {
@@ -24,6 +24,12 @@ export interface MarkdownEditorProps {
   notes: readonly NoteSummary[];
   /** The terms the vault defines, for marking them and explaining them on hover. */
   terms: TermMatcher;
+  /** Where the vault keeps its templates, and what its placeholders default to. */
+  templates: TemplateSettings;
+  /** What the slash menu calls each built-in command, translated; keyed by command id. */
+  commandLabels: Readonly<Record<string, string>>;
+  /** BCP 47 tag for the month and weekday names a template writes into the note. */
+  locale: string;
   /** Called on every document change (the caller debounces and saves). */
   onChange: (content: string) => void;
   /** Ctrl/Cmd+S. */
@@ -32,6 +38,8 @@ export interface MarkdownEditorProps {
   onOpenLink: (target: string) => void;
   /** Dropped or pasted image: resolve with the vault path it was stored at. */
   onUpload: (file: File) => Promise<string>;
+  /** The Markdown of another note, for inserting a template. */
+  onReadNote: (path: string) => Promise<string>;
   /** Accessible name for the editor (already translated by the caller). */
   ariaLabel: string;
 }
@@ -94,23 +102,33 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     readOnly = false,
     notes,
     terms,
+    templates,
+    commandLabels,
+    locale,
     onChange,
     onSave,
     onOpenLink,
     onUpload,
+    onReadNote,
     ariaLabel,
   } = props;
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sessionRef = useRef<EditorSession | null>(null);
-  const handlersRef = useRef<EditorHandlers>({ onChange, onSave, onOpenLink, onUpload });
+  const handlersRef = useRef<EditorHandlers>({
+    onChange,
+    onSave,
+    onOpenLink,
+    onUpload,
+    onReadNote,
+  });
   /** The content last handed to `onChange`, so the flush on unmount knows what is pending. */
   const reportedRef = useRef(content);
 
   const index = useMemo(() => buildNoteIndex(notes), [notes]);
   const context = useMemo<EditorContextValue>(
-    () => ({ path, notes, index, terms, handlers: handlersRef }),
-    [path, notes, index, terms],
+    () => ({ path, notes, index, terms, templates, commandLabels, locale, handlers: handlersRef }),
+    [path, notes, index, terms, templates, commandLabels, locale],
   );
 
   const latestRef = useRef<LatestProps>({ content, readOnly, ariaLabel, context });
@@ -118,7 +136,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
   // Runs before the effect below on every commit, so a rebuilt editor starts from fresh props
   // while a re-rendered one keeps its view.
   useEffect(() => {
-    handlersRef.current = { onChange, onSave, onOpenLink, onUpload };
+    handlersRef.current = { onChange, onSave, onOpenLink, onUpload, onReadNote };
     latestRef.current = { content, readOnly, ariaLabel, context };
   });
 
