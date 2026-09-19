@@ -72,6 +72,26 @@ jobs:
       - name: End-to-end tests
         run: pnpm run e2e
 
+      # One package serves every operating system: the only native dependency ships a prebuilt
+      # binary for each of them. Assembled once, on the runner whose build the e2e tests just
+      # exercised.
+      - name: Package a runnable build
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        # The two halves of `pnpm run package`, run directly: a `pnpm run` that shells out to a
+        # second pnpm hands it the inner package's bin directory, and the root `prepare` script
+        # then looks for its tool on a PATH that does not have it.
+        run: |
+          pnpm --filter @rhizom/server deploy --prod --legacy dist/package/server
+          node scripts/package-app.mjs
+
+      - name: Upload the runnable build
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        uses: actions/upload-artifact@v7
+        with:
+          name: rhizom-${{ github.sha }}
+          path: dist/package/
+          retention-days: 30
+
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7

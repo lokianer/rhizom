@@ -29,7 +29,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "pnpm --filter @rhizom/web run e2e",
-    "site:build": "node scripts/build-site.mjs"
+    "site:build": "node scripts/build-site.mjs",
+    "package": "pnpm --filter @rhizom/server deploy --prod --legacy dist/package/server && node scripts/package-app.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
