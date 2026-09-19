@@ -101,6 +101,11 @@ among several — and it is not a virtual tabletop: no battle map, no tokens, no
       where it stands; roll-and-record appends the result to the session note. Any ordered list or
       range table under a `d20`-style heading is rollable, `{{table:Tables/Names#Surnames}}` rolls
       one at insert time, and a generated name or trait arrives in a note rather than in a message
+- [ ] Decks: a table is rolled with replacement, a deck is not. A note listing cards — a Deck of
+      Many Things written by hand, a deck of complications, rumours, weather or hooks — is drawn
+      from with one click, and what has been drawn stays drawn until the deck is shuffled again.
+      The draw goes into the session note the way a roll does, so the run of the evening is on
+      record; a drawn card links to its own note where one exists, so the card is a place to read
 - [ ] Typed relationships from frontmatter lists the vault names itself (`allies:`, `owes:`,
       `serves:`): each is a directed, coloured graph edge and a rendered "Ties" block. Eight
       colours at most, the ninth relation stays neutral, direction is drawn and reciprocity is
@@ -126,6 +131,54 @@ among several — and it is not a virtual tabletop: no battle map, no tokens, no
 - [ ] Party ledger: the loot tables in the session notes rolled up into one list — held, sold,
       spent, promised, and the session each item came from. A view; a row is edited where it was
       written
+
+_The second half of the module: what it grows into once those sixteen stand — the people at the
+table and the weeks between sessions, a campaign that has run for years beside a second one in the
+same vault, and the mechanical half, which stays a layout and a lookup table and never a rules
+engine._
+
+- [ ] The people at the table: `type: character` for the player characters — player name, the four
+      or five numbers you ask for mid-session, bonds and flags as links, and `sheet:` pointing at
+      wherever the real sheet lives. The keys render as written; Rhizom never computes a number
+- [ ] The week between sessions: a `type: scene` note with `between: 12, 13` and its participants
+      sits on the spine and counts for reveals exactly as a session does, and a downtime note beside
+      it holds one task per character with an owner and an outcome. Pasted text only, no bot
+- [ ] Who was told, not only when: a gated block may name people (`> [!gm] told: Ilex, Orrin`) and
+      the player view renders for one of them; sessions name who was present, so the page for a
+      player who missed two of them is the same view over exactly the sessions they missed
+- [ ] Cold threads: every unchecked hook and open quest sorted by how many sessions have passed
+      since anything touched the note it lives in, grouped by place or faction — two years in, a
+      dropped thread does not announce itself
+- [ ] The shelf: `retired: 2026-05-02` on material the campaign has finished with. It keeps its
+      links and backlinks, drops out of search ranking, the field and the improv drawer, and comes
+      back by deleting the line — retired is about what is in play, never about what a player sees
+- [ ] Two chronologies: `in_world: 14 Thawrun 1247` beside the real `date:`, ordered by the month
+      names the campaign note lists, so the spine reads both ways after a flashback; a `type: event`
+      with `when:` and `status:` lists what falls due. Ordering only — arithmetic is Phase 5
+- [ ] More than one campaign in a vault: several campaign notes each scoping a folder, one current,
+      `ended:` stopping the counting while its notes stay searchable, a selector that says how many
+      notes it narrows away, and `revealed: hollow-crown/12` — decided before the reveal item ships
+- [ ] System pack (`type: system`): one note per game system saying which stat keys exist, in what
+      groups and order, which are rollable and which named Markdown tables may be looked up. Layout
+      and lookup, never a formula; Rhizom ships an empty skeleton and no numbers of its own
+- [ ] Encounter note: party size and level plus creatures as wikilinks with counts, costed against
+      the thresholds in the system pack — a pack may say the system has no budget, and the panel is
+      then absent rather than wrong. It renders as one page for the table and keeps no state at all
+- [ ] Stat blocks that change: a second `## statblock — after session 12` heading in the same note
+      holds the numbers as they are now; the renderer shows the latest, offers the earlier ones and
+      diffs two, and a prep note embeds the version it means with the heading transclusion it has
+- [ ] Rulings: `> [!ruling]` in a session note records what the table decided and what about; the
+      index collects every one into a searchable page and a later ruling `supersedes:` an earlier
+      one without deleting it. Rules are somebody else's text, rulings are the vault's own
+- [ ] Reference import from a file already on disk, never over the network: one note per monster or
+      spell carrying `license:` and `source:`, a licence note per folder, nothing written whose
+      profile cannot name a licence, and a second run that touches only what the first run wrote
+- [ ] Lines and veils in a `type: safety` note, with what actually came up logged by date and never
+      by name; prep is checked against the list at index time, so a note tagged with something on it
+      is flagged before you run it. Anonymity is the feature — the format cannot record who asked
+- [ ] Handouts: `type: handout` refuses to index as one while the note holds a gated block, prints
+      as a single sheet with the images inlined and the wiki chrome gone, and records `handed_out:`
+      with the session. One note and the browser's print; the site builder stays in Phase 4
 
 ## Phase 4 — Sharing, permissions, history
 
