@@ -21,6 +21,7 @@ import {
 } from '@codemirror/view';
 
 import { wikilinkCompletion } from './completion.js';
+import { definitionMarks, definitionTooltip } from './definitions.js';
 import { editorContext } from './context.js';
 import { fileUpload } from './imageDrop.js';
 import { wikilinkClicks } from './links.js';
@@ -65,6 +66,8 @@ export function baseExtensions(): Extension {
     autocompletion({ activateOnTypingDelay: 0, icons: false }),
     closeBrackets(),
     livePreviewMarks,
+    definitionMarks,
+    definitionTooltip,
     imagePreview,
     fileUpload,
     wikilinkClicks,

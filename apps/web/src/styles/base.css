@@ -230,16 +230,26 @@ mark {
 
 /* --- note view ------------------------------------------------------------------------ */
 
+/* Header, the editor, then the two panels that answer "what points here" and "what nearly
+   does". A column rather than four grid rows, because when the window is too short for all of
+   them something has to give, and in a grid that something is the row that grows: the editor
+   would be squeezed to nothing while both panels kept their full height. Here the panels give
+   way instead — they scroll already — and the editor keeps a floor it never falls below. */
 .rz-note {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
 }
 
+.rz-note > header {
+  flex: 0 0 auto;
+}
+
 .rz-note-body {
   display: grid;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 10rem;
   overflow: hidden;
 }
 
@@ -349,6 +359,82 @@ mark {
   border-left: 3px solid var(--rz-border-strong);
   padding-left: var(--rz-space-4);
   color: var(--rz-text-muted);
+}
+
+/* The glossary: a reading page, so it is set narrow and the letters carry the rhythm rather
+   than rules or boxes. */
+.rz-glossary {
+  max-width: 60ch;
+}
+
+.rz-glossary-group {
+  margin-top: var(--rz-space-6);
+}
+
+/* Weight and letter-spacing carry the hierarchy rather than a smaller size: the letter is
+   already muted, and muted plus small is the combination that stops being readable. */
+.rz-glossary-letter {
+  margin: 0 0 var(--rz-space-2);
+  padding-bottom: var(--rz-space-1);
+  border-bottom: 1px solid var(--rz-border);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.rz-glossary-entry {
+  margin-bottom: var(--rz-space-4);
+}
+
+.rz-glossary-entry dt {
+  font-weight: 600;
+}
+
+.rz-glossary-entry dd {
+  margin: var(--rz-space-1) 0 0;
+  color: var(--rz-text-muted);
+}
+
+.rz-glossary-aliases {
+  font-weight: 400;
+}
+
+.rz-glossary-empty {
+  color: var(--rz-text-muted);
+}
+
+/* A word the vault defines somewhere. Marked with an underline rather than a colour, so a
+   paragraph full of known terms still reads as prose; the browser's own tooltip carries the
+   definition, which needs no script and works in the wiki as well as in the preview. */
+.rz-term {
+  border-bottom: 1px dotted var(--rz-accent);
+  cursor: help;
+}
+
+/* A transcluded note: the same prose, set in from the margin so the reader can see where the
+   host note stops and the embedded one begins, the way a blockquote does. */
+.rz-embed {
+  margin: var(--rz-space-4) 0;
+  border-left: 3px solid var(--rz-accent);
+  padding-left: var(--rz-space-4);
+}
+
+.rz-embed > :first-child {
+  margin-top: 0;
+}
+
+.rz-embed > :last-child {
+  margin-bottom: 0;
+}
+
+/* Everything that is not a body: a note still loading, missing, circular or over the budget.
+   It is one line of muted prose, never an error; nothing the reader wrote is wrong. */
+.rz-embed:not([data-state='ready']) {
+  border-left-style: dashed;
+  border-left-color: var(--rz-border-strong);
+  color: var(--rz-text-muted);
+  font-style: italic;
 }
 
 .rz-prose code {

@@ -1,7 +1,6 @@
 {
   "app": {
     "name": "Rhizom",
-    "tagline": "Vernetztes Wissen aus reinem Markdown.",
     "skipToContent": "Zum Inhalt springen"
   },
   "language": {
@@ -96,6 +95,37 @@
     "edges_other": "{{count}} Verweise",
     "resetView": "Ansicht zurücksetzen"
   },
+  "embed": {
+    "loading": "{{target}} wird geladen …",
+    "missing": "{{target}} liegt nicht in diesem Vault",
+    "noSection": "{{target}} hat keinen Abschnitt {{heading}}",
+    "circular": "{{target}} bettet sich selbst ein",
+    "tooDeep": "{{target}} ist zu tief verschachtelt, um hier zu erscheinen",
+    "tooMany": "{{target}} wird nicht gezeigt: zu viele Einbettungen auf dieser Seite"
+  },
+  "mentions": {
+    "title": "Unverlinkte Erwähnungen",
+    "empty": "Keine Notiz nennt diese, ohne auf sie zu verweisen.",
+    "inHeading": "in einer Überschrift",
+    "notLinkable": "über einen Zeilenumbruch verteilt",
+    "truncated": "Es wurden nur die zuerst gefundenen Notizen durchsucht.",
+    "linking": "Wird verlinkt …",
+    "linkAll_one": "In {{count}} Notiz verlinken",
+    "linkAll_other": "In {{count}} Notizen verlinken",
+    "linked_one": "{{count}} Erwähnung verlinkt.",
+    "linked_other": "{{count}} Erwähnungen verlinkt.",
+    "conflicts_one": "{{count}} Notiz wurde zwischenzeitlich geändert und blieb unberührt.",
+    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und blieben unberührt.",
+    "mentionLabel": "In {{note}}: {{line}}"
+  },
+  "glossary": {
+    "title": "Glossar",
+    "count_one": "{{count}} Definition",
+    "count_other": "{{count}} Definitionen",
+    "empty": "Noch gibt sich keine Notiz in diesem Tresor als Definition zu erkennen. Mit `type: definition` im Frontmatter wird der Titel einer Notiz zum Begriff.",
+    "alsoKnownAs": "auch {{aliases}}",
+    "noSummary": "Noch keine Beschreibung."
+  },
   "wiki": {
     "title": "Wiki",
     "label": "Nur-Lese-Ansicht",
@@ -113,6 +143,7 @@
       "newNote": "Neue Notiz",
       "toggleTheme": "Design wechseln",
       "openGraph": "Graph öffnen",
+      "openGlossary": "Glossar öffnen",
       "openWiki": "Als Wiki lesen",
       "search": "Alle Notizen durchsuchen",
       "rebuild": "Index neu aufbauen",

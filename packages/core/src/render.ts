@@ -2,10 +2,9 @@
 // indexer parses (GFM, YAML frontmatter, wikilinks, embeds), and headings are slugged with the
 // same algorithm, so the ids in the HTML agree with what `parseNote` reports. Everything the
 // note itself contributes is sanitised, so the result can be injected into the DOM as-is.
-import GithubSlugger, { slug as slugOf } from 'github-slugger';
+import GithubSlugger from 'github-slugger';
 import type { Properties, Root as HastRoot } from 'hast';
-import type { Image, Link, Paragraph, Parent, Root } from 'mdast';
-import { toString } from 'mdast-util-to-string';
+import type { Image, Link, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -16,6 +15,8 @@ import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
 
 import type { Heading, LinkKind } from './api.js';
+import { displayText, headingSlug } from './parse.js';
+import type { TermMatcher, VaultTerm } from './terms.js';
 import { remarkWikilink } from './remark-wikilink.js';
 import { parseWikilink, type WikilinkTarget } from './wikilink.js';
 
@@ -28,13 +29,50 @@ export interface RenderedLink {
   label?: string;
 }
 
+/** What an `![[…]]` points at, as far as this note can tell. */
+export interface EmbedReference {
+  /** Resolved vault path, or null when the vault holds no such note. */
+  path: string | null;
+  /** The target as written, without heading, block id or alias. */
+  target: string;
+  heading?: string | undefined;
+  blockId?: string | undefined;
+  alias?: string | undefined;
+}
+
+/**
+ * What to put in the place of an embed. `ready` carries HTML that is inserted after sanitising
+ * and must therefore come from `renderNote` itself; every other state carries a label that is
+ * rendered as ordinary text, so the app can say "loading" or "no such note" in its own language
+ * without core knowing any.
+ */
+export type EmbedResult =
+  | { state: 'ready'; html: string }
+  | { state: 'loading' | 'missing' | 'circular' | 'truncated'; label: string };
+
 export interface RenderOptions {
-  /** Resolves a wikilink or relative Markdown link target written in this note. */
-  resolveLink: (target: string, kind: LinkKind) => RenderedLink;
+  /** The note being rendered; a link resolves relative to it. */
+  sourcePath: string;
+  /** Resolves a wikilink or relative Markdown link target written in `source`. */
+  resolveLink: (target: string, kind: LinkKind, source: string) => RenderedLink;
   /** URL of a file inside the vault (images, PDFs) for embeds and Markdown images. */
   assetUrl: (vaultPath: string) => string;
-  /** Rendered instead of an embedded note's body; return undefined to render a link instead. */
-  renderEmbeddedNote?: ((path: string) => string | undefined) | undefined;
+  /**
+   * Prepended to every id this render emits. A transcluded note carries its own headings and
+   * footnotes into the host page, and two notes may well share a heading; without a prefix the
+   * page would hold the same id twice and `#fragment` links would land on the wrong one.
+   */
+  idPrefix?: string | undefined;
+  /**
+   * Fills a standalone `![[Note]]`. Returning undefined leaves it a link, which is what happens
+   * when nothing supplies this hook at all.
+   */
+  renderEmbed?: ((reference: EmbedReference) => EmbedResult | undefined) | undefined;
+  /**
+   * Marks the terms the vault defines where they appear in prose. Built once by the caller and
+   * reused: this runs over every text node of every render.
+   */
+  terms?: TermMatcher | undefined;
 }
 
 export interface RenderedNote {
@@ -83,7 +121,10 @@ const sanitizeSchema: SanitizeSchema = {
   attributes: {
     ...defaultSchema.attributes,
     a: allowFor('a', ['rz-wikilink', 'rz-wikilink-missing', 'rz-embed-file'], 'dataTarget'),
-    div: allowFor('div', ['rz-embed'], 'dataPath', 'dataEmbed'),
+    div: allowFor('div', ['rz-embed'], 'dataPath', 'dataEmbed', 'dataState'),
+    // `span` is an allowed tag in the default schema but has no attribute rules of its own, so
+    // without this the element would survive and its class would be filtered away in silence.
+    span: allowFor('span', ['rz-term'], 'dataTerm'),
   },
   clobberPrefix: '',
 };
@@ -97,22 +138,52 @@ const parser = unified()
   .use(remarkWikilink)
   .freeze();
 
-const renderer = unified()
-  .use(remarkRehype)
-  .use(rehypeSanitize, sanitizeSchema)
-  // Only the embedded-note bodies are raw, and they are inserted after sanitising.
-  .use(rehypeStringify, { allowDangerousHtml: true })
-  .freeze();
+function makeRenderer(idPrefix: string) {
+  return (
+    unified()
+      // remark-rehype namespaces footnote ids and the hrefs that point at them; the prefix goes
+      // in there too, so a transcluded note's footnotes do not collide with the host's.
+      .use(remarkRehype, { clobberPrefix: `user-content-${idPrefix}` })
+      .use(rehypeSanitize, sanitizeSchema)
+      // Only the embedded-note bodies are raw, and they are inserted after sanitising.
+      .use(rehypeStringify, { allowDangerousHtml: true })
+      .freeze()
+  );
+}
+
+// One frozen pipeline per id prefix, not per note: `.use()` after the first run throws, and
+// building the pipeline is the expensive part. A page holds a handful of prefixes at most.
+const renderers = new Map<string, ReturnType<typeof makeRenderer>>();
+
+// A page uses a handful of prefixes, but a long session moving through many notes would keep
+// every one it has ever seen. Past this many, the lot is dropped; the cost is one pipeline
+// built per prefix on the next render, which is what the cache saves in the first place.
+const MAX_RENDERERS = 64;
+
+function rendererFor(idPrefix: string): ReturnType<typeof makeRenderer> {
+  const existing = renderers.get(idPrefix);
+  if (existing !== undefined) {
+    return existing;
+  }
+  if (renderers.size >= MAX_RENDERERS) {
+    renderers.clear();
+  }
+  const made = makeRenderer(idPrefix);
+  renderers.set(idPrefix, made);
+  return made;
+}
 
 export function renderNote(markdown: string, options: RenderOptions): RenderedNote {
   const tree = parser.parse(markdown);
   // Frontmatter is metadata, not content; without a handler remark-rehype would print it.
   tree.children = tree.children.filter((child) => child.type !== 'yaml');
 
-  const headings = collectHeadings(tree);
+  const idPrefix = options.idPrefix ?? '';
+  const headings = collectHeadings(tree, idPrefix);
   const embeds: string[] = [];
-  transform(tree, { options, embeds });
+  transform(tree, { options, embeds }, false);
 
+  const renderer = rendererFor(idPrefix);
   const hast = renderer.runSync(tree);
   fillEmbeds(hast, embeds);
   return { html: renderer.stringify(hast), headings };
@@ -123,15 +194,17 @@ export function renderNote(markdown: string, options: RenderOptions): RenderedNo
  * so that it matches `parseNote`, and the slugger is per note so that duplicate headings get
  * the same `-1`, `-2` suffixes there as here.
  */
-function collectHeadings(tree: Root): Heading[] {
+function collectHeadings(tree: Root, idPrefix: string): Heading[] {
   const slugger = new GithubSlugger();
   const headings: Heading[] = [];
   visit(tree, 'heading', (node) => {
-    const text = toString(node).trim();
+    const text = displayText(node);
     const slug = slugger.slug(text);
+    // The reported slug stays bare, so an outline and a `#fragment` agree with `parseNote`;
+    // only the id written into the page carries the prefix that keeps it unique there.
     headings.push({ level: node.depth, text, slug, line: node.position?.start.line ?? 0 });
     const data = (node.data ??= {});
-    data.hProperties = { ...data.hProperties, id: slug };
+    data.hProperties = { ...data.hProperties, id: `${idPrefix}${slug}` };
   });
   return headings;
 }
@@ -143,7 +216,7 @@ interface Context {
 }
 
 /** Rewrites every node whose target points into the vault; the rest stays untouched. */
-function transform(parent: Parent, context: Context): void {
+function transform(parent: Parent, context: Context, insideLink: boolean): void {
   const children = parent.children;
   for (let index = 0; index < children.length; index += 1) {
     const child = children[index];
@@ -157,15 +230,85 @@ function transform(parent: Parent, context: Context): void {
       children[index] = renderWikilink(child.value, child.embed, context);
       continue;
     }
+    // Only running text carries term marks. Code is a leaf node and never reaches this branch;
+    // a wikilink was replaced above; a link is skipped so a word does not end up with two
+    // things to click.
+    if (child.type === 'text' && !insideLink) {
+      const marked = markTerms(child, context);
+      if (marked !== undefined) {
+        // Spliced by assignment rather than with a spread: a text node can hold more matches
+        // than the engine allows arguments, and `splice(i, 1, ...pieces)` would throw on it.
+        children.splice(index, 1);
+        for (const [offset, piece] of marked.entries()) {
+          children.splice(index + offset, 0, piece);
+        }
+        index += marked.length - 1;
+        continue;
+      }
+    }
     if (child.type === 'link') {
       rewriteLink(child, context);
     } else if (child.type === 'image') {
       rewriteImage(child, context);
     }
     if ('children' in child) {
-      transform(child, context);
+      transform(
+        child,
+        context,
+        insideLink || child.type === 'link' || child.type === 'linkReference',
+      );
     }
   }
+}
+
+/**
+ * Splits one text node around the terms the vault defines. Undefined when it holds none, so the
+ * overwhelmingly common case allocates nothing.
+ *
+ * A definition never marks itself: reading the note that defines a word should not present that
+ * word as something to look up.
+ */
+function markTerms(node: Text, context: Context): RootContent[] | undefined {
+  const matcher = context.options.terms;
+  if (matcher === undefined) {
+    return undefined;
+  }
+  const matches = matcher
+    .find(node.value)
+    .filter((match) => match.term.path !== context.options.sourcePath);
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  const pieces: RootContent[] = [];
+  let at = 0;
+  for (const match of matches) {
+    if (match.start > at) {
+      pieces.push({ type: 'text', value: node.value.slice(at, match.start) });
+    }
+    pieces.push({
+      // Any node remark-rehype knows will do as the carrier; `hName` decides the tag, and
+      // emphasis is the least loaded of the inline containers.
+      type: 'emphasis',
+      children: [{ type: 'text', value: match.text }],
+      data: { hName: 'span', hProperties: termProperties(match.term) },
+    });
+    at = match.end;
+  }
+  if (at < node.value.length) {
+    pieces.push({ type: 'text', value: node.value.slice(at) });
+  }
+  return pieces;
+}
+
+function termProperties(term: VaultTerm): Properties {
+  const properties: Properties = { className: ['rz-term'], dataTerm: term.path };
+  if (term.summary !== '') {
+    // `title` is allowed on every element by the default schema, so the plainest tooltip there
+    // is needs no JavaScript and works in the wiki as well as in the preview.
+    properties.title = term.summary;
+  }
+  return properties;
 }
 
 /**
@@ -174,7 +317,7 @@ function transform(parent: Parent, context: Context): void {
  * embed in running text falls through and is rendered as a link.
  */
 function embedParagraph(paragraph: Paragraph, context: Context): boolean {
-  const render = context.options.renderEmbeddedNote;
+  const render = context.options.renderEmbed;
   const only = paragraph.children[0];
   if (render === undefined || paragraph.children.length !== 1 || only?.type !== 'wikilink') {
     return false;
@@ -183,23 +326,43 @@ function embedParagraph(paragraph: Paragraph, context: Context): boolean {
   if (!only.embed || embedKind(parts.target) !== 'note') {
     return false;
   }
-  const link = context.options.resolveLink(parts.target, 'embed');
-  if (link.path === null) {
+  const link = context.options.resolveLink(parts.target, 'embed', context.options.sourcePath);
+  const reference: EmbedReference = { path: link.path, target: parts.target };
+  if (parts.heading !== undefined) {
+    reference.heading = parts.heading;
+  }
+  if (parts.blockId !== undefined) {
+    reference.blockId = parts.blockId;
+  }
+  if (parts.alias !== undefined) {
+    reference.alias = parts.alias;
+  }
+  const result = render(reference);
+  if (result === undefined) {
     return false;
   }
-  const body = render(link.path);
-  if (body === undefined) {
-    return false;
-  }
+
   const data = (paragraph.data ??= {});
   data.hName = 'div';
-  data.hProperties = {
+  const properties: Properties = {
     className: ['rz-embed'],
-    dataPath: link.path,
-    dataEmbed: String(context.embeds.push(body) - 1),
+    dataState: result.state,
   };
-  // Replaced by the rendered body after sanitising; shown if the caller drops the marker.
-  paragraph.children = [{ type: 'text', value: labelOf(parts, link, only.value) }];
+  if (link.path !== null) {
+    properties.dataPath = link.path;
+  }
+  if (result.state === 'ready') {
+    // Replaced by the rendered body after sanitising; the label below is what shows if the
+    // marker is ever dropped.
+    properties.dataEmbed = String(context.embeds.push(result.html) - 1);
+  }
+  data.hProperties = properties;
+  paragraph.children = [
+    {
+      type: 'text',
+      value: result.state === 'ready' ? labelOf(parts, link, only.value) : result.label,
+    },
+  ];
   return true;
 }
 
@@ -209,13 +372,13 @@ function renderWikilink(value: string, embed: boolean, context: Context): Image 
   if (kind === 'note') {
     return noteLink(parts, embed ? 'embed' : 'wikilink', value, context);
   }
-  const link = context.options.resolveLink(parts.target, 'embed');
+  const link = context.options.resolveLink(parts.target, 'embed', context.options.sourcePath);
   const url = context.options.assetUrl(link.path ?? parts.target);
   return kind === 'image' ? imageEmbed(parts, url) : fileEmbed(parts, url);
 }
 
 function noteLink(parts: WikilinkTarget, kind: LinkKind, value: string, context: Context): Link {
-  const link = context.options.resolveLink(parts.target, kind);
+  const link = context.options.resolveLink(parts.target, kind, context.options.sourcePath);
   return {
     type: 'link',
     url: link.href + fragmentOf(parts.heading),
@@ -268,7 +431,7 @@ function rewriteLink(node: Link, context: Context): void {
   if (target === undefined || !MARKDOWN_TARGET.test(target.path)) {
     return;
   }
-  const link = context.options.resolveLink(target.path, 'markdown');
+  const link = context.options.resolveLink(target.path, 'markdown', context.options.sourcePath);
   node.url = link.href + fragmentOf(target.fragment);
   const data = (node.data ??= {});
   data.hProperties = { ...data.hProperties, ...noteLinkProperties(link, target.path) };
@@ -279,11 +442,20 @@ function rewriteImage(node: Image, context: Context): void {
   if (target === undefined) {
     return;
   }
-  const link = context.options.resolveLink(target.path, 'embed');
+  const link = context.options.resolveLink(target.path, 'embed', context.options.sourcePath);
   node.url = context.options.assetUrl(link.path ?? target.path);
 }
 
-/** Puts the embedded bodies in place; they are already HTML and must not be escaped again. */
+/**
+ * Puts the embedded bodies in place; they are already HTML and must not be escaped again.
+ *
+ * This runs *after* `rehypeSanitize` and the result is stringified with `allowDangerousHtml`,
+ * so whatever reaches here is written into the page untouched. The only acceptable producer of
+ * such a string is `renderNote` itself, which is why `EmbedResult.ready` is the one state that
+ * carries HTML and why nothing outside this module ever fills `context.embeds`. Widening that —
+ * a query result assembled as a string, `rehype-raw`, anything — turns a tool whose whole point
+ * is opening somebody else's vault into stored cross-site scripting.
+ */
 function fillEmbeds(tree: HastRoot, embeds: readonly string[]): void {
   if (embeds.length === 0) {
     return;
@@ -312,7 +484,7 @@ function embedKind(target: string): 'image' | 'file' | 'note' {
 
 /** Heading references are slugged like the heading ids, so `#Heading` finds its anchor. */
 function fragmentOf(heading: string | undefined): string {
-  return heading === undefined ? '' : `#${slugOf(heading)}`;
+  return heading === undefined ? '' : `#${headingSlug(heading)}`;
 }
 
 /** The alias wins over the resolver's label: it is what the author wrote into the note. */

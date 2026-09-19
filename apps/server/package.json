@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@fastify/multipart": "catalog:",
-    "@fastify/sensible": "catalog:",
     "@fastify/static": "catalog:",
     "@fastify/swagger": "catalog:",
     "@fastify/swagger-ui": "catalog:",

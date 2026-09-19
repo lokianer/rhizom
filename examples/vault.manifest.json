@@ -2,7 +2,7 @@
   "description": "What a checker should find when it indexes examples/vault. Paths are vault paths: forward slashes, relative to the vault root, NFC-normalised, with extension.",
   "vault": "vault",
   "notes": {
-    "count": 37,
+    "count": 38,
     "byFolder": {
       "": 1,
       "Campaign": 1,
@@ -13,6 +13,7 @@
       "Campaign/Sessions": 3,
       "Research": 9,
       "Daily": 5,
+      "Glossary": 1,
       "Templates": 2
     },
     "ignored": [
@@ -33,6 +34,18 @@
       "Campaign/stats.csv"
     ],
     "maxTotalBytes": 307200
+  },
+  "definitions": {
+    "notes": ["Glossary/Spring tide.md"],
+    "terms": [
+      { "surface": "Spring tide", "path": "Glossary/Spring tide.md", "alias": false },
+      { "surface": "spring tides", "path": "Glossary/Spring tide.md", "alias": true }
+    ],
+    "unlinkedMentions": [
+      { "in": "Campaign/Places/Silverstadt.md", "text": "spring tides" },
+      { "in": "Campaign/Places/Silverstadt.md", "text": "Spring tide" }
+    ],
+    "note": "Only a note with type: definition contributes terms. The two mentions in Silverstadt.md are plain prose, not links, and the defining note mentions its own term as well."
   },
   "unresolvedLinks": {
     "targets": ["The Ashen Codex", "Lady Vermillion", "Research/Graph Layout Algorithms"],

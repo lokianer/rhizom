@@ -1,3 +1,4 @@
+import type { LinkKind } from './api.js';
 import { folderOf, noteNameOf } from './paths.js';
 
 export interface GraphNote {
@@ -9,6 +10,7 @@ export interface GraphLink {
   source: string;
   /** Resolved target path, or null for a link to a note that does not exist. */
   target: string | null;
+  kind: LinkKind;
 }
 
 export interface GraphNode {
@@ -28,6 +30,13 @@ export interface GraphEdge {
   target: string;
   /** How many links point from source to target. */
   count: number;
+  /**
+   * How many of those are written as an embed — `![[Note]]` or `![](Note.md)` — rather than as
+   * a plain link. Absent when none are, which keeps the field's response the size it was for a
+   * vault that embeds nothing. Note that this counts how the reference is *written*: a
+   * standalone `![[Note]]` is transcluded, while one inside running text renders as a link.
+   */
+  embeds?: number;
 }
 
 export interface GraphData {
@@ -44,6 +53,8 @@ export interface GraphOptions {
 /**
  * Builds the bubble graph from indexed notes and resolved links: one node per note, one edge
  * per linked pair (repeated links only raise the count), no self links, no unresolved links.
+ * A resolved `![[embed]]` counts: once it pulls the target's text onto the page, the two notes
+ * are connected in the strongest sense the vault has (see DECISIONS.md).
  */
 export function buildGraph(
   notes: readonly GraphNote[],
@@ -75,8 +86,15 @@ export function buildGraph(
     const existing = edges.get(key);
     if (existing) {
       existing.count += 1;
+      if (link.kind === 'embed') {
+        existing.embeds = (existing.embeds ?? 0) + 1;
+      }
     } else {
-      edges.set(key, { source: link.source, target: link.target, count: 1 });
+      const edge: GraphEdge = { source: link.source, target: link.target, count: 1 };
+      if (link.kind === 'embed') {
+        edge.embeds = 1;
+      }
+      edges.set(key, edge);
     }
   }
 

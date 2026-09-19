@@ -120,6 +120,20 @@ describe('parseNote', () => {
     expect(note.text).not.toContain('```');
     expect(note.wordCount).toBeGreaterThan(30);
   });
+
+  it('gives a hard-wrapped paragraph one line, so a block really is a line', () => {
+    const wrapped = parseNote(
+      '# T\n\nThe higher tide that follows\na full moon.\n\nSecond block.',
+      {
+        fallbackTitle: 'F',
+      },
+    );
+    expect(wrapped.text.split('\n')).toEqual([
+      'T',
+      'The higher tide that follows a full moon.',
+      'Second block.',
+    ]);
+  });
 });
 
 describe('parseNote edge cases', () => {

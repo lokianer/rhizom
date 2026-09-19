@@ -62,7 +62,13 @@ export async function syncVault(
     await yieldToEventLoop();
   }
   for (const path of removed) {
-    index.removeNote(path);
+    index.removeNote(path, { deferResolution: true });
+  }
+  // One resolution pass for the whole batch. Resolving per note is quadratic here: until the
+  // last note is in, most links point at notes the index has not seen yet, so every note would
+  // re-check nearly every link in the vault.
+  if (pending.length > 0 || removed.length > 0) {
+    index.resolveAll();
   }
   index.setMeta('indexedAt', new Date().toISOString());
   return { added, updated, removed: removed.length, unchanged };
@@ -103,7 +109,7 @@ export async function indexPaths(
 
 async function indexOne(vault: Vault, index: VaultIndex, path: string): Promise<boolean> {
   try {
-    await indexNote(vault, index, path);
+    await indexNote(vault, index, path, { deferResolution: true });
     return true;
   } catch (error) {
     if (error instanceof VaultError) {
@@ -118,19 +124,22 @@ async function indexNote(
   vault: Vault,
   index: VaultIndex,
   path: string,
-  options: { skipUnchanged?: boolean } = {},
+  options: { skipUnchanged?: boolean; deferResolution?: boolean } = {},
 ): Promise<boolean> {
   const note = await vault.readNote(path);
   if (options.skipUnchanged === true && index.getNote(note.path)?.hash === note.hash) {
     return false;
   }
-  index.upsertNote({
-    path: note.path,
-    size: note.size,
-    modifiedAt: note.modifiedAt,
-    hash: note.hash,
-    content: note.content,
-    parsed: parseNote(note.content, { fallbackTitle: noteNameOf(note.path) }),
-  });
+  index.upsertNote(
+    {
+      path: note.path,
+      size: note.size,
+      modifiedAt: note.modifiedAt,
+      hash: note.hash,
+      content: note.content,
+      parsed: parseNote(note.content, { fallbackTitle: noteNameOf(note.path) }),
+    },
+    options.deferResolution === true ? { deferResolution: true } : {},
+  );
   return true;
 }

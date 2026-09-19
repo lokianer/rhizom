@@ -5,8 +5,13 @@ import { rmSync } from 'node:fs';
 
 import Database from 'better-sqlite3';
 
-/** Bump whenever the DDL below or the Drizzle schema changes. */
-export const INDEX_SCHEMA_VERSION = 1;
+/**
+ * Bump whenever the DDL below, the Drizzle schema, or what `parseNote` stores in a row changes.
+ * The index is a cache of a parse, so a parser that reports something different needs the file
+ * rebuilt: `syncVault` skips a file whose size and modification time are unchanged and would
+ * otherwise keep the old answer forever.
+ */
+export const INDEX_SCHEMA_VERSION = 3;
 
 const DDL = `
 create table if not exists notes (
@@ -50,6 +55,15 @@ create table if not exists note_tags (
 );
 create index if not exists note_tags_tag on note_tags (tag);
 
+create table if not exists terms (
+  path text not null,
+  surface text not null,
+  folded text not null,
+  alias integer not null,
+  primary key (path, folded)
+);
+create index if not exists terms_folded on terms (folded);
+
 create table if not exists meta (
   key text primary key,
   value text not null
@@ -74,6 +88,27 @@ create trigger if not exists notes_fts_update after update on notes begin
 end;
 `;
 
+/**
+ * Deletes an index written by an older schema, together with its write-ahead log. On Windows a
+ * second Rhizom still holding the file makes this fail, and the bare errno that better-sqlite3
+ * would raise a moment later says nothing about what to do, so the cause is named here.
+ */
+function replaceIndexFile(file: string): void {
+  for (const suffix of ['', '-wal', '-shm']) {
+    try {
+      rmSync(`${file}${suffix}`, { force: true });
+    } catch (error) {
+      throw new Error(
+        `The index at ${file} was written by another version of Rhizom and has to be rebuilt, ` +
+          `but ${file}${suffix} could not be removed. Stop any other Rhizom using this data ` +
+          `directory, or delete the file yourself; nothing in it is lost, it is rebuilt from ` +
+          `the vault.`,
+        { cause: error },
+      );
+    }
+  }
+}
+
 export function openDatabase(file: string): Database.Database {
   let sqlite = new Database(file);
   if (
@@ -83,9 +118,7 @@ export function openDatabase(file: string): Database.Database {
     const version = sqlite.pragma('user_version', { simple: true });
     sqlite.close();
     if (version !== 0) {
-      for (const suffix of ['', '-wal', '-shm']) {
-        rmSync(`${file}${suffix}`, { force: true });
-      }
+      replaceIndexFile(file);
     }
     sqlite = new Database(file);
   }

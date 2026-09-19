@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseNote } from './parse.js';
+import { createTermMatcher } from './terms.js';
 import { renderNote, type RenderOptions, type RenderedLink } from './render.js';
 
 const VAULT = new Set(['Silverstadt.md', 'Factions/Harbour Guild.md', 'Templates/NPC.md']);
@@ -13,8 +14,26 @@ function resolveLink(target: string): RenderedLink {
   return { path: null, href: `/new/${target}` };
 }
 
+const ready = (html: string) => ({ state: 'ready', html }) as const;
+
+const matcher = createTermMatcher([
+  {
+    surface: 'spring tide',
+    path: 'Glossary/Spring tide.md',
+    alias: false,
+    summary: 'The higher tide.',
+  },
+  {
+    surface: 'spring tides',
+    path: 'Glossary/Spring tide.md',
+    alias: true,
+    summary: 'The higher tide.',
+  },
+]);
+
 function options(overrides: Partial<RenderOptions> = {}): RenderOptions {
   return {
+    sourcePath: 'Home.md',
     resolveLink,
     assetUrl: (vaultPath) => `/files/${vaultPath}`,
     ...overrides,
@@ -94,26 +113,55 @@ describe('renderNote: embeds', () => {
 
   it('replaces a standalone note embed with the rendered body', () => {
     const html = render('Before\n\n![[Templates/NPC]]\n\nAfter', {
-      renderEmbeddedNote: (path) => `<p>body of ${path}</p>`,
+      renderEmbed: (reference) => ready(`<p>body of ${reference.path ?? ''}</p>`),
     });
     expect(html).toContain(
-      '<div class="rz-embed" data-path="Templates/NPC.md"><p>body of Templates/NPC.md</p></div>',
+      '<div class="rz-embed" data-state="ready" data-path="Templates/NPC.md">' +
+        '<p>body of Templates/NPC.md</p></div>',
     );
     expect(html).not.toContain('data-embed');
+  });
+
+  it('hands the embed hook the heading and alias that were written', () => {
+    const seen: unknown[] = [];
+    render('![[Templates/NPC#Voice|the voice]]', {
+      renderEmbed: (reference) => {
+        seen.push(reference);
+        return ready('<p>x</p>');
+      },
+    });
+    expect(seen).toEqual([
+      { path: 'Templates/NPC.md', target: 'Templates/NPC', heading: 'Voice', alias: 'the voice' },
+    ]);
+  });
+
+  it('shows a labelled block when the hook has no body to give', () => {
+    for (const state of ['loading', 'missing', 'circular', 'truncated'] as const) {
+      expect(
+        render('![[Templates/NPC]]', { renderEmbed: () => ({ state, label: `${state} here` }) }),
+      ).toBe(
+        `<div class="rz-embed" data-state="${state}" data-path="Templates/NPC.md">${state} here</div>`,
+      );
+    }
+  });
+
+  it('offers an embed of a note that does not exist, so the app can say so', () => {
+    expect(
+      render('![[No Such Note]]', {
+        renderEmbed: (reference) => ({ state: 'missing', label: `no ${reference.target}` }),
+      }),
+    ).toBe('<div class="rz-embed" data-state="missing">no No Such Note</div>');
   });
 
   it('falls back to a link without a renderer, when the renderer declines or inline', () => {
     expect(render('![[Templates/NPC]]')).toBe(
       '<p><a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
     );
-    expect(render('![[Templates/NPC]]', { renderEmbeddedNote: () => undefined })).toContain(
+    expect(render('![[Templates/NPC]]', { renderEmbed: () => undefined })).toContain(
       '<a href="/wiki/Templates/NPC.md" class="rz-wikilink">',
     );
-    expect(render('text ![[Templates/NPC]]', { renderEmbeddedNote: () => '<p>x</p>' })).toBe(
+    expect(render('text ![[Templates/NPC]]', { renderEmbed: () => ready('<p>x</p>') })).toBe(
       '<p>text <a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
-    );
-    expect(render('![[No Such Note]]', { renderEmbeddedNote: () => '<p>x</p>' })).toContain(
-      'rz-wikilink-missing',
     );
   });
 
@@ -122,9 +170,58 @@ describe('renderNote: embeds', () => {
   });
 
   it('never embeds a plain link that stands on its own line', () => {
-    expect(render('[[Templates/NPC]]', { renderEmbeddedNote: () => '<p>x</p>' })).toBe(
+    expect(render('[[Templates/NPC]]', { renderEmbed: () => ready('<p>x</p>') })).toBe(
       '<p><a href="/wiki/Templates/NPC.md" class="rz-wikilink">Templates/NPC</a></p>',
     );
+  });
+});
+
+describe('renderNote: terms', () => {
+  it('marks a term the vault defines where it stands in prose', () => {
+    const html = render('The spring tides flood the cellars.', { terms: matcher });
+    expect(html).toBe(
+      '<p>The <span class="rz-term" data-term="Glossary/Spring tide.md" ' +
+        'title="The higher tide.">spring tides</span> flood the cellars.</p>',
+    );
+  });
+
+  it('keeps the class and the data attribute through the sanitiser', () => {
+    const html = render('A spring tide.', { terms: matcher });
+    expect(html).toContain('class="rz-term"');
+    expect(html).toContain('data-term="Glossary/Spring tide.md"');
+  });
+
+  it('leaves a term alone inside code, a link or a wikilink', () => {
+    expect(render('`spring tide`', { terms: matcher })).not.toContain('rz-term');
+    expect(render('```\nspring tide\n```', { terms: matcher })).not.toContain('rz-term');
+    expect(render('[spring tide](https://example.com)', { terms: matcher })).not.toContain(
+      'rz-term',
+    );
+    expect(render('[[spring tide]]', { terms: matcher })).not.toContain('rz-term');
+  });
+
+  it('does not mark a term inside the note that defines it', () => {
+    const html = render('A spring tide floods the cellars.', {
+      terms: matcher,
+      sourcePath: 'Glossary/Spring tide.md',
+    });
+    expect(html).not.toContain('rz-term');
+  });
+
+  it('leaves the title off when the defining note says nothing but its name', () => {
+    const bare = createTermMatcher([
+      { surface: 'Insel', path: 'Glossary/Insel.md', alias: false, summary: '' },
+    ]);
+    expect(render('The Insel.', { terms: bare })).toBe(
+      '<p>The <span class="rz-term" data-term="Glossary/Insel.md">Insel</span>.</p>',
+    );
+  });
+
+  it('marks every occurrence in one paragraph, and inside a heading too', () => {
+    const html = render('## A spring tide\n\nOne spring tide, then another spring tide.', {
+      terms: matcher,
+    });
+    expect(html.match(/class="rz-term"/g)).toHaveLength(3);
   });
 });
 

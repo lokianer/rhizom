@@ -4,7 +4,7 @@ Rhizom is built in strict phases. Every phase ends in a runnable state with gree
 Windows, macOS and Linux, updated documentation and clean, atomic commits — and then stops
 for review before the next phase begins. Features from later phases are never pulled forward.
 
-Status: **Phase 1 in progress** (Phase 0 complete).
+Status: **Phase 2 in progress** (Phases 0 and 1 complete).
 
 ## Phase 0 — Foundation
 
@@ -41,11 +41,11 @@ Status: **Phase 1 in progress** (Phase 0 complete).
 
 ## Phase 2 — Knowledge layer and editor expansion
 
-- [ ] Definitions: note type `definition` via frontmatter; term and aliases are recognised
+- [x] Definitions: note type `definition` via frontmatter; term and aliases are recognised
       automatically in all notes; hover tooltip with the short definition; automatically
       maintained, alphabetical glossary page
-- [ ] Unlinked mentions with a one-click "Link all" action
-- [ ] Transclusion: `![[Note]]` and `![[Note#Heading]]`
+- [x] Unlinked mentions with a one-click "Link all" action
+- [x] Transclusion: `![[Note]]` and `![[Note#Heading]]`
 - [ ] Templates + slash commands (`/table`, `/definition`, `/date`, `/npc` …) with variables
       (`{{date}}`, `{{title}}`, `{{roll:1d100}}`)
 - [ ] Frontmatter editable as a form
@@ -53,8 +53,8 @@ Status: **Phase 1 in progress** (Phase 0 complete).
       index (filter by type/tag/folder/frontmatter fields); saved searches appear as smart
       folders in the sidebar
 - [ ] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
-- [ ] Editor expansion: split view, outline panel, callouts, Mermaid, task checkboxes,
-      zen mode, optional Vim mode
+- [ ] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
+      optional Vim mode (split view already shipped with Phase 1)
 - [ ] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export
 

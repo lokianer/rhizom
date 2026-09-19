@@ -62,6 +62,27 @@ export const noteTags = sqliteTable(
   ],
 );
 
+// Terms are a denormalisation of `notes`: title and aliases of every note that declares itself
+// a definition. It exists so that marking mentions does not have to parse the frontmatter JSON
+// of every note in the vault on a path that runs after each save.
+export const terms = sqliteTable(
+  'terms',
+  {
+    /** The note that defines the term. */
+    path: text('path').notNull(),
+    /** The term as written, for display. */
+    surface: text('surface').notNull(),
+    /** Folded for lookup, which also collapses duplicates inside one note. */
+    folded: text('folded').notNull(),
+    /** Whether the surface comes from `aliases:` rather than from the note's title. */
+    alias: integer('alias', { mode: 'boolean' }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.path, table.folded] }),
+    index('terms_folded').on(table.folded),
+  ],
+);
+
 export const meta = sqliteTable('meta', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),

@@ -8,6 +8,7 @@ import {
   resolveLinkTarget,
   type NoteIndex,
   type NoteSummary,
+  type TermMatcher,
 } from '@rhizom/core';
 
 export interface EditorHandlers {
@@ -22,6 +23,8 @@ export interface EditorContextValue {
   readonly path: string;
   readonly notes: readonly NoteSummary[];
   readonly index: NoteIndex;
+  /** The terms the vault defines, for marking them and explaining them on hover. */
+  readonly terms: TermMatcher;
   readonly handlers: { current: EditorHandlers };
 }
 
@@ -30,7 +33,12 @@ export const editorContext = Facet.define<EditorContextValue, EditorContextValue
 });
 
 export function buildNoteIndex(notes: readonly NoteSummary[]): NoteIndex {
-  return createNoteIndex(notes.map((note) => note.path));
+  // One by one, because createNoteIndex(paths) drops the aliases a link may also use.
+  const index = createNoteIndex();
+  for (const note of notes) {
+    index.add(note.path, note.aliases);
+  }
+  return index;
 }
 
 /**

@@ -1,18 +1,19 @@
 import { CompletionContext } from '@codemirror/autocomplete';
 import { EditorState } from '@codemirror/state';
-import type { NoteSummary } from '@rhizom/core';
+import { createTermMatcher, type NoteSummary } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
 import { wikilinkCompletion } from './completion.js';
 import { buildNoteIndex, editorContext, wikilinkExists } from './context.js';
 
-function note(path: string, title: string, folder: string): NoteSummary {
+function note(path: string, title: string, folder: string, aliases: string[] = []): NoteSummary {
   return {
     path,
     name: title,
     title,
     folder,
     tags: [],
+    aliases,
     modifiedAt: '2026-01-01T00:00:00.000Z',
     size: 0,
     linkCount: 0,
@@ -30,6 +31,7 @@ const context = {
   path: 'Campaign/Session.md',
   notes,
   index: buildNoteIndex(notes),
+  terms: createTermMatcher([]),
   handlers: {
     current: {
       onChange: () => undefined,

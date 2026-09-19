@@ -1,16 +1,19 @@
 // Wiki mode: the vault as a read-only site. The same Markdown pipeline as the indexer turns
 // the note into sanitised HTML; links stay inside the app.
 import type { NoteDocument } from '@rhizom/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router';
+import { Link, useOutletContext, useParams } from 'react-router';
 
 import { api, isAbortError } from '../api/client.js';
 import { NotePreview } from './NotePreview.js';
+import type { OutletContext } from './outlet.js';
 import { noteHref, notePathFromParam } from './paths.js';
+import { revisionOf } from './useIndexEvents.js';
 
 export function WikiPage() {
   const { t } = useTranslation();
+  const { revisions } = useOutletContext<OutletContext>();
   const params = useParams();
   const path = notePathFromParam(params['*']);
 
@@ -19,10 +22,10 @@ export function WikiPage() {
   }
   // Keyed like the editor page: another note starts from nothing, instead of an effect
   // having to clear the previous one's state first.
-  return <WikiView key={path} path={path} />;
+  return <WikiView key={path} path={path} revisions={revisions} />;
 }
 
-function WikiView({ path }: { path: string }) {
+function WikiView({ path, revisions }: { path: string } & OutletContext) {
   const { t } = useTranslation();
   const [doc, setDoc] = useState<NoteDocument | null>(null);
   const [error, setError] = useState('');
@@ -41,6 +44,29 @@ function WikiView({ path }: { path: string }) {
       controller.abort();
     };
   }, [path]);
+
+  // Read-only does not mean frozen: the file may change under the reader, through Git, another
+  // editor or the app's own editor in a second tab. Without this the body would stay as it was
+  // for as long as the tab stays open, and a transcluded body with it.
+  const revision = revisionOf(revisions, path);
+  const applied = useRef(revision);
+  useEffect(() => {
+    // The effect above already fetched what the page mounted with, so only a *change* counts.
+    if (applied.current === revision) {
+      return;
+    }
+    applied.current = revision;
+    const controller = new AbortController();
+    api
+      .note(path, { signal: controller.signal })
+      .then(setDoc)
+      .catch(() => {
+        // A failed refresh keeps what is on screen; the next change tries again.
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [revision, path]);
 
   if (error !== '') {
     return <p className="rz-page rz-error">{t('status.error', { message: error })}</p>;

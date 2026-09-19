@@ -24,6 +24,13 @@ const router = createBrowserRouter([
         path: 'graph',
         lazy: async () => ({ Component: (await import('./GraphPage.js')).GraphPage }),
       },
+      {
+        path: 'glossary',
+        lazy: async () => ({ Component: (await import('./GlossaryPage.js')).GlossaryPage }),
+      },
+      // Anything unmatched shows the home page. React Router ranks routes by how specific they
+      // are rather than by order, so this does not shadow its siblings; it is written last
+      // because that is where a reader looks for the fallback.
       { path: '*', Component: HomePage },
     ],
   },

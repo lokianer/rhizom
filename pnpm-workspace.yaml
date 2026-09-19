@@ -29,7 +29,6 @@ catalog:
   '@codemirror/state': ^6.7.5
   '@codemirror/view': ^6.43.12
   '@fastify/multipart': ^10.1.1
-  '@fastify/sensible': ^6.0.5
   '@fastify/static': ^10.1.4
   '@fastify/swagger': ^9.8.1
   '@fastify/swagger-ui': ^6.1.1

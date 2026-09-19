@@ -1,4 +1,5 @@
 import { EditorState } from '@codemirror/state';
+import { createTermMatcher } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
 import { buildNoteIndex, editorContext, type EditorContextValue } from './context.js';
@@ -9,6 +10,7 @@ const context: EditorContextValue = {
   path: 'Campaign/Session.md',
   notes: [],
   index: buildNoteIndex([]),
+  terms: createTermMatcher([]),
   handlers: {
     current: {
       onChange: () => undefined,

@@ -13,7 +13,12 @@ export interface LinkResolver {
 }
 
 export function createResolver(notes: readonly NoteSummary[]): LinkResolver {
-  const index = createNoteIndex(notes.map((note) => note.path));
+  // Added one by one rather than through createNoteIndex(paths), which takes paths alone: a
+  // link may name a note by any of its aliases, and the server resolves it that way too.
+  const index = createNoteIndex();
+  for (const note of notes) {
+    index.add(note.path, note.aliases);
+  }
   return {
     resolve: (target, sourcePath) => resolveLinkTarget(target, sourcePath, index),
   };

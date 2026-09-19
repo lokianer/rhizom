@@ -319,3 +319,226 @@ rather than writing the file on the spot. A stray click in a vault of somebody's
 should not leave a file behind, and the path the link would create is worth seeing before it
 exists. The same page appears when a URL points at a note that is not there, so the two ways
 of arriving at a missing note look the same.
+
+## 2026-09-19 — Phase 2: one reserved frontmatter key, `type`
+
+Definitions, templates, saved searches and axis definitions all need to say what a note _is_,
+and that mark lands in files their owner also opens in Obsidian or a plain editor. Rhizom
+reserves a single flat key for it — `type`, with the values `definition`, `template`, `query`
+and `axes` — and keeps the keys Obsidian already established for the rest (`aliases`, `tags`).
+Matching is case-insensitive on the trimmed string.
+
+A namespaced `rhizom:` map would rule out every collision, but it is invisible to Dataview and
+to anything else that reads frontmatter, and it is tedious to type by hand, which is the
+opposite of what rule 2 asks for. A vault that already uses `type` for something of its own
+loses nothing: a value Rhizom does not know simply means the note is of no special kind to it,
+and no value is ever rewritten. Should a Rhizom-only key be needed later that does not describe
+the kind of a note, it goes under a `rhizom:` map introduced at that point, not now.
+
+## 2026-09-19 — Phase 2: a resolved embed is a graph edge of its own kind
+
+Phase 1 left `![[Note]]` out of the graph, which was right while an embed was only a link that
+looked different. Once transclusion pulls the target's text into the page, the two notes are
+connected in the strongest sense the vault has, and a note that is only ever embedded would
+otherwise sit in the field as an orphan while its content is on screen. Resolved note embeds
+therefore count.
+
+They carry their kind: `links.kind` already distinguishes `wikilink`, `embed` and `markdown`,
+so the graph edge keeps that distinction instead of flattening it, and the field can draw or
+filter embeds differently. File embeds (images, PDFs) stay out — they have no node. This is
+also the groundwork for the typed relationships Phase 3 wants on edges.
+
+One caveat on the count: `links.kind` records how a reference is _written_, and only a
+standalone `![[Note]]` is actually transcluded — one inside running text renders as a link.
+`GraphEdge.embeds` therefore counts embed-shaped references, which is what the field can filter
+on; it is not a promise that each one pulled text onto the page.
+
+## 2026-09-19 — Phase 2: milieu axes are defined in a note
+
+The axes of the milieu view are named, described and bounded somewhere, and that somewhere is
+an ordinary Markdown note with `type: axes` in its frontmatter — not `localStorage`, and not a
+configuration file under a dotted folder inside the vault. Axes are part of what a vault means,
+not a per-browser preference: they belong to the material, they should travel with it through
+Git or Syncthing, and someone without Rhizom should be able to read and change them.
+
+This does not reopen the Phase 1 decision about where the index lives. The index is derived and
+disposable, so it stays out of the vault; an axis definition is authored content, so it stays
+in. Keeping it a note rather than a `.rhizom/axes.yml` is the same choice templates and saved
+searches make, which leaves one rule instead of three.
+
+## 2026-09-19 — Phase 2: Mermaid and Vim mode, both loaded on demand
+
+Rule 6 wants larger dependencies justified before they are built in. Two enter in Phase 2:
+`mermaid` for diagrams in notes and `@replit/codemirror-vim` for the optional Vim mode.
+
+`mermaid` is by a distance the heaviest thing in the tree — 172 kB gzipped, 1.45 MB across its
+chunks, 23 transitive dependencies — and nothing else renders a diagram from text that people
+already write in their notes. It is imported dynamically the first time a `mermaid` block is
+rendered, so a reader who never opens a note with a diagram never fetches it; the app's 321 kB
+first load does not move. Vim mode costs 74 kB with its core, is off by default and is imported
+when it is switched on. Both are optional at runtime: the editor and the wiki work with the
+packages absent, a diagram then staying the code block it is in the file.
+
+## 2026-09-19 — Phase 2: the terms table, and what a schema bump costs
+
+The title and aliases of every definition note are denormalised into a `terms` table rather
+than read out of the `notes` rows they already sit in. Marking mentions runs on a path that
+fires after every save, and the two shapes differ by an order of magnitude: a few hundred term
+rows against the frontmatter and alias JSON of every note in the vault. The table carries only
+`path`, `surface`, `folded` and `alias`; the tooltip's summary is read from `notes.body`, and
+the matcher buckets by first word in memory, so neither needs a column.
+
+That makes `INDEX_SCHEMA_VERSION` 2. A bump deletes the index file and rebuilds it
+(`openDatabase`), which costs one vault scan on the next start and loses nothing — the Markdown
+files are the vault. Later slices in this phase are designed without further DDL, but the
+version is not only about DDL: the index is a cache of a parse, so a slice that changes what
+`parseNote` reports bumps it too, because `syncVault` skips a file whose size and modification
+time are unchanged and would otherwise serve the old answer forever.
+
+## 2026-09-19 — Phase 2: block references are not part of it
+
+`![[Note#^block-id]]` stays out. `parseWikilink` already reports a `blockId`, but nothing parses
+the `^id` anchor that a block carries, `NoteLink` has no field for it and the `links` table no
+column — and an anchor has to survive being moved, edited and copied, which is a larger job than
+resolving a heading. Phase 2 transcludes `![[Note]]` and `![[Note#Heading]]`, as the roadmap
+says, and a block reference renders as the link it is today.
+
+## 2026-09-19 — Phase 2: a bulk sync resolves links once, not once per note
+
+`upsertNote` used to re-resolve, for every note it wrote, every link in the vault that was still
+unresolved. While a first build is running most links are unresolved — their targets have not
+been indexed yet — so the work grew with the square of the vault: a generated vault of 5,000
+notes and 47,000 links took 198 seconds, and `openVaultContext` awaits that build before the
+server answers anything.
+
+A full sync now passes `deferResolution` and calls `resolveAll()` once when the batch is in. The
+answer is identical, because a link is resolved against the finished note index either way, and
+the same build now takes about ten seconds. The watcher keeps the per-note path: for a single
+saved note the targeted pass is the cheaper of the two.
+
+This was found while measuring what the schema bump above costs a user, since that bump makes
+every existing installation rebuild once.
+
+## 2026-09-19 — Phase 2: the transclusion seam, and what may cross it
+
+`![[Note]]` and `![[Note#Heading]]` render the note itself. Three things about how.
+
+**The recursion lives in core, the fetching does not.** `renderNoteWithEmbeds` owns the ancestor
+chain, the depth limit and the budget; the note bodies arrive through a synchronous `readNote`
+hook that the app fills from its own cache. A body the app has not got yet is not an error: the
+embed renders a "loading" placeholder and the app renders again when it arrives. That keeps the
+renderer a pure function of what is currently known, which is what the editor's preview needs —
+it renders the unsaved draft on every keystroke, and no server has ever seen that text. Rendering
+on the server was considered and dropped for the same reason.
+
+**The cycle key is the note _and_ the heading.** Two sections of one note side by side is the
+ordinary map-of-content case and must work; only a reference that is already its own ancestor is
+a cycle. Every render also carries an id prefix, because a transcluded note brings its headings
+and footnotes into the host page and two notes may well share a heading; the reported `headings`
+stay the host's, so an outline lists what the reader wrote, not what the reader pulled in.
+
+**Only `renderNote` may produce embedded HTML.** The bodies are inserted after `rehypeSanitize`
+and stringified with `allowDangerousHtml`, so whatever reaches `fillEmbeds` is written into the
+page untouched. `EmbedResult.ready` is therefore the one state carrying HTML; every other state
+carries a label that is rendered as ordinary text. A later feature that wants to put something
+else there — a query result, say — builds mdast and goes through the sanitiser like everything
+else. Widening that seam would turn a tool whose whole point is opening somebody else's vault
+into stored cross-site scripting.
+
+Block references (`![[Note#^id]]`) stay out of Phase 2, as recorded above: `renderNoteWithEmbeds`
+returns undefined for one, which leaves it the link it has always been rather than transcluding
+the whole note it happens to point into.
+
+## 2026-09-19 — Phase 2: a heading reads as the reader sees it
+
+`## See [[Silverstadt|the city]]` used to report its text as `See Silverstadt|the city` and slug
+to `see-silverstadtthe-city`, because the flattener hands back a wikilink's raw value. It now
+reads `See the city`, which is what the page shows, what Obsidian slugs and therefore what an
+anchor already written in a vault points at.
+
+Three kinds of heading read differently now: one containing a wikilink, one containing an image
+(its alt text counts), and one containing a run of whitespace, a tab or a non-breaking space,
+which now collapses to a single space. The last is the one that matters most, because a
+reference is usually the heading copied verbatim: `headingSlug` is the single function every
+heading id, `#fragment` href and `![[Note#Heading]]` goes through, so a slug written one way and
+read the other cannot drift apart again. `INDEX_SCHEMA_VERSION` is bumped with it, because the
+stored headings are a cache of the old parse.
+
+## 2026-09-19 — Phase 2: the glossary is a view, and a term explains itself in place
+
+The glossary is generated from the index, not written into the vault as a note. A vault that
+carried a glossary file would have two truths about what it defines, and the file would be wrong
+the moment a definition is renamed or deleted; rule 2 says the Markdown files are the source, and
+a generated list is not a source. The page is therefore a route, not a document, and anything
+that wants the glossary in a file exports it.
+
+A mention says what it means through the `title` attribute in the rendered HTML and through a
+CodeMirror hover tooltip in the editor. Both read the same summary, which arrives with the
+glossary, so hovering fetches nothing: a tooltip that has to go to the server first is a tooltip
+that appears after the reader has moved on. The summary is the defining note's first block,
+computed in `packages/core` so the glossary, the tooltip and the marks cannot disagree about it.
+
+There is one endpoint, not two. `GET /api/glossary` returns one entry per definition note, and
+`glossaryTerms` expands an entry into the names it answers to; a separate term list would have
+been the same data with the summary repeated once per name — 1,268 kB against 171 kB on a vault
+of 300 definitions with nine names apiece, reloaded after every save.
+
+Marks are deliberately quiet — a dotted underline, no colour — because in a vault with a full
+glossary most sentences hold one. A term is not marked inside a link, a code span, a wikilink or
+the frontmatter, and never inside the note that defines it: a word already carrying one
+affordance does not get a second, and reading the definition of a word is not a mention of it.
+
+## 2026-09-19 — Phase 2: the batch that writes other people's notes
+
+"Link all" is the only thing in Rhizom that writes several files at once, and the only thing
+that writes a file the reader is not looking at. Three rules hold it in.
+
+**Every file carries the hash it was read at, and the hash is mandatory.** `PUT /api/notes/*`
+accepts a missing `If-Match` and overwrites; a batch writer must not inherit that habit, because
+the mistake it makes is multiplied by the number of files. The hash does double duty here: it
+also says the file is character for character what the browser scanned, which is what makes the
+offsets it sends back safe to cut at.
+
+**A file that changed meanwhile is reported, not refused.** One stale note comes back as
+`skipped: { reason: 'conflict' }` while the other nine are written, rather than a 412 that fails
+the batch. The alternative — all or nothing — means one background save can block a reader from
+doing anything, and the reader cannot tell which file was the problem.
+
+**Candidates come from the full-text index, not from reading the vault.** A panel opening must
+not read five thousand files. Full-text is a coarser filter than the term matcher — it tokenises
+and folds differently — so it may hand back a note holding no mention after all, which the scan
+then drops; what matters is that it never misses one, so the terms are ANDed within a name and
+ORed between names, with no prefix matching. The candidate set is capped and the answer says when
+it was.
+
+The undo story is Git, or the file itself. `.trash` catches deletes only, and nothing in Rhizom
+restores a rewrite — which is why the mentions are listed one by one with the line each sits in,
+ticked individually, and why a mention inside a heading is marked as such: linking it changes
+the heading's text and with it every `#anchor` and `![[Note#Heading]]` pointing at it.
+
+## 2026-09-19 — Phase 2: what a written link is allowed to look like
+
+Reading a link is forgiving; writing one is not. Three rules follow from that.
+
+**Inside a table cell the alias separator is written `\|`.** A bare `|` ends the cell: the row
+gains a column, GFM drops the last one, and the link is torn in half with nothing to show for
+it. Obsidian requires the same backslash there, so this is its convention rather than ours —
+and `parseWikilink` now strips it, because the backslash belongs to the table, not to the note's
+name.
+
+**A note whose name holds `#`, `|`, `[` or `]` is not linked at all.** The wikilink syntax
+spends those characters on something else, so writing the name would point the link at a
+different note, or at none. The mention stays as it is; a syntax that cannot say what we mean is
+not one to guess with.
+
+**An ambiguous name is written as a path.** Where two notes share a name, the one a bare link
+lands on depends on which folder the link stands in and on what else the vault holds. That the
+tie breaks towards the right note today is not a reason to write the short form: the day a
+namesake is added, every such link quietly starts pointing elsewhere.
+
+The scan is driven by the other notes in the vault, not by the one being edited: typing in the
+open note cannot add a mention of it to somebody else's file, so its own saves do not trigger a
+rescan — a full-text query plus up to two hundred file reads is not something to do between
+keystrokes. And a mention that has been offered once keeps whatever answer it was given, because
+a scan can run again for reasons the reader had nothing to do with, and a batch that re-ticks
+the boxes they unticked would write the very notes they took out of it.

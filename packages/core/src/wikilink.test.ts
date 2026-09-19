@@ -57,6 +57,16 @@ describe('parseWikilink', () => {
     expect(parseWikilink('Silverstadt#')).toEqual({ target: 'Silverstadt' });
   });
 
+  it('reads the separator a table cell forced to be escaped', () => {
+    // Inside a GFM table an unescaped `|` would end the cell, so Obsidian — and Rhizom — write
+    // the alias separator as `\|` there. The backslash belongs to the table, not to the name.
+    expect(parseWikilink('Places/Silverstadt\\|Silverstadt')).toEqual({
+      target: 'Places/Silverstadt',
+      alias: 'Silverstadt',
+    });
+    expect(parseWikilink('Places/Silverstadt\\|')).toEqual({ target: 'Places/Silverstadt' });
+  });
+
   it('returns an empty target for empty input', () => {
     expect(parseWikilink('')).toEqual({ target: '' });
     expect(parseWikilink('   ')).toEqual({ target: '' });

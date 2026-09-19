@@ -1,6 +1,6 @@
 // One open note: loaded from the server, edited in CodeMirror, saved with the hash it was
 // loaded with, and reloaded when the file changes on disk while nothing is unsaved.
-import type { IndexEvent, NoteDocument } from '@rhizom/core';
+import { createTermMatcher, type NoteDocument } from '@rhizom/core';
 import {
   lazy,
   Suspense,
@@ -16,21 +16,16 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
 import { MarkdownEditor } from '../editor/index.js';
-import { BacklinksPanel } from '../panels/index.js';
+import { BacklinksPanel, MentionsPanel } from '../panels/index.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { createResolver } from './links.js';
-
+import type { OutletContext } from './outlet.js';
 import { noteHref, notePathFromParam } from './paths.js';
-import { eventTouches } from './useIndexEvents.js';
+import { revisionElsewhere, revisionOf } from './useIndexEvents.js';
 
 // The preview brings the whole Markdown renderer, which someone who only writes never needs.
 const NotePreview = lazy(async () => ({ default: (await import('./NotePreview.js')).NotePreview }));
-
-/** What the shell hands down through the router outlet. */
-export interface OutletContext {
-  lastEvent: IndexEvent | null;
-}
 
 const AUTOSAVE_MS = 800;
 
@@ -38,7 +33,7 @@ type LoadState = 'loading' | 'ready' | 'missing' | 'error';
 type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 
 export function NotePage() {
-  const { lastEvent } = useOutletContext<OutletContext>();
+  const { revisions } = useOutletContext<OutletContext>();
   const { t } = useTranslation();
   const params = useParams();
   const path = notePathFromParam(params['*']);
@@ -48,18 +43,18 @@ export function NotePage() {
   }
   // Another note is another document: the key resets editor, save state and pending edits,
   // instead of an effect having to undo the previous note's state.
-  return <NoteView key={path} path={path} lastEvent={lastEvent} />;
+  return <NoteView key={path} path={path} revisions={revisions} />;
 }
 
-interface NoteViewProps {
+interface NoteViewProps extends OutletContext {
   path: string;
-  lastEvent: IndexEvent | null;
 }
 
-function NoteView({ path, lastEvent }: NoteViewProps) {
+function NoteView({ path, revisions }: NoteViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const notes = useVaultStore((state) => state.notes);
+  const terms = useVaultStore((state) => state.terms);
   const refreshVault = useVaultStore((state) => state.refresh);
   const splitView = useUiStore((state) => state.splitView);
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
@@ -80,6 +75,9 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resolver = useMemo(() => createResolver(notes), [notes]);
+  // Memoised on the term list, not on the context: the vault store replaces every array after
+  // each save, and rebuilding the matcher would rebuild every decoration layer with it.
+  const matcher = useMemo(() => createTermMatcher(terms), [terms]);
 
   const applyLoaded = useCallback((loaded: NoteDocument) => {
     hashRef.current = loaded.hash;
@@ -172,10 +170,15 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
   }, [path]);
 
   // The file changed outside Rhizom: take the new text over when nothing is unsaved.
+  // Counted rather than signalled: one watcher batch can report two events in a single render,
+  // and a page holding only the last of them would never hear about the first.
+  const revision = revisionOf(revisions, path);
+  const applied = useRef(revision);
   useEffect(() => {
-    if (!eventTouches(lastEvent, path) || pending.current !== null) {
+    if (applied.current === revision || pending.current !== null) {
       return;
     }
+    applied.current = revision;
     const controller = new AbortController();
     api
       .note(path, { signal: controller.signal })
@@ -193,7 +196,7 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
     return () => {
       controller.abort();
     };
-  }, [lastEvent, path]);
+  }, [revision, path]);
 
   const remove = useCallback(() => {
     setAskDelete(false);
@@ -313,6 +316,7 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
           content={doc.content}
           externalContent={externalContent}
           notes={notes}
+          terms={matcher}
           ariaLabel={t('editor.label')}
           onChange={scheduleSave}
           onSave={(content) => {
@@ -345,6 +349,14 @@ function NoteView({ path, lastEvent }: NoteViewProps) {
 
       <BacklinksPanel
         path={doc.path}
+        onOpen={(target) => {
+          void navigate(noteHref(target));
+        }}
+      />
+
+      <MentionsPanel
+        path={doc.path}
+        elsewhere={revisionElsewhere(revisions, doc.path)}
         onOpen={(target) => {
           void navigate(noteHref(target));
         }}

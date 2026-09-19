@@ -3,11 +3,17 @@ export type {
   AssetSummary,
   Backlink,
   CreateNoteRequest,
+  GlossaryEntry,
   GraphResponse,
   Heading,
   HealthResponse,
   IndexEvent,
   LinkKind,
+  LinkMentionsRequest,
+  LinkMentionsResult,
+  MentionGroup,
+  MentionWrite,
+  MentionsResponse,
   NoteDocument,
   NoteLink,
   NoteSummary,
@@ -19,6 +25,14 @@ export type {
   UploadResponse,
   VaultInfo,
 } from './api.js';
+export { NOTE_TYPES, noteTypeOf, type NoteType } from './frontmatter.js';
+export {
+  renderNoteWithEmbeds,
+  type EmbedLabels,
+  type EmbedRenderOptions,
+  type EmbedSource,
+  type RenderedWithEmbeds,
+} from './embed.js';
 export { fuzzyMatch, fuzzyRank, type FuzzyMatch, type FuzzyRanked } from './fuzzy.js';
 export {
   buildGraph,
@@ -32,6 +46,14 @@ export {
   type GraphOptions,
 } from './graph.js';
 export { isMarkdownFile, MARKDOWN_EXTENSIONS } from './markdown.js';
+export {
+  canLinkTo,
+  findMentions,
+  linkMentions,
+  proseSpans,
+  type Mention,
+  type ProseSpan,
+} from './mentions.js';
 export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from './parse.js';
 export {
   ensureMarkdownExtension,
@@ -47,5 +69,24 @@ export {
   type NoteIndex,
 } from './resolve.js';
 export { remarkWikilink, type Wikilink } from './remark-wikilink.js';
+export {
+  createTermMatcher,
+  definedTerms,
+  foldTerm,
+  glossaryTerms,
+  summaryOf,
+  type DefinedTerm,
+  type TermMatch,
+  type TermMatcher,
+  type VaultTerm,
+} from './terms.js';
 export { parseWikilink, type WikilinkTarget } from './wikilink.js';
-export { renderNote, type RenderOptions, type RenderedLink, type RenderedNote } from './render.js';
+export {
+  renderNote,
+  type EmbedReference,
+  type EmbedResult,
+  type RenderOptions,
+  type RenderedLink,
+  type RenderedNote,
+} from './render.js';
+export { sliceSection } from './section.js';

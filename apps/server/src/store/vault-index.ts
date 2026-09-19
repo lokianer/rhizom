@@ -2,8 +2,13 @@
 // Everything in here can be rebuilt from the Markdown files; nothing here is a source of truth.
 import {
   createNoteIndex,
+  definedTerms,
+  foldTerm,
+  noteNameOf,
+  summaryOf,
   resolveLinkTarget,
   type Backlink,
+  type GlossaryEntry,
   type GraphLink,
   type GraphNote,
   type Heading,
@@ -14,14 +19,15 @@ import {
   type SearchHit,
   type SearchResponse,
   type TagCount,
+  type DefinedTerm,
   type TreeEntry,
 } from '@rhizom/core';
 import type Database from 'better-sqlite3';
-import { asc, eq, isNull, or, sql } from 'drizzle-orm';
+import { asc, eq, isNull, or } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 import { INDEX_SCHEMA_VERSION, openDatabase } from './database.js';
-import { links, meta, notes, noteTags } from './schema.js';
+import { links, meta, notes, noteTags, terms } from './schema.js';
 
 export { INDEX_SCHEMA_VERSION };
 
@@ -63,11 +69,31 @@ const MARK_START = String.fromCharCode(1);
 const MARK_END = String.fromCharCode(2);
 const CONTEXT_LENGTH = 200;
 
+const RESOLUTION_COLUMNS = {
+  id: links.id,
+  source: links.source,
+  targetKey: links.targetKey,
+  target: links.target,
+};
+
+interface ResolutionRow {
+  id: number;
+  source: string;
+  targetKey: string;
+  target: string | null;
+}
+
+/** Whether the caller runs `resolveAll()` itself once a batch of notes is in. */
+export interface UpsertOptions {
+  deferResolution?: boolean;
+}
+
 interface SummaryRow {
   path: string;
   name: string;
   title: string;
   folder: string;
+  aliases: string;
   modifiedAt: number;
   size: number;
   linkCount: number;
@@ -77,11 +103,19 @@ interface SummaryRow {
 
 // Counted per note with correlated subqueries; note_tags is joined as one separated string
 // because SQLite has no array type.
-const SUMMARY_COLUMNS = `select n.path, n.name, n.title, n.folder, n.modified_at as modifiedAt, n.size,
+const SUMMARY_COLUMNS = `select n.path, n.name, n.title, n.folder, n.aliases, n.modified_at as modifiedAt, n.size,
         (select count(*) from links l where l.source = n.path and l.target is not null) as linkCount,
         (select count(*) from links l where l.target = n.path) as backlinkCount,
         (select group_concat(t.tag, char(31)) from note_tags t where t.path = n.path) as tags
  from notes n`;
+
+/** `aliases` is a JSON column, and hand-written SQL hands it back as the raw text. */
+function parseAliases(raw: string): string[] {
+  const parsed: unknown = JSON.parse(raw);
+  return Array.isArray(parsed)
+    ? parsed.filter((entry): entry is string => typeof entry === 'string')
+    : [];
+}
 
 function toSummary(row: SummaryRow): NoteSummary {
   return {
@@ -89,6 +123,7 @@ function toSummary(row: SummaryRow): NoteSummary {
     name: row.name,
     title: row.title,
     folder: row.folder,
+    aliases: parseAliases(row.aliases),
     tags: row.tags === null ? [] : row.tags.split(String.fromCharCode(31)).sort(),
     modifiedAt: new Date(row.modifiedAt).toISOString(),
     size: row.size,
@@ -127,7 +162,7 @@ export class VaultIndex {
     this.sqlite.close();
   }
 
-  upsertNote(input: IndexNoteInput): void {
+  upsertNote(input: IndexNoteInput, options: UpsertOptions = {}): void {
     const { path, parsed } = input;
     const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.(md|markdown)$/i, '');
     const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
@@ -137,6 +172,7 @@ export class VaultIndex {
       tx.delete(notes).where(eq(notes.path, path)).run();
       tx.delete(links).where(eq(links.source, path)).run();
       tx.delete(noteTags).where(eq(noteTags.path, path)).run();
+      tx.delete(terms).where(eq(terms.path, path)).run();
 
       tx.insert(notes)
         .values({
@@ -157,6 +193,33 @@ export class VaultIndex {
       if (parsed.tags.length > 0) {
         tx.insert(noteTags)
           .values(parsed.tags.map((tag) => ({ path, tag })))
+          .run();
+      }
+
+      // The primary key is (path, folded), so a title and an alias that fold to the same string
+      // would collide; the title is kept because it comes first.
+      const defined = new Map<string, DefinedTerm>();
+      for (const term of definedTerms({
+        path,
+        title: parsed.title,
+        aliases: parsed.aliases,
+        frontmatter: parsed.frontmatter,
+      })) {
+        const folded = foldTerm(term.surface);
+        if (!defined.has(folded)) {
+          defined.set(folded, term);
+        }
+      }
+      if (defined.size > 0) {
+        tx.insert(terms)
+          .values(
+            [...defined].map(([folded, term]) => ({
+              path,
+              surface: term.surface,
+              folded,
+              alias: term.alias,
+            })),
+          )
           .run();
       }
 
@@ -182,33 +245,53 @@ export class VaultIndex {
           .run();
       }
 
-      this.reresolve(tx, path);
+      if (options.deferResolution !== true) {
+        this.reresolve(tx, path);
+      }
     });
   }
 
-  removeNote(path: string): void {
+  removeNote(path: string, options: UpsertOptions = {}): void {
     this.db.transaction((tx) => {
       tx.delete(notes).where(eq(notes.path, path)).run();
       tx.delete(links).where(eq(links.source, path)).run();
       tx.delete(noteTags).where(eq(noteTags.path, path)).run();
+      tx.delete(terms).where(eq(terms.path, path)).run();
       this.resolver.remove(path);
       tx.update(links).set({ target: null }).where(eq(links.target, path)).run();
-      this.reresolve(tx, path);
+      if (options.deferResolution !== true) {
+        this.reresolve(tx, path);
+      }
     });
   }
 
   /** Re-resolves links that are unresolved or point at `path`, after that note changed. */
   private reresolve(tx: BetterSQLite3Database, path: string): void {
-    const candidates = tx
-      .select({
-        id: links.id,
-        source: links.source,
-        targetKey: links.targetKey,
-        target: links.target,
-      })
-      .from(links)
-      .where(or(isNull(links.target), eq(links.target, path)))
-      .all();
+    this.applyResolution(
+      tx,
+      tx
+        .select(RESOLUTION_COLUMNS)
+        .from(links)
+        .where(or(isNull(links.target), eq(links.target, path)))
+        .all(),
+    );
+  }
+
+  /**
+   * Re-resolves every link in the index. A bulk sync defers the per-note pass and calls this
+   * once at the end instead, because the per-note pass is quadratic over a first build: while
+   * the vault is still half indexed most links are unresolved, so note n re-checks almost every
+   * link in the vault. Measured on a generated vault of 5,000 notes with 47,000 links, a first
+   * build took 198 s that way and the server answers nothing until it is done; one pass at the
+   * end gives the same answer, because a link is resolved against the finished note index.
+   */
+  resolveAll(): void {
+    this.db.transaction((tx) => {
+      this.applyResolution(tx, tx.select(RESOLUTION_COLUMNS).from(links).all());
+    });
+  }
+
+  private applyResolution(tx: BetterSQLite3Database, candidates: readonly ResolutionRow[]): void {
     for (const candidate of candidates) {
       const resolution = resolveLinkTarget(candidate.targetKey, candidate.source, this.resolver);
       const target = resolution.resolved ? resolution.path : null;
@@ -369,10 +452,84 @@ export class VaultIndex {
     return { query, hits, total: total.count };
   }
 
+  /**
+   * Notes that might name any of these terms, narrowed through the full-text index so that a
+   * mention scan reads a handful of files rather than the whole vault. Full-text is a coarse
+   * filter — it tokenises and folds differently from the term matcher — so it may hand back a
+   * note that holds no mention after all; the scan drops those. It must never miss one, which
+   * is why the terms are ANDed per term and ORed between them, without prefix matching.
+   */
+  mentionCandidates(terms: readonly string[], limit: number): string[] {
+    const phrases = terms
+      // `\p{M}` keeps a combining mark with the letter it belongs to: a decomposed "Rhône" is
+      // one token like the composed one, not "Rho" and "ne", which would match nothing.
+      .map((term) => term.match(/[\p{L}\p{N}\p{M}_]+/gu) ?? [])
+      .filter((tokens) => tokens.length > 0)
+      .map((tokens) => `(${tokens.map((token) => `"${token.replaceAll('"', '""')}"`).join(' ')})`);
+    if (phrases.length === 0) {
+      return [];
+    }
+    return (
+      this.sqlite
+        .prepare(
+          `select n.path from notes_fts join notes n on n.id = notes_fts.rowid
+           where notes_fts match ? order by n.path limit ?`,
+        )
+        .all(phrases.join(' OR '), limit) as { path: string }[]
+    ).map((row) => row.path);
+  }
+
+  /**
+   * How a link to `target` should be written inside `source`: the bare note name where that
+   * leads back to the same note, the path from the vault root where it would not — two notes of
+   * the same name are exactly the case a written link must not guess at.
+   *
+   * An ambiguous name counts as "would not", even when the tie happens to break towards this
+   * note today: the rule that breaks it depends on where the link stands and on what else the
+   * vault holds, so the bare name would start pointing elsewhere the day a namesake is added.
+   */
+  linkTextFor(target: string, source: string): string {
+    const name = noteNameOf(target);
+    const resolution = resolveLinkTarget(name, source, this.resolver);
+    const unambiguous =
+      resolution.resolved && resolution.path === target && resolution.ambiguous !== true;
+    return unambiguous ? name : target.replace(/\.(md|markdown)$/i, '');
+  }
+
   tags(): TagCount[] {
     return this.sqlite
       .prepare('select tag, count(*) as count from note_tags group by tag order by tag')
       .all() as TagCount[];
+  }
+
+  /**
+   * One entry per note that defines something, alphabetical by title. The `terms` table is what
+   * finds those notes: without it this would parse the frontmatter of every note in the vault,
+   * on a path the browser reloads after every save.
+   */
+  glossary(): GlossaryEntry[] {
+    const rows = this.sqlite
+      .prepare(
+        `select n.path, n.title, n.aliases, n.body
+         from notes n where exists (select 1 from terms t where t.path = n.path)`,
+      )
+      .all() as { path: string; title: string; aliases: string; body: string }[];
+    return (
+      rows
+        .map((row) => ({
+          path: row.path,
+          title: row.title,
+          aliases: parseAliases(row.aliases).sort((a, b) => a.localeCompare(b)),
+          summary: summaryOf(row.body, row.title),
+        }))
+        // Path breaks a tie in code-unit order, because two notes may well carry the same title
+        // and SQLite hands rows back in whatever order it scanned them.
+        .sort(
+          (a, b) =>
+            a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }) ||
+            (a.path < b.path ? -1 : a.path > b.path ? 1 : 0),
+        )
+    );
   }
 
   tree(): TreeEntry[] {
@@ -423,10 +580,11 @@ export class VaultIndex {
       .from(notes)
       .all()
       .map((row) => ({ path: row.path, tags: tagsByPath.get(row.path) ?? [] }));
+    // Every resolved link, embeds included: buildGraph tells the kinds apart and a file embed
+    // has no note to point at, so it never resolves in the first place.
     const graphLinks = this.db
-      .select({ source: links.source, target: links.target })
+      .select({ source: links.source, target: links.target, kind: links.kind })
       .from(links)
-      .where(sql`${links.kind} <> 'embed'`)
       .all();
     return { notes: graphNotes, links: graphLinks };
   }

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { parseNote } from '@rhizom/core';
+import { glossaryTerms, parseNote } from '@rhizom/core';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -38,7 +38,13 @@ beforeEach(() => {
   index.upsertNote(
     note(
       'Campaign/NPCs/Mira the Ledger-Keeper.md',
-      '---\naliases: [Mira]\ntags: [campaign, npcs]\n---\n# Mira the Ledger-Keeper\n\nShe keeps the harbour ledger in [[Silverstadt]].',
+      '---\naliases: [Mira]\ntags: [campaign, npcs]\n---\n# Mira the Ledger-Keeper\n\nShe keeps the harbour ledger in [[Silverstadt]].\n\n![[Glossary/Ledger]]',
+    ),
+  );
+  index.upsertNote(
+    note(
+      'Glossary/Ledger.md',
+      '---\ntype: definition\naliases: [ledgers, account book]\n---\n# Ledger\n\nA bound record of debts and payments.',
     ),
   );
 });
@@ -53,6 +59,7 @@ describe('notes', () => {
     expect(notes.map((n) => n.path)).toEqual([
       'Campaign/NPCs/Mira the Ledger-Keeper.md',
       'Campaign/Places/Silverstadt.md',
+      'Glossary/Ledger.md',
       'Home.md',
     ]);
     const silverstadt = notes.find((n) => n.path === 'Campaign/Places/Silverstadt.md');
@@ -92,7 +99,7 @@ describe('notes', () => {
     expect(index.backlinks('Campaign/Places/Silverstadt.md')).toHaveLength(1);
     index.removeNote('Home.md');
     expect(index.getNote('Home.md')).toBeUndefined();
-    expect(index.stats().noteCount).toBe(2);
+    expect(index.stats().noteCount).toBe(3);
   });
 
   it('reports the file state of every note for incremental syncing', () => {
@@ -101,7 +108,7 @@ describe('notes', () => {
       size: expect.any(Number) as number,
       modifiedAt: new Date('2026-09-18T10:00:00Z'),
     });
-    expect(states.size).toBe(3);
+    expect(states.size).toBe(4);
   });
 });
 
@@ -229,14 +236,126 @@ describe('tags, tree and graph', () => {
           },
         ],
       },
+      {
+        type: 'folder',
+        name: 'Glossary',
+        path: 'Glossary',
+        children: [{ type: 'note', name: 'Ledger', path: 'Glossary/Ledger.md', title: 'Ledger' }],
+      },
       { type: 'note', name: 'Home', path: 'Home.md', title: 'Home' },
     ]);
   });
 
   it('exposes notes and resolved links for the graph', () => {
     const data = index.graphInput();
-    expect(data.notes).toHaveLength(3);
-    expect(data.links.filter((l) => l.target !== null)).toHaveLength(5);
+    expect(data.notes).toHaveLength(4);
+    // Five wikilinks plus the note embed of Glossary/Ledger.
+    expect(data.links.filter((l) => l.target !== null)).toHaveLength(6);
+  });
+
+  it('hands the graph a resolved note embed, marked as one', () => {
+    const embed = index
+      .linksFrom('Campaign/NPCs/Mira the Ledger-Keeper.md')
+      .find((link) => link.kind === 'embed');
+    expect(embed?.target).toBe('Glossary/Ledger.md');
+    expect(index.graphInput().links).toContainEqual({
+      source: 'Campaign/NPCs/Mira the Ledger-Keeper.md',
+      target: 'Glossary/Ledger.md',
+      kind: 'embed',
+    });
+  });
+
+  it('keeps a file embed out of the graph, because it resolves to no note', () => {
+    index.upsertNote(note('Campaign/Places/Quay.md', '# Quay\n\n![[tavern.png]]'));
+    const fileEmbed = index
+      .graphInput()
+      .links.find((link) => link.source === 'Campaign/Places/Quay.md');
+    expect(fileEmbed?.target).toBeNull();
+  });
+});
+
+describe('terms', () => {
+  const terms = (): ReturnType<typeof glossaryTerms> => glossaryTerms(index.glossary());
+
+  it('collects the title and every alias of a definition note', () => {
+    const summary = 'A bound record of debts and payments.';
+    expect(terms()).toEqual([
+      { surface: 'Ledger', path: 'Glossary/Ledger.md', alias: false, summary },
+      { surface: 'account book', path: 'Glossary/Ledger.md', alias: true, summary },
+      { surface: 'ledgers', path: 'Glossary/Ledger.md', alias: true, summary },
+    ]);
+  });
+
+  it('collects nothing from a note that is not a definition', () => {
+    index.upsertNote(note('Campaign/Places/Harbour.md', '---\ntype: place\n---\n# Harbour'));
+    expect(terms().every((term) => term.path === 'Glossary/Ledger.md')).toBe(true);
+  });
+
+  it('follows the note when it stops being a definition', () => {
+    index.upsertNote(note('Glossary/Ledger.md', '# Ledger\n\nJust prose now.'));
+    expect(terms()).toEqual([]);
+  });
+
+  it('forgets the terms of a removed note', () => {
+    index.removeNote('Glossary/Ledger.md');
+    expect(terms()).toEqual([]);
+    expect(index.glossary()).toEqual([]);
+  });
+
+  it('keeps one row when a title and an alias fold to the same term', () => {
+    index.upsertNote(
+      note('Glossary/Tide.md', '---\ntype: definition\naliases: [TIDE, ebb]\n---\n# Tide'),
+    );
+    const tide = terms().filter((term) => term.path === 'Glossary/Tide.md');
+    expect(tide).toEqual([
+      { surface: 'Tide', path: 'Glossary/Tide.md', alias: false, summary: '' },
+      { surface: 'ebb', path: 'Glossary/Tide.md', alias: true, summary: '' },
+    ]);
+  });
+
+  it('sorts the glossary by title, whatever order the rows come back in', () => {
+    index.upsertNote(note('Glossary/tide.md', '---\ntype: definition\n---\n# tide\n\nThe sea.'));
+    index.upsertNote(note('Glossary/Anchor.md', '---\ntype: definition\n---\n# Anchor\n\nA hook.'));
+    expect(index.glossary().map((entry) => entry.title)).toEqual(['Anchor', 'Ledger', 'tide']);
+  });
+
+  it('lists one glossary entry per definition note, with a summary that is not the title', () => {
+    expect(index.glossary()).toEqual([
+      {
+        path: 'Glossary/Ledger.md',
+        title: 'Ledger',
+        aliases: ['account book', 'ledgers'],
+        summary: 'A bound record of debts and payments.',
+      },
+    ]);
+  });
+});
+
+describe('linkTextFor', () => {
+  it('writes the bare name when it leads back to the same note', () => {
+    expect(index.linkTextFor('Campaign/Places/Silverstadt.md', 'Home.md')).toBe('Silverstadt');
+  });
+
+  it('writes the path once a namesake exists, even where the tie breaks towards this note', () => {
+    index.upsertNote(note('Research/Silverstadt.md', '# Silverstadt\n\nA paper, not a city.'));
+    // From the same folder the name resolves here — but only until the next namesake moves in.
+    expect(index.linkTextFor('Campaign/Places/Silverstadt.md', 'Campaign/Places/Docks.md')).toBe(
+      'Campaign/Places/Silverstadt',
+    );
+  });
+});
+
+describe('mentionCandidates', () => {
+  it('finds a note naming a title whose accent is a combining mark', () => {
+    // The way a Mac writes a filename: the circumflex is a character of its own.
+    const decomposed = 'Rhône'.normalize('NFD');
+    index.upsertNote(note('Places/Rhone.md', `# ${decomposed}\n\nA river.`));
+    index.upsertNote(note('Journal/Trip.md', `# Trip\n\nWe followed the ${decomposed} south.`));
+    expect(index.mentionCandidates([decomposed], 10)).toContain('Journal/Trip.md');
+  });
+
+  it('asks for nothing when the terms hold no word', () => {
+    expect(index.mentionCandidates(['', '  '], 10)).toEqual([]);
   });
 });
 

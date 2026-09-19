@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { LinkKind, NoteLink } from '@rhizom/core';
+import { createTermMatcher, glossaryTerms, type LinkKind, type NoteLink } from '@rhizom/core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { syncVault } from './store/sync.js';
@@ -25,6 +25,11 @@ interface Manifest {
     ignored: string[];
     assets: string[];
     maxTotalBytes: number;
+  };
+  definitions: {
+    notes: string[];
+    terms: { surface: string; path: string; alias: boolean }[];
+    unlinkedMentions: { in: string; text: string }[];
   };
   unresolvedLinks: { targets: string[]; sources: Record<string, string[]> };
   ambiguousBasename: { name: string; candidates: string[]; linkedBareFrom: string[] };
@@ -61,6 +66,15 @@ function totalBytes(dir: string): number {
     sum += entry.isDirectory() ? totalBytes(path) : statSync(path).size;
   }
   return sum;
+}
+
+/** Every `[[…]]` and `![[…]]` in a note, as half-open offset ranges. */
+function wikilinkRanges(content: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  for (const match of content.matchAll(/!?\[\[[^\]]*\]\]/g)) {
+    ranges.push([match.index, match.index + match[0].length]);
+  }
+  return ranges;
 }
 
 /** The inner text of a wikilink or the href of a Markdown link, as the index stores it. */
@@ -245,6 +259,39 @@ describe('the example vault', () => {
   it('derives titles from frontmatter, the first heading or the file name', () => {
     for (const [path, title] of Object.entries(manifest.titles)) {
       expect(index.getNote(path)?.title, path).toBe(title);
+    }
+  });
+
+  it('collects a term for the title and every alias of a definition note', () => {
+    const bySurface = (a: { surface: string }, b: { surface: string }): number =>
+      a.surface.localeCompare(b.surface);
+    // The manifest names the surfaces; the summary is generated, so it is checked for what it
+    // has to be rather than spelled out twice.
+    const terms = [...glossaryTerms(index.glossary())].sort(bySurface);
+    expect(terms.map(({ surface, path, alias }) => ({ surface, path, alias }))).toEqual(
+      [...manifest.definitions.terms].sort(bySurface),
+    );
+    expect(terms.every((term) => term.summary !== '')).toBe(true);
+
+    const glossary = index.glossary();
+    expect(glossary.map((entry) => entry.path)).toEqual(manifest.definitions.notes);
+    expect(glossary[0]?.summary).not.toBe('');
+    expect(glossary[0]?.summary).not.toBe(glossary[0]?.title);
+  });
+
+  it('finds the unlinked mentions of those terms in ordinary prose', async () => {
+    const matcher = createTermMatcher(glossaryTerms(index.glossary()));
+    for (const mention of manifest.definitions.unlinkedMentions) {
+      const note = await vault.readNote(mention.in);
+      const hits = matcher.find(note.content).filter((match) => match.text === mention.text);
+      expect(hits, mention.in).not.toHaveLength(0);
+      // What makes the mention an *unlinked* one: no `[[…]]` encloses it. The matcher knows
+      // nothing of Markdown, so the fixture has to prove the property, not the matcher.
+      const links = wikilinkRanges(note.content);
+      for (const hit of hits) {
+        const inside = links.some(([from, to]) => hit.start >= from && hit.end <= to);
+        expect(inside, `${mention.in}: ${mention.text} at ${String(hit.start)}`).toBe(false);
+      }
     }
   });
 });

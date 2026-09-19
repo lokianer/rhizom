@@ -16,9 +16,16 @@ starting with a byte order mark, an empty note, a 15 KB note, file names with an
 apostrophe, a dot and an en dash, tags inside code that must not count, and an `.obsidian/`
 folder and a `.trash/` folder that must be ignored.
 
+It also carries one glossary note, `Glossary/Spring tide.md`, which declares `type: definition`
+and one alias. The words "spring tides" in `Campaign/Places/Silverstadt.md` and "Spring tide" in
+its bell table are deliberately left as plain prose: they are the unlinked mentions the term
+index has to find, and the acceptance test checks that no `[[…]]` encloses them. Linking them
+would silently empty that test.
+
 `vault.manifest.json` next to it lists what an indexer should find (note count, the unresolved
-link targets, the ambiguous name, tags that must and must not exist, embed targets, expected
-titles). Tests read the manifest rather than hard-coding these numbers.
+link targets, the ambiguous name, tags that must and must not exist, embed targets, defined
+terms and their unlinked mentions, expected titles). Tests read the manifest rather than
+hard-coding these numbers.
 
 ## Pointing Rhizom at it
 

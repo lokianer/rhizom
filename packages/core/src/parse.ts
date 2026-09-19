@@ -1,7 +1,7 @@
 // Parses one note into everything the index needs, in a single pass over the mdast tree:
 // title, frontmatter (with aliases and tags), links of every kind with line numbers, headings
 // with unique slugs, inline tags outside code, and plain text for full-text search.
-import GithubSlugger from 'github-slugger';
+import GithubSlugger, { slug as slugOf } from 'github-slugger';
 import type { Nodes, Root, RootContent } from 'mdast';
 import { toString } from 'mdast-util-to-string';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -35,7 +35,10 @@ export interface ParsedNote {
   tags: string[];
   links: ParsedLink[];
   headings: Heading[];
-  /** Plain text without frontmatter and Markdown syntax, one line per block. */
+  /**
+   * Plain text without frontmatter and Markdown syntax, one line per block: a paragraph is one
+   * line however the file wraps it. Only a fenced code block keeps its own line breaks.
+   */
   text: string;
   wordCount: number;
 }
@@ -119,7 +122,7 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
     case 'yaml':
       return;
     case 'heading': {
-      const text = toString(node).trim();
+      const text = displayText(node);
       state.headings.push({
         level: node.depth,
         text,
@@ -194,7 +197,10 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
           }
         }
       }
-      state.pieces.push(node.value);
+      // A paragraph hard-wrapped in the file is still one block of prose, so its soft line
+      // breaks become spaces. Without this a search snippet breaks mid-sentence and the first
+      // "line" of a note is only the first line the author happened to type.
+      state.pieces.push(node.value.replace(/[ \t]*\n[ \t]*/g, ' '));
       return;
     }
     case 'inlineCode':
@@ -219,6 +225,53 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
     state.pieces.push('\n');
   } else if (node.type === 'tableCell' || node.type === 'listItem') {
     state.pieces.push(node.type === 'tableCell' ? ' ' : '\n');
+  }
+}
+
+/**
+ * A node's text as the reader sees it. `mdast-util-to-string` would hand back a wikilink's raw
+ * value, so `## See [[Silverstadt|the city]]` would read `See Silverstadt|the city` and slug to
+ * something no anchor in Obsidian ever points at; here it reads `See the city`.
+ */
+export function displayText(node: Nodes): string {
+  const pieces: string[] = [];
+  collectText(node, pieces);
+  return normaliseHeadingText(pieces.join(''));
+}
+
+/**
+ * The form a heading's text is compared and slugged in: whitespace runs are one space. Every
+ * place that turns a heading *or a reference to one* into a slug goes through this, because a
+ * heading id, a `#fragment` href and a `![[Note#Heading]]` all have to end up at the same
+ * string — and a reference is usually the heading copied verbatim, spacing and all.
+ */
+export function normaliseHeadingText(text: string): string {
+  return text.replace(/\s+/gu, ' ').trim();
+}
+
+/** The slug of a heading reference, as `parseNote` slugged the heading itself. */
+export function headingSlug(reference: string): string {
+  return slugOf(normaliseHeadingText(reference));
+}
+
+function collectText(node: Nodes, pieces: string[]): void {
+  if (node.type === 'wikilink') {
+    const parts = parseWikilink(node.value);
+    pieces.push(parts.alias ?? parts.target);
+    return;
+  }
+  if ('value' in node && typeof node.value === 'string') {
+    pieces.push(node.value);
+    return;
+  }
+  if (node.type === 'image') {
+    pieces.push(node.alt ?? '');
+    return;
+  }
+  if ('children' in node) {
+    for (const child of node.children) {
+      collectText(child, pieces);
+    }
   }
 }
 

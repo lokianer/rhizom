@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildGraph, clusterColorIndex, localGraph } from './graph.js';
+import { buildGraph, clusterColorIndex, localGraph, type GraphLink } from './graph.js';
 
 const notes = [
   { path: 'Home.md', tags: ['index'] },
@@ -10,15 +10,15 @@ const notes = [
   { path: 'Research/Mycelium.md', tags: [] },
 ];
 
-const links = [
-  { source: 'Home.md', target: 'Campaign/Places/Silverstadt.md' },
-  { source: 'Home.md', target: 'Research/Rhizome.md' },
-  { source: 'Campaign/Places/Silverstadt.md', target: 'Campaign/NPCs/Mira.md' },
-  { source: 'Campaign/NPCs/Mira.md', target: 'Campaign/Places/Silverstadt.md' },
-  { source: 'Campaign/NPCs/Mira.md', target: 'Campaign/Places/Silverstadt.md' },
-  { source: 'Research/Rhizome.md', target: 'Research/Mycelium.md' },
-  { source: 'Research/Rhizome.md', target: 'Research/Rhizome.md' },
-  { source: 'Research/Rhizome.md', target: null },
+const links: GraphLink[] = [
+  { source: 'Home.md', target: 'Campaign/Places/Silverstadt.md', kind: 'wikilink' },
+  { source: 'Home.md', target: 'Research/Rhizome.md', kind: 'wikilink' },
+  { source: 'Campaign/Places/Silverstadt.md', target: 'Campaign/NPCs/Mira.md', kind: 'wikilink' },
+  { source: 'Campaign/NPCs/Mira.md', target: 'Campaign/Places/Silverstadt.md', kind: 'wikilink' },
+  { source: 'Campaign/NPCs/Mira.md', target: 'Campaign/Places/Silverstadt.md', kind: 'markdown' },
+  { source: 'Research/Rhizome.md', target: 'Research/Mycelium.md', kind: 'wikilink' },
+  { source: 'Research/Rhizome.md', target: 'Research/Rhizome.md', kind: 'wikilink' },
+  { source: 'Research/Rhizome.md', target: null, kind: 'wikilink' },
 ];
 
 describe('buildGraph', () => {
@@ -46,6 +46,27 @@ describe('buildGraph', () => {
       count: 2,
     });
     expect(graph.edges).toHaveLength(5);
+  });
+
+  it('counts a resolved embed as an edge and says how many of the links transclude', () => {
+    const embedded = buildGraph(
+      notes,
+      [
+        { source: 'Home.md', target: 'Research/Mycelium.md', kind: 'embed' },
+        { source: 'Home.md', target: 'Research/Rhizome.md', kind: 'embed' },
+        { source: 'Home.md', target: 'Research/Rhizome.md', kind: 'wikilink' },
+      ],
+      { clusterBy: 'folder' },
+    );
+    expect(embedded.edges).toEqual([
+      { source: 'Home.md', target: 'Research/Mycelium.md', count: 1, embeds: 1 },
+      { source: 'Home.md', target: 'Research/Rhizome.md', count: 2, embeds: 1 },
+    ]);
+    expect(embedded.nodes.find((n) => n.path === 'Research/Mycelium.md')?.degree).toBe(1);
+  });
+
+  it('leaves an edge with no transclusion unmarked, so the response does not grow', () => {
+    expect(graph.edges.every((edge) => !('embeds' in edge))).toBe(true);
   });
 
   it('ignores self links and unresolved links', () => {

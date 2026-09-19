@@ -141,15 +141,22 @@ function pick(
   return undefined;
 }
 
+/**
+ * Picks one of several notes of the same name: one beside the source note first, then the
+ * shallowest path, then code-unit order. Every step is a total order on purpose — two notes in
+ * the source's own folder used to be separated by whichever the index happened to hold first,
+ * and the server and the browser fill their index in different orders, so the same link could
+ * lead to two different notes. Code-unit order rather than `localeCompare` for the same reason:
+ * a vault must read the same on every machine.
+ */
 function pickAmbiguous(candidates: readonly string[], sourcePath: string): string {
   const sourceFolder = folderOf(sourcePath);
-  const sameFolder = candidates.find((candidate) => folderOf(candidate) === sourceFolder);
-  if (sameFolder !== undefined) {
-    return sameFolder;
-  }
-  const sorted = [...candidates].sort((a, b) => {
-    const depth = a.split('/').length - b.split('/').length;
-    return depth !== 0 ? depth : a.localeCompare(b);
-  });
-  return sorted[0] ?? candidates[0] ?? '';
+  const beside = (candidate: string): number => (folderOf(candidate) === sourceFolder ? 0 : 1);
+  const sorted = [...candidates].sort(
+    (a, b) =>
+      beside(a) - beside(b) ||
+      a.split('/').length - b.split('/').length ||
+      (a < b ? -1 : a > b ? 1 : 0),
+  );
+  return sorted[0] ?? '';
 }

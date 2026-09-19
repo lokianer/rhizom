@@ -1,7 +1,6 @@
 {
   "app": {
     "name": "Rhizom",
-    "tagline": "Networked knowledge from plain Markdown.",
     "skipToContent": "Skip to content"
   },
   "language": {
@@ -96,6 +95,37 @@
     "edges_other": "{{count}} links",
     "resetView": "Reset the view"
   },
+  "embed": {
+    "loading": "Loading {{target}} …",
+    "missing": "{{target}} is not in this vault",
+    "noSection": "{{target}} has no section {{heading}}",
+    "circular": "{{target}} embeds itself",
+    "tooDeep": "{{target}} is nested too deep to be shown here",
+    "tooMany": "{{target}} is not shown: too many embeds on this page"
+  },
+  "mentions": {
+    "title": "Unlinked mentions",
+    "empty": "No note names this one without linking to it.",
+    "inHeading": "in a heading",
+    "notLinkable": "broken across a line",
+    "truncated": "Only the first notes found were searched.",
+    "linking": "Linking…",
+    "linkAll_one": "Link in {{count}} note",
+    "linkAll_other": "Link in {{count}} notes",
+    "linked_one": "{{count}} mention linked.",
+    "linked_other": "{{count}} mentions linked.",
+    "conflicts_one": "{{count}} note changed meanwhile and was left alone.",
+    "conflicts_other": "{{count}} notes changed meanwhile and were left alone.",
+    "mentionLabel": "In {{note}}: {{line}}"
+  },
+  "glossary": {
+    "title": "Glossary",
+    "count_one": "{{count}} definition",
+    "count_other": "{{count}} definitions",
+    "empty": "No note in this vault declares itself a definition yet. Add `type: definition` to a note's frontmatter and its title becomes a term.",
+    "alsoKnownAs": "also {{aliases}}",
+    "noSummary": "No description yet."
+  },
   "wiki": {
     "title": "Wiki",
     "label": "Read-only view",
@@ -113,6 +143,7 @@
       "newNote": "New note",
       "toggleTheme": "Switch theme",
       "openGraph": "Open the graph",
+      "openGlossary": "Open the glossary",
       "openWiki": "Read as wiki",
       "search": "Search all notes",
       "rebuild": "Rebuild the index",

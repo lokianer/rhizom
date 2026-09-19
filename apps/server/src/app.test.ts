@@ -14,8 +14,11 @@ import { join } from 'node:path';
 import type {
   AssetSummary,
   Backlink,
+  GlossaryEntry,
   GraphResponse,
   HealthResponse,
+  LinkMentionsResult,
+  MentionsResponse,
   NoteDocument,
   NoteLink,
   NoteSummary,
@@ -53,6 +56,12 @@ function makeVault(): string {
     root,
     'Campaign/NPCs/Mira.md',
     '---\naliases: [The Ledger-Keeper]\ntags: [campaign, npcs]\n---\n# Mira\n\nShe keeps the harbour ledger in [[Silverstadt]].\n\n![[tavern.png]]\n',
+  );
+  writeInto(
+    root,
+    'Glossary/Ledger.md',
+    // The second block names Mira without linking her: the unlinked mention the panel finds.
+    '---\ntype: definition\naliases: [ledgers, account book]\n---\n# Ledger\n\nA bound record of debts and payments.\n\nMira keeps one for the guild.\n',
   );
   writeInto(
     root,
@@ -130,7 +139,7 @@ describe('vault API', () => {
 
     expect(res.statusCode).toBe(200);
     const body: VaultInfo = res.json();
-    expect(body.noteCount).toBe(3);
+    expect(body.noteCount).toBe(4);
     expect(body.name).toBe(
       root.slice(root.lastIndexOf(process.platform === 'win32' ? '\\' : '/') + 1),
     );
@@ -141,13 +150,15 @@ describe('vault API', () => {
     const tree = await app.inject({ method: 'GET', url: '/api/tree' });
     const entries: TreeEntry[] = tree.json();
     expect(entries[0]).toMatchObject({ type: 'folder', name: 'Campaign' });
-    expect(entries[1]).toMatchObject({ type: 'note', path: 'Home.md' });
+    expect(entries[1]).toMatchObject({ type: 'folder', name: 'Glossary' });
+    expect(entries[2]).toMatchObject({ type: 'note', path: 'Home.md' });
 
     const notes = await app.inject({ method: 'GET', url: '/api/notes' });
     const list: NoteSummary[] = notes.json();
     expect(list.map((n) => n.path)).toEqual([
       'Campaign/NPCs/Mira.md',
       'Campaign/Places/Silverstadt.md',
+      'Glossary/Ledger.md',
       'Home.md',
     ]);
   });
@@ -291,6 +302,101 @@ describe('vault API', () => {
 
     const tags = await app.inject({ method: 'GET', url: '/api/tags' });
     expect(tags.json<TagCount[]>()).toContainEqual({ tag: 'campaign', count: 2 });
+  });
+
+  it('lists one glossary entry per definition note', async () => {
+    const glossary = await app.inject({ method: 'GET', url: '/api/glossary' });
+    expect(glossary.statusCode).toBe(200);
+    expect(glossary.json<GlossaryEntry[]>()).toEqual([
+      {
+        path: 'Glossary/Ledger.md',
+        title: 'Ledger',
+        aliases: ['account book', 'ledgers'],
+        summary: 'A bound record of debts and payments.',
+      },
+    ]);
+  });
+
+  it('finds where a note is named without a link, and links it on request', async () => {
+    const found = await app.inject({
+      method: 'GET',
+      url: '/api/mentions?path=Campaign/NPCs/Mira.md',
+    });
+    expect(found.statusCode).toBe(200);
+    const mentions: MentionsResponse = found.json();
+    expect(mentions.terms).toEqual(['Mira', 'The Ledger-Keeper']);
+    const group = mentions.groups.find((entry) => entry.source === 'Glossary/Ledger.md');
+    expect(group, 'the glossary note names Mira in prose').toBeDefined();
+    expect(group?.mentions[0]?.text).toBe('Mira');
+    // Silverstadt.md links to [[Mira]] already, so it is not an *unlinked* mention.
+    expect(mentions.groups.map((entry) => entry.source)).not.toContain(
+      'Campaign/Places/Silverstadt.md',
+    );
+
+    const write = {
+      source: group?.source ?? '',
+      hash: group?.hash ?? '',
+      offsets: (group?.mentions ?? []).map((mention) => mention.start),
+    };
+    const linked = await app.inject({
+      method: 'POST',
+      url: '/api/mentions/link',
+      payload: { path: 'Campaign/NPCs/Mira.md', writes: [write] },
+    });
+    expect(linked.statusCode).toBe(200);
+    expect(linked.json<LinkMentionsResult>()).toEqual({
+      linked: [{ source: 'Glossary/Ledger.md', count: 1 }],
+      skipped: [],
+    });
+    expect(readFileSync(join(root, 'Glossary', 'Ledger.md'), 'utf8')).toContain('[[Mira]]');
+
+    // Once written it is a link, so it is no longer an unlinked mention.
+    const again = await app.inject({
+      method: 'GET',
+      url: '/api/mentions?path=Campaign/NPCs/Mira.md',
+    });
+    expect(again.json<MentionsResponse>().groups.map((entry) => entry.source)).not.toContain(
+      'Glossary/Ledger.md',
+    );
+  });
+
+  it('refuses to write a file that changed since it was scanned', async () => {
+    const before = readFileSync(join(root, 'Home.md'), 'utf8');
+    const result = await app.inject({
+      method: 'POST',
+      url: '/api/mentions/link',
+      payload: {
+        path: 'Campaign/NPCs/Mira.md',
+        writes: [{ source: 'Home.md', hash: 'not-the-hash-on-disk', offsets: [0] }],
+      },
+    });
+    expect(result.statusCode).toBe(200);
+    expect(result.json<LinkMentionsResult>()).toEqual({
+      linked: [],
+      skipped: [{ source: 'Home.md', reason: 'conflict' }],
+    });
+    expect(readFileSync(join(root, 'Home.md'), 'utf8')).toBe(before);
+  });
+
+  it('answers 404 for a note that is not there, on both mention routes', async () => {
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/mentions?path=Nope.md' })).statusCode,
+    ).toBe(404);
+    const post = await app.inject({
+      method: 'POST',
+      url: '/api/mentions/link',
+      payload: { path: 'Nope.md', writes: [{ source: 'Home.md', hash: 'x', offsets: [0] }] },
+    });
+    expect(post.statusCode).toBe(404);
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/api/mentions/link',
+          payload: { path: 'Campaign/NPCs/Mira.md', writes: [] },
+        })
+      ).statusCode,
+    ).toBe(400);
   });
 
   it('serves graph data for the vault and for a neighbourhood', async () => {

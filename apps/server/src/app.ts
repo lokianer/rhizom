@@ -16,7 +16,9 @@ import { registerGraphRoutes } from './routes/graph.js';
 import { registerMaintenanceRoutes } from './routes/maintenance.js';
 import { registerNoteRoutes } from './routes/notes.js';
 import { HealthSchema } from './routes/schemas.js';
+import { registerMentionRoutes } from './routes/mentions.js';
 import { registerSearchRoutes } from './routes/search.js';
+import { registerTermRoutes } from './routes/terms.js';
 import { openVaultContext, type VaultContext } from './vault/context.js';
 
 // package.json sits one level above both src/ (tsx, vitest) and dist/ (tsc output).
@@ -63,6 +65,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
         { name: 'vault', description: 'The open vault' },
         { name: 'notes', description: 'Notes, links and backlinks' },
         { name: 'search', description: 'Full-text search and tags' },
+        { name: 'terms', description: 'The vocabulary the vault defines' },
+        { name: 'mentions', description: 'Where a note is named without a link' },
         { name: 'graph', description: 'Graph data for the bubble field' },
         { name: 'assets', description: 'Files inside the vault' },
         { name: 'index', description: 'Index maintenance and live events' },
@@ -104,6 +108,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   registerNoteRoutes(app, requireContext);
   registerSearchRoutes(app, requireContext);
+  registerTermRoutes(app, requireContext);
+  registerMentionRoutes(app, requireContext);
   registerGraphRoutes(app, requireContext);
   registerMaintenanceRoutes(app, requireContext);
   await registerAssetRoutes(app, requireContext, context?.vault.root);

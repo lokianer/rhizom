@@ -49,7 +49,7 @@ export function Layout() {
   const paletteOpen = useUiStore((state) => state.paletteOpen);
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen);
 
-  const lastEvent = useIndexEvents();
+  const revisions = useIndexEvents();
   const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
 
   useEffect(() => {
@@ -100,6 +100,13 @@ export function Layout() {
           void navigate(
             openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`,
           );
+        },
+      },
+      {
+        id: 'openGlossary',
+        label: t('palette.commandNames.openGlossary'),
+        run: () => {
+          void navigate('/glossary');
         },
       },
       {
@@ -192,6 +199,9 @@ export function Layout() {
           >
             {t('graph.title')}
           </NavLink>
+          <NavLink to="/glossary" className={({ isActive }) => (isActive ? 'active' : '')}>
+            {t('glossary.title')}
+          </NavLink>
           {openNotePath === null ? null : (
             <NavLink to={noteHref(openNotePath, 'wiki')}>{t('wiki.title')}</NavLink>
           )}
@@ -264,7 +274,7 @@ export function Layout() {
             </button>
           </div>
         ) : (
-          <Outlet context={{ lastEvent }} />
+          <Outlet context={{ revisions }} />
         )}
       </main>
 

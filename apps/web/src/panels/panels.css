@@ -244,8 +244,71 @@
   border-top: 1px solid var(--rz-border);
   background: var(--rz-surface);
   padding: var(--rz-space-3) var(--rz-space-5);
+  /* Both shelves may shrink further than their content when the window is short: the editor
+     above them has the stronger claim on the height, and they scroll. */
+  flex: 0 1 auto;
+  min-height: 0;
   max-height: 30vh;
   overflow: auto;
+}
+
+/* Unlinked mentions: the same shelf as the backlinks, with room for fewer lines — it is the
+   rarer of the two and must not push the editor out of the way. */
+.rz-mentions {
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 24vh;
+  overflow: auto;
+}
+
+.rz-mentions h3 {
+  margin: 0;
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-mention-group {
+  margin-top: var(--rz-space-3);
+}
+
+.rz-mention-group h4 {
+  margin: 0 0 var(--rz-space-1);
+  font-size: var(--rz-text-md);
+  font-weight: 500;
+}
+
+.rz-mention-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rz-mention label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  cursor: pointer;
+}
+
+.rz-mention-context {
+  /* Without `min-width: 0` a flex item refuses to shrink below its text, and the line runs
+     past the shelf instead of ending in the ellipsis this asks for. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-mention-note {
+  margin-left: var(--rz-space-5);
+}
+
+.rz-mention-actions {
+  margin-top: var(--rz-space-3);
 }
 
 .rz-backlinks-title {

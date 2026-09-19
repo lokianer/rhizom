@@ -1,6 +1,6 @@
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import type { NoteSummary } from '@rhizom/core';
+import type { NoteSummary, TermMatcher } from '@rhizom/core';
 import { useEffect, useMemo, useRef, type JSX } from 'react';
 
 import {
@@ -22,6 +22,8 @@ export interface MarkdownEditorProps {
   readOnly?: boolean | undefined;
   /** Every note in the vault, for `[[` autocompletion. */
   notes: readonly NoteSummary[];
+  /** The terms the vault defines, for marking them and explaining them on hover. */
+  terms: TermMatcher;
   /** Called on every document change (the caller debounces and saves). */
   onChange: (content: string) => void;
   /** Ctrl/Cmd+S. */
@@ -91,6 +93,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     externalContent,
     readOnly = false,
     notes,
+    terms,
     onChange,
     onSave,
     onOpenLink,
@@ -106,8 +109,8 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
 
   const index = useMemo(() => buildNoteIndex(notes), [notes]);
   const context = useMemo<EditorContextValue>(
-    () => ({ path, notes, index, handlers: handlersRef }),
-    [path, notes, index],
+    () => ({ path, notes, index, terms, handlers: handlersRef }),
+    [path, notes, index, terms],
   );
 
   const latestRef = useRef<LatestProps>({ content, readOnly, ariaLabel, context });

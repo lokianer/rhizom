@@ -58,6 +58,26 @@ export const editorTheme = EditorView.theme({
     padding: '0 var(--rz-space-1)',
   },
 
+  // A word this vault defines somewhere. An underline rather than a colour, so a paragraph full
+  // of known terms still reads as prose.
+  '.cm-rz-term': {
+    borderBottom: '1px dotted var(--rz-accent)',
+  },
+  '.cm-rz-term-tooltip': {
+    fontFamily: 'var(--rz-font-sans)',
+    fontSize: 'var(--rz-text-md)',
+    lineHeight: '1.5',
+    maxWidth: '34em',
+    padding: 'var(--rz-space-2) var(--rz-space-3)',
+  },
+  '.cm-rz-term-tooltip strong': {
+    color: 'var(--rz-accent-strong)',
+  },
+  '.cm-rz-term-tooltip p': {
+    margin: 'var(--rz-space-1) 0 0',
+    color: 'var(--rz-text-muted)',
+  },
+
   '.cm-tooltip': {
     backgroundColor: 'var(--rz-surface-raised)',
     color: 'var(--rz-text)',

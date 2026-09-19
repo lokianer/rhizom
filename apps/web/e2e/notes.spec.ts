@@ -79,3 +79,16 @@ test('typing two brackets suggests notes and writes the link', async ({ page }) 
   await page.keyboard.press('Enter');
   await expect(page.locator('.cm-content')).toContainText('[[Campaign/Places/Lantern Bridge]]');
 });
+
+test('the editor keeps its height when the window is too short for the shelves below it', async ({
+  page,
+}) => {
+  // Backlinks and unlinked mentions both cap themselves against the viewport, and a note with
+  // plenty of each fills both. They may take the room; they may not take all of it.
+  await page.setViewportSize({ width: 420, height: 560 });
+  await page.goto('/notes/Campaign/NPCs/Corvin Marsh');
+  await expect(page.locator('.cm-content')).toBeVisible();
+
+  const editor = await page.locator('.cm-editor').boundingBox();
+  expect(editor?.height ?? 0).toBeGreaterThan(120);
+});

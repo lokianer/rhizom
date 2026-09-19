@@ -4,7 +4,11 @@ import type {
   AssetSummary,
   Backlink,
   CreateNoteRequest,
+  GlossaryEntry,
   GraphResponse,
+  LinkMentionsRequest,
+  LinkMentionsResult,
+  MentionsResponse,
   NoteDocument,
   NoteLink,
   NoteSummary,
@@ -115,6 +119,18 @@ export const api = {
   assets: (options?: RequestOptions) => request<AssetSummary[]>('/api/assets', options),
 
   tags: (options?: RequestOptions) => request<TagCount[]>('/api/tags', options),
+
+  glossary: (options?: RequestOptions) => request<GlossaryEntry[]>('/api/glossary', options),
+
+  mentions: (path: string, options?: RequestOptions) =>
+    request<MentionsResponse>(`/api/mentions?path=${encodeURIComponent(path)}`, options),
+
+  linkMentions: (body: LinkMentionsRequest, options?: RequestOptions) =>
+    request<LinkMentionsResult>('/api/mentions/link', {
+      method: 'POST',
+      ...json(body),
+      ...options,
+    }),
 
   graph: (clusterBy: 'folder' | 'tag', options?: RequestOptions) =>
     request<GraphResponse>(`/api/graph?clusterBy=${clusterBy}`, options),

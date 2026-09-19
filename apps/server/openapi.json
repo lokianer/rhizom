@@ -205,6 +205,7 @@
                       "title",
                       "folder",
                       "tags",
+                      "aliases",
                       "modifiedAt",
                       "size",
                       "linkCount",
@@ -225,6 +226,13 @@
                         "type": "string"
                       },
                       "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "aliases": {
+                        "description": "Other names the note answers to",
                         "type": "array",
                         "items": {
                           "type": "string"
@@ -312,6 +320,7 @@
                     "title",
                     "folder",
                     "tags",
+                    "aliases",
                     "modifiedAt",
                     "size",
                     "linkCount",
@@ -336,6 +345,13 @@
                       "type": "string"
                     },
                     "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "aliases": {
+                      "description": "Other names the note answers to",
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -472,6 +488,7 @@
                     "title",
                     "folder",
                     "tags",
+                    "aliases",
                     "modifiedAt",
                     "size",
                     "linkCount",
@@ -496,6 +513,13 @@
                       "type": "string"
                     },
                     "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "aliases": {
+                      "description": "Other names the note answers to",
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -646,6 +670,7 @@
                     "title",
                     "folder",
                     "tags",
+                    "aliases",
                     "modifiedAt",
                     "size",
                     "linkCount",
@@ -670,6 +695,13 @@
                       "type": "string"
                     },
                     "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "aliases": {
+                      "description": "Other names the note answers to",
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -1232,6 +1264,390 @@
         }
       }
     },
+    "/api/glossary": {
+      "get": {
+        "summary": "One entry per definition note, sorted by title",
+        "tags": ["terms"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["path", "title", "aliases", "summary"],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "aliases": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "summary": {
+                        "description": "The note's first block as plain text",
+                        "type": "string"
+                      }
+                    },
+                    "title": "GlossaryEntry"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mentions": {
+      "get": {
+        "summary": "Notes that name this one without linking to it",
+        "tags": ["mentions"],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["path", "terms", "groups", "truncated"],
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "terms": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "sourceTitle", "hash", "mentions"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "sourceTitle": {
+                            "type": "string"
+                          },
+                          "hash": {
+                            "description": "Send back when linking, so a changed file is refused",
+                            "type": "string"
+                          },
+                          "mentions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "target",
+                                "line",
+                                "start",
+                                "end",
+                                "text",
+                                "context",
+                                "inHeading",
+                                "inTableCell",
+                                "linkable"
+                              ],
+                              "properties": {
+                                "target": {
+                                  "type": "string"
+                                },
+                                "line": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "start": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "end": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "text": {
+                                  "type": "string"
+                                },
+                                "context": {
+                                  "type": "string"
+                                },
+                                "inHeading": {
+                                  "description": "Linking here would move a heading anchor",
+                                  "type": "boolean"
+                                },
+                                "inTableCell": {
+                                  "description": "The alias separator has to be escaped here",
+                                  "type": "boolean"
+                                },
+                                "linkable": {
+                                  "description": "False when the words break across a line",
+                                  "type": "boolean"
+                                }
+                              },
+                              "title": "Mention"
+                            }
+                          }
+                        },
+                        "title": "MentionGroup"
+                      }
+                    },
+                    "truncated": {
+                      "description": "The search stopped at its cap",
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mentions/link": {
+      "post": {
+        "summary": "Writes links around the given mentions",
+        "tags": ["mentions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["path", "writes"],
+                "properties": {
+                  "path": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "writes": {
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["source", "hash", "offsets"],
+                      "properties": {
+                        "source": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "hash": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "offsets": {
+                          "minItems": 1,
+                          "maxItems": 500,
+                          "type": "array",
+                          "items": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "title": "MentionWrite"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["linked", "skipped"],
+                  "properties": {
+                    "linked": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "count"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "reason"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": ["conflict"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["notFound"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["nothing"]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/graph": {
       "get": {
         "summary": "The whole vault as nodes and edges",
@@ -1316,6 +1732,10 @@
                             "type": "string"
                           },
                           "count": {
+                            "type": "integer"
+                          },
+                          "embeds": {
+                            "description": "How many of the links are written as an embed",
                             "type": "integer"
                           }
                         }
@@ -1485,6 +1905,10 @@
                             "type": "string"
                           },
                           "count": {
+                            "type": "integer"
+                          },
+                          "embeds": {
+                            "description": "How many of the links are written as an embed",
                             "type": "integer"
                           }
                         }
@@ -1778,6 +2202,14 @@
     {
       "name": "search",
       "description": "Full-text search and tags"
+    },
+    {
+      "name": "terms",
+      "description": "The vocabulary the vault defines"
+    },
+    {
+      "name": "mentions",
+      "description": "Where a note is named without a link"
     },
     {
       "name": "graph",

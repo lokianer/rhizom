@@ -33,6 +33,7 @@ export async function readNoteDocument(context: VaultContext, path: string): Pro
     title: record?.title ?? noteNameOf(file.path),
     folder: record?.folder ?? '',
     tags: record?.tags ?? [],
+    aliases: record?.aliases ?? [],
     modifiedAt: file.modifiedAt.toISOString(),
     size: file.size,
     linkCount: summary?.linkCount ?? 0,

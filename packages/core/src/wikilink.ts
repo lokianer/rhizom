@@ -10,10 +10,15 @@ export interface WikilinkTarget {
 /**
  * Parses the text between `[[` and `]]`. The first `|` starts the alias (later pipes belong to
  * it); the first `#` before that starts a heading, or a block reference when it is followed by `^`.
+ *
+ * A `\|` is that same separator written so that a GFM table cell does not take it for a column
+ * break — Obsidian requires the backslash inside a table and so does Rhizom, so it is stripped
+ * here rather than becoming part of the note's name.
  */
 export function parseWikilink(inner: string): WikilinkTarget {
   const pipe = inner.indexOf('|');
-  const reference = pipe === -1 ? inner : inner.slice(0, pipe);
+  // A backslash directly before the separator escaped it; it is not part of the name.
+  const reference = (pipe === -1 ? inner : inner.slice(0, pipe)).replace(/\\$/, '');
   const alias = pipe === -1 ? '' : inner.slice(pipe + 1).trim();
 
   const hash = reference.indexOf('#');

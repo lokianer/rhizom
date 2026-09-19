@@ -2,6 +2,7 @@
 // Paths are vault paths (see paths.ts). Timestamps are ISO 8601 strings.
 
 import type { GraphData } from './graph.js';
+import type { Mention } from './mentions.js';
 
 /** Response body of `GET /api/health`. */
 export interface HealthResponse {
@@ -35,6 +36,8 @@ export interface NoteSummary {
   title: string;
   folder: string;
   tags: string[];
+  /** Names the note also answers to, from `aliases:`; a link may use any of them. */
+  aliases: string[];
   /** Last modification time of the file. */
   modifiedAt: string;
   size: number;
@@ -104,6 +107,64 @@ export interface TagCount {
 
 /** `GET /api/graph` and `GET /api/graph/local` */
 export type GraphResponse = GraphData;
+
+/**
+ * `GET /api/glossary` — one entry per definition note, sorted by title. This is also where the
+ * terms come from: `glossaryTerms` expands an entry into the title and aliases it answers to,
+ * so the summary crosses the wire once per note rather than once per name.
+ */
+export interface GlossaryEntry {
+  path: string;
+  title: string;
+  /** The note's aliases, sorted; each is a term in its own right. */
+  aliases: string[];
+  /** The note's first block as plain text, for the list and the hover tooltip. */
+  summary: string;
+}
+
+/** One source note that names the open note, with the hash it was read at. */
+export interface MentionGroup {
+  source: string;
+  sourceTitle: string;
+  /** Content hash of the source when it was scanned; sent back when linking. */
+  hash: string;
+  mentions: Mention[];
+}
+
+/** `GET /api/mentions?path=` — where this note is named without a link leading to it. */
+export interface MentionsResponse {
+  path: string;
+  /** The names looked for: the note's title and every alias it answers to. */
+  terms: string[];
+  groups: MentionGroup[];
+  /** True when the search stopped at its cap, so the list may be short of a few. */
+  truncated: boolean;
+}
+
+/** One file to rewrite, and which of its mentions. */
+export interface MentionWrite {
+  source: string;
+  /** The hash the mentions were found at. A different one on disk means someone else wrote. */
+  hash: string;
+  /** Start offsets, exactly as `GET /api/mentions` reported them. */
+  offsets: number[];
+}
+
+/** `POST /api/mentions/link` */
+export interface LinkMentionsRequest {
+  /** The note every new link should lead to. */
+  path: string;
+  writes: MentionWrite[];
+}
+
+/**
+ * What the batch did. A note that could not be written is reported here rather than failing the
+ * whole batch: one stale file must not stop the other nine from being linked.
+ */
+export interface LinkMentionsResult {
+  linked: { source: string; count: number }[];
+  skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
+}
 
 /** `POST /api/notes` */
 export interface CreateNoteRequest {

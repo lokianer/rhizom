@@ -1,6 +1,6 @@
 // JSON schemas of the API, from which Fastify validates requests, serialises responses and
 // @fastify/swagger derives the OpenAPI document. The TypeScript contracts in @rhizom/core
-// describe the same shapes; types.test.ts keeps the two in step.
+// describe the same shapes; schemas.test.ts keeps the two in step.
 import { Type, type Static } from '@sinclair/typebox';
 
 export const ErrorSchema = Type.Object(
@@ -42,6 +42,7 @@ const noteSummaryFields = {
   title: Type.String(),
   folder: Type.String(),
   tags: Type.Array(Type.String()),
+  aliases: Type.Array(Type.String(), { description: 'Other names the note answers to' }),
   modifiedAt: Type.String({ format: 'date-time' }),
   size: Type.Integer(),
   linkCount: Type.Integer(),
@@ -59,6 +60,16 @@ export const NoteDocumentSchema = Type.Object(
     headings: Type.Array(HeadingSchema),
   },
   { $id: 'NoteDocument' },
+);
+
+export const GlossaryEntrySchema = Type.Object(
+  {
+    path: Type.String(),
+    title: Type.String(),
+    aliases: Type.Array(Type.String()),
+    summary: Type.String({ description: "The note's first block as plain text" }),
+  },
+  { $id: 'GlossaryEntry' },
 );
 
 export const LinkKindSchema = Type.Union([
@@ -147,6 +158,9 @@ export const GraphEdgeSchema = Type.Object({
   source: Type.String(),
   target: Type.String(),
   count: Type.Integer(),
+  embeds: Type.Optional(
+    Type.Integer({ description: 'How many of the links are written as an embed' }),
+  ),
 });
 
 export const GraphSchema = Type.Object(
@@ -157,6 +171,72 @@ export const GraphSchema = Type.Object(
   },
   { $id: 'Graph' },
 );
+
+export const MentionSchema = Type.Object(
+  {
+    target: Type.String(),
+    line: Type.Integer({ minimum: 1 }),
+    start: Type.Integer({ minimum: 0 }),
+    end: Type.Integer({ minimum: 0 }),
+    text: Type.String(),
+    context: Type.String(),
+    inHeading: Type.Boolean({ description: 'Linking here would move a heading anchor' }),
+    inTableCell: Type.Boolean({ description: 'The alias separator has to be escaped here' }),
+    linkable: Type.Boolean({ description: 'False when the words break across a line' }),
+  },
+  { $id: 'Mention' },
+);
+
+export const MentionGroupSchema = Type.Object(
+  {
+    source: Type.String(),
+    sourceTitle: Type.String(),
+    hash: Type.String({ description: 'Send back when linking, so a changed file is refused' }),
+    mentions: Type.Array(MentionSchema),
+  },
+  { $id: 'MentionGroup' },
+);
+
+export const MentionsResponseSchema = Type.Object(
+  {
+    path: Type.String(),
+    terms: Type.Array(Type.String()),
+    groups: Type.Array(MentionGroupSchema),
+    truncated: Type.Boolean({ description: 'The search stopped at its cap' }),
+  },
+  { $id: 'MentionsResponse' },
+);
+
+export const MentionWriteSchema = Type.Object(
+  {
+    source: Type.String({ minLength: 1 }),
+    hash: Type.String({ minLength: 1 }),
+    offsets: Type.Array(Type.Integer({ minimum: 0 }), { minItems: 1, maxItems: 500 }),
+  },
+  { $id: 'MentionWrite' },
+);
+
+export const LinkMentionsBodySchema = Type.Object({
+  path: Type.String({ minLength: 1 }),
+  // The one batch write in the app: bounded, because nothing else bounds it.
+  writes: Type.Array(MentionWriteSchema, { minItems: 1, maxItems: 200 }),
+});
+
+export const LinkMentionsResultSchema = Type.Object({
+  linked: Type.Array(Type.Object({ source: Type.String(), count: Type.Integer() })),
+  skipped: Type.Array(
+    Type.Object({
+      source: Type.String(),
+      reason: Type.Union([
+        Type.Literal('conflict'),
+        Type.Literal('notFound'),
+        Type.Literal('nothing'),
+      ]),
+    }),
+  ),
+});
+
+export const MentionsQuerySchema = Type.Object({ path: Type.String({ minLength: 1 }) });
 
 export const ClusterBySchema = Type.Union([Type.Literal('folder'), Type.Literal('tag')], {
   default: 'folder',
