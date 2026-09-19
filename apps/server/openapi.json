@@ -3,7 +3,7 @@
   "info": {
     "title": "Rhizom API",
     "description": "REST API of a Rhizom server. Note paths are vault paths: POSIX, relative to the vault root, with extension.",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "components": {
     "schemas": {}
