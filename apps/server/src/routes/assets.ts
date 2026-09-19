@@ -24,6 +24,10 @@ export async function registerAssetRoutes(
       dotfiles: 'ignore',
       index: false,
       list: false,
+      // A note is not an asset. `GET /api/assets` already leaves notes out, and this is the
+      // same contract: one door to the notes, which is `/api/notes/*`. A second one would be a
+      // way around whatever that door is given to check later.
+      allowedPath: (pathName) => !/\.(md|markdown)$/i.test(pathName),
     });
   }
 

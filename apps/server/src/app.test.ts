@@ -144,6 +144,8 @@ describe('vault API', () => {
       root.slice(root.lastIndexOf(process.platform === 'win32' ? '\\' : '/') + 1),
     );
     expect(body.indexedAt).toMatch(/^\d{4}-/);
+    // This vault has no Templates folder and no Obsidian settings, so it has no templates.
+    expect(body.templates).toEqual({ folder: null, dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm' });
   });
 
   it('lists the tree and the notes', async () => {
@@ -448,6 +450,15 @@ describe('vault API', () => {
     expect(
       (await app.inject({ method: 'GET', url: '/api/assets/..%2Fpackage.json' })).statusCode,
     ).not.toBe(200);
+  });
+
+  it('never serves a note as an asset: the notes have one door, and it is /api/notes', async () => {
+    expect((await app.inject({ method: 'GET', url: '/api/assets/Home.md' })).statusCode).toBe(404);
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/assets/Campaign/NPCs/Mira.md' })).statusCode,
+    ).toBe(404);
+    // The same file is there, through the door that will one day be asked who is knocking.
+    expect((await app.inject({ method: 'GET', url: '/api/notes/Home.md' })).statusCode).toBe(200);
   });
 
   it('stores an uploaded file under assets/', async () => {
