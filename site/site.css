@@ -2,17 +2,27 @@
  * Rhizom landing page.
  *
  * Every colour, type size, space, radius and duration comes from tokens.css, which the build
- * copies next to this file. The only values defined here are the page's own layout widths.
+ * copies next to this file. The only values defined here are the page's own layout widths and
+ * the few effects a landing page needs and the app does not: the glow behind the hero, the
+ * window frames around the screenshots, the live bubble field.
  *
- * Layout: a marginalia grid. Section headings sit in a narrow margin column, prose sits in a
- * column no wider than the reading measure, and the bubble-field figure is the one element
- * that spans both.
+ * Layout: one centred column. Prose keeps the reading measure; figures, frames and the field
+ * are allowed to be wider, and the field is full-bleed.
+ *
+ * Motion: everything that moves is decoration, and every rule that moves something is switched
+ * off under prefers-reduced-motion. Nothing here is ever the only way to understand the page.
  */
 
 :root {
-  --site-aside: 11rem;
-  --site-gap: var(--rz-space-7);
-  --site-max: calc(var(--site-aside) + var(--site-gap) + var(--rz-measure));
+  --site-max: 72rem;
+  --site-prose: var(--rz-measure);
+  --site-gutter: var(--rz-space-5);
+  --site-radius: var(--rz-radius-lg);
+  /* The hero glow and the card washes: the accents at the strength a background can take. */
+  --site-glow-moss: color-mix(in oklab, var(--rz-moss) 22%, transparent);
+  --site-glow-ochre: color-mix(in oklab, var(--rz-ochre) 20%, transparent);
+  --site-wash: color-mix(in oklab, var(--rz-surface) 70%, transparent);
+  --site-hairline: color-mix(in oklab, var(--rz-border) 70%, transparent);
 }
 
 /* Base */
@@ -29,11 +39,14 @@ html {
   font-family: var(--rz-font-serif);
   line-height: var(--rz-leading-relaxed);
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
   margin: 0;
   font-size: var(--rz-text-lg);
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -49,8 +62,6 @@ p {
   margin: 0;
   text-wrap: pretty;
 }
-
-/* Underlines take the link's own colour so they stay visible in both themes. */
 
 a {
   color: var(--rz-link);
@@ -70,6 +81,15 @@ strong {
 code {
   font-family: var(--rz-font-mono);
   font-size: 0.875em;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+  line-height: var(--rz-leading-tight);
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
 /* Hidden from sight, still read by assistive technology */
@@ -124,57 +144,68 @@ code {
 
 .page {
   width: 100%;
-  max-width: calc(var(--site-max) + 2 * var(--rz-space-4));
+  max-width: calc(var(--site-max) + 2 * var(--site-gutter));
   margin-inline: auto;
-  padding-inline: var(--rz-space-4);
+  padding-inline: var(--site-gutter);
 }
 
-/* Reading measure. Above 50rem the grid column enforces it; below, the prose blocks do. */
+/* Prose keeps its measure inside the wider column. */
 
 .hero__lead,
-.hero__status,
-.statements,
-.plans,
-.status__body,
+.section__lead,
+.section__note,
+.status__note,
+.cta p,
 .site-footer__row > p {
-  max-width: var(--rz-measure);
+  max-width: var(--site-prose);
 }
 
 /* Skip link */
 
 .skip-link {
   position: absolute;
-  top: var(--rz-space-2);
-  left: var(--rz-space-2);
-  padding: var(--rz-space-2) var(--rz-space-3);
-  border-radius: var(--rz-radius-sm);
+  left: var(--rz-space-4);
+  top: -4rem;
+  z-index: 10;
+  padding: var(--rz-space-2) var(--rz-space-4);
+  border-radius: var(--rz-radius-md);
   background: var(--rz-surface-raised);
   color: var(--rz-text);
   font-family: var(--rz-font-sans);
-  font-size: var(--rz-text-sm);
-  transform: translateY(-200%);
+  font-size: var(--rz-text-md);
+  text-decoration: none;
+  transition: top var(--rz-duration-normal) var(--rz-ease);
 }
 
 .skip-link:focus {
-  transform: none;
+  top: var(--rz-space-4);
 }
 
-/* Header. Fonts are set on the controls, not the row: the row is a .page, and .page measures
-   its width in ch of the body font. The theme switch follows the nav in DOM and tab order; on
-   narrow screens it wraps to a second row, right-aligned under the nav, rather than being
-   reordered. The wordmark's auto margin keeps it flush left on its own row. */
+/* Header — sticky, and a hairline once the page has moved under it */
 
 .site-header {
-  border-bottom: 1px solid var(--rz-border);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  border-bottom: 1px solid transparent;
+  background: color-mix(in oklab, var(--rz-bg) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+  transition:
+    border-color var(--rz-duration-normal) var(--rz-ease),
+    background-color var(--rz-duration-normal) var(--rz-ease);
+}
+
+.site-header.is-scrolled {
+  border-bottom-color: var(--site-hairline);
+  background: color-mix(in oklab, var(--rz-bg) 94%, transparent);
 }
 
 .site-header__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
   gap: var(--rz-space-3) var(--rz-space-5);
-  padding-block: var(--rz-space-4);
+  padding-block: var(--rz-space-3);
 }
 
 .wordmark {
@@ -182,29 +213,65 @@ code {
   align-items: center;
   gap: var(--rz-space-2);
   margin-right: auto;
-  font-family: var(--rz-font-serif);
-  font-size: var(--rz-text-lg);
+  color: var(--rz-text);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
-.mark circle {
-  fill-opacity: 0.85;
+.wordmark .mark {
+  overflow: visible;
+}
+
+.wordmark .mark circle {
+  transition: transform var(--rz-duration-normal) var(--rz-ease);
+  transform-origin: center;
+}
+
+.wordmark:hover .mark .k1 {
+  transform: translate(-1px, -1px);
+}
+
+.wordmark:hover .mark .k2 {
+  transform: translate(1.5px, -0.5px);
+}
+
+.wordmark:hover .mark .k3 {
+  transform: translate(0, 1.5px);
 }
 
 .site-nav {
   display: flex;
-  gap: var(--rz-space-5);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rz-space-2) var(--rz-space-5);
   font-family: var(--rz-font-sans);
-  font-size: var(--rz-text-sm);
-  line-height: var(--rz-leading-normal);
+  font-size: var(--rz-text-md);
 }
 
 .site-nav a {
-  color: var(--rz-text);
+  color: var(--rz-text-muted);
   text-decoration: none;
 }
 
 .site-nav a:hover {
+  color: var(--rz-text);
   text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.site-nav__cta {
+  padding: var(--rz-space-1) var(--rz-space-3);
+  border: 1px solid var(--rz-border-strong);
+  border-radius: var(--rz-radius-full);
+  color: var(--rz-text);
+}
+
+.site-nav__cta:hover {
+  border-color: var(--rz-accent-strong);
+  text-decoration: none;
 }
 
 /* The group border takes the faint text colour: the only border token that clears 3:1 on the
@@ -212,27 +279,23 @@ code {
 
 .theme-switch {
   display: inline-flex;
-  padding: var(--rz-space-1);
+  padding: 2px;
   border: 1px solid var(--rz-text-faint);
-  border-radius: var(--rz-radius-md);
-  background: var(--rz-surface-sunken);
-  font-family: var(--rz-font-sans);
-  font-size: var(--rz-text-sm);
-  line-height: var(--rz-leading-normal);
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-surface);
 }
 
 .theme-switch button {
-  appearance: none;
-  padding: var(--rz-space-1) var(--rz-space-2);
+  padding: var(--rz-space-1) var(--rz-space-3);
   border: 0;
-  border-radius: var(--rz-radius-sm);
-  background: transparent;
+  border-radius: var(--rz-radius-full);
+  background: none;
   color: var(--rz-text-muted);
   font: inherit;
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
   cursor: pointer;
-  transition:
-    background-color var(--rz-duration-fast) var(--rz-ease),
-    color var(--rz-duration-fast) var(--rz-ease);
 }
 
 .theme-switch button:hover {
@@ -242,36 +305,100 @@ code {
 /* The accent ring is the state cue that clears 3:1 in both themes; the raised fill is secondary. */
 
 .theme-switch button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--rz-accent-strong);
   background: var(--rz-surface-raised);
-  box-shadow: inset 0 0 0 1px var(--rz-accent-strong);
   color: var(--rz-text);
 }
 
 /* Hero */
 
 .hero {
-  padding-top: var(--rz-space-7);
+  position: relative;
+  isolation: isolate;
+  padding-top: var(--rz-space-8);
+  overflow: hidden;
+}
+
+/* Two soft lights behind everything, the way a lamp falls on a desk. */
+
+.hero__glow {
+  position: absolute;
+  inset: -20% -10% auto;
+  z-index: -1;
+  height: 46rem;
+  background:
+    radial-gradient(38rem 26rem at 22% 18%, var(--site-glow-moss), transparent 70%),
+    radial-gradient(34rem 24rem at 78% 8%, var(--site-glow-ochre), transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+  margin-bottom: var(--rz-space-5);
+  padding: var(--rz-space-1) var(--rz-space-4);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--rz-radius-full);
+  background: var(--site-wash);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-moss-strong);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--rz-moss-strong) 60%, transparent);
+  animation: pulse 2.8s var(--rz-ease) infinite;
+}
+
+@keyframes pulse {
+  70% {
+    box-shadow: 0 0 0 0.5rem transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 
 h1 {
   margin: 0 0 var(--rz-space-5);
-  font-size: var(--rz-text-2xl);
-  font-weight: 400;
-  line-height: var(--rz-leading-tight);
-  letter-spacing: -0.01em;
-  text-wrap: balance;
+  font-size: clamp(2.1rem, 1.2rem + 3.4vw, 4rem);
+  letter-spacing: -0.025em;
+}
+
+/* The gradient is decoration over an inherited colour: where background-clip is unsupported,
+   or forced colours are on, the words stay the text colour. */
+
+.grad {
+  background: linear-gradient(
+    100deg,
+    var(--rz-moss-strong),
+    var(--rz-ochre-strong) 60%,
+    var(--rz-rust-strong)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero__lead {
-  font-size: var(--rz-text-lg);
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.45rem);
   line-height: var(--rz-leading-normal);
+  color: var(--rz-text-muted);
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--rz-space-4) var(--rz-space-5);
+  gap: var(--rz-space-4);
   margin-top: var(--rz-space-6);
   font-family: var(--rz-font-sans);
   font-size: var(--rz-text-md);
@@ -281,14 +408,20 @@ h1 {
 .button {
   display: inline-block;
   padding: var(--rz-space-3) var(--rz-space-5);
+  border: 1px solid transparent;
   border-radius: var(--rz-radius-md);
   background: var(--rz-accent-strong);
   color: var(--rz-text-inverse);
   font-weight: 600;
   text-decoration: none;
+  transition:
+    transform var(--rz-duration-fast) var(--rz-ease),
+    box-shadow var(--rz-duration-normal) var(--rz-ease);
 }
 
 .button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--rz-shadow-floating);
   text-decoration: underline;
   text-decoration-thickness: 1px;
 }
@@ -299,39 +432,78 @@ h1 {
   outline-color: var(--rz-text);
 }
 
-.link-quiet {
+.button--ghost {
+  border-color: var(--rz-border-strong);
+  background: var(--site-wash);
   color: var(--rz-text);
 }
 
-.hero__status {
-  margin-top: var(--rz-space-6);
-  padding-left: var(--rz-space-3);
-  border-left: 2px solid var(--rz-accent);
-  color: var(--rz-text-muted);
+.button--ghost:hover {
+  border-color: var(--rz-accent-strong);
+}
+
+.button--ghost:focus-visible {
+  outline-color: var(--rz-focus-ring);
+}
+
+/* Three numbers, because a landing page should say something measurable. */
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-5) var(--rz-space-7);
+  margin: var(--rz-space-7) 0 0;
+  padding: 0;
+  list-style: none;
   font-family: var(--rz-font-sans);
+}
+
+.facts li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rz-space-1);
+  max-width: 15rem;
+}
+
+.facts__value {
+  font-size: var(--rz-text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--rz-text);
+}
+
+.facts__unit {
+  font-size: var(--rz-text-lg);
+  color: var(--rz-text-muted);
+}
+
+.facts__label {
   font-size: var(--rz-text-md);
   line-height: var(--rz-leading-normal);
+  color: var(--rz-text-muted);
 }
 
-.hero__status strong {
-  color: var(--rz-text);
-  font-weight: 600;
-}
+/* Bubble field — full-bleed, fading into the page at both ends */
 
-/* Bubble field */
+/* Narrower than the page and taller than a band: the notes come out at a size worth taking
+   hold of, and the crop stays on the drawing's own aspect rather than the window's. */
 
 .field {
-  margin: var(--rz-space-7) 0 0;
+  max-width: 64rem;
+  margin: var(--rz-space-7) auto 0;
+  padding-inline: var(--site-gutter);
 }
 
-/* On narrow screens the whole drawing would shrink to specks. The minimum height, together with
-   preserveAspectRatio="slice" on the svg, shows a centred crop at a legible scale instead. */
+/* A band rather than a whole drawing: the height is capped and `preserveAspectRatio="slice"`
+   crops a centred strip out of it, so the bubbles keep their size on every screen instead of
+   shrinking to specks on a narrow one or swallowing the fold on a wide one. The fade is on the
+   drawing alone — a caption behind a gradient is a caption nobody reads. */
 
 .field svg {
   display: block;
   width: 100%;
-  height: auto;
-  min-height: 15rem;
+  height: clamp(15rem, 34vh, 24rem);
+  mask-image: linear-gradient(to bottom, transparent, #000 9%, #000 88%, transparent);
 }
 
 .field .edges {
@@ -340,289 +512,558 @@ h1 {
   stroke-width: 1.5;
 }
 
-.field .edges line {
-  vector-effect: non-scaling-stroke;
+/* With field.js the drawing is a simulation the notes can be taken hold of; without it, the
+   still illustration it always was. Nothing here hints at what cannot be done. */
+
+.js .field svg.is-over {
+  cursor: grab;
 }
 
-.field circle {
-  fill-opacity: 0.85;
-  transition: fill-opacity var(--rz-duration-fast) var(--rz-ease);
+.js .field svg.is-dragging {
+  cursor: grabbing;
 }
 
-.field circle:hover {
-  fill-opacity: 1;
-}
-
-.field figcaption {
-  margin-top: var(--rz-space-3);
-  max-width: var(--rz-measure);
-  color: var(--rz-text-muted);
-  font-family: var(--rz-font-sans);
-  font-size: var(--rz-text-md);
-  line-height: var(--rz-leading-normal);
-}
+/* Only the script makes the field grabbable, so only the script's page invites it. */
 
 /* Sections */
 
 .section {
-  margin-top: var(--rz-space-8);
+  padding-block: var(--rz-space-8);
 }
 
-/* Two steps above the bold item titles it stacks over on narrow screens; above 50rem the margin
-   column carries the hierarchy and the heading steps down one size. */
+.kicker {
+  margin-bottom: var(--rz-space-2);
+  color: var(--rz-accent-strong);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 h2 {
-  margin: 0 0 var(--rz-space-4);
-  font-size: var(--rz-text-2xl);
-  font-style: italic;
-  font-weight: 400;
-  line-height: var(--rz-leading-tight);
-  text-wrap: balance;
+  margin: 0 0 var(--rz-space-6);
+  font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.4rem);
 }
 
-.statements {
-  display: grid;
-  gap: var(--rz-space-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.section__lead {
+  font-size: var(--rz-text-lg);
+  line-height: var(--rz-leading-normal);
 }
 
-/* The track minimum is capped at the container so a large root font size cannot overflow it. */
-
-.plans {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-  gap: var(--rz-space-5) var(--rz-space-6);
-  margin: 0;
-}
-
-.plans dt {
-  font-weight: 700;
-}
-
-.plans dd {
-  margin: var(--rz-space-2) 0 0;
-}
-
-.plans__phase {
+.section__note {
+  margin-top: var(--rz-space-5);
   color: var(--rz-text-muted);
   font-family: var(--rz-font-sans);
   font-size: var(--rz-text-md);
   line-height: var(--rz-leading-normal);
 }
 
-/* Status band */
+/* Statement cards */
 
-.status {
-  margin-top: var(--rz-space-8);
-  padding-block: var(--rz-space-7);
-  border-top: 1px solid var(--rz-border);
-  border-bottom: 1px solid var(--rz-border);
-  background: var(--rz-surface);
+.statements {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: var(--rz-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* The screenshots. One column of wide images; each keeps its own caption so the page still
-   reads without them. */
-
-.section__lead {
-  max-width: var(--rz-measure);
-  margin-bottom: var(--rz-space-4);
-}
-
-.section__note {
-  max-width: var(--rz-measure);
-  margin-top: var(--rz-space-4);
+.statements li {
+  position: relative;
+  padding: var(--rz-space-5);
+  padding-top: var(--rz-space-6);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--site-radius);
+  background: var(--site-wash);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
   color: var(--rz-text-muted);
+  transition:
+    transform var(--rz-duration-normal) var(--rz-ease),
+    border-color var(--rz-duration-normal) var(--rz-ease);
+}
+
+.statements li::before {
+  content: '';
+  position: absolute;
+  left: var(--rz-space-5);
+  top: var(--rz-space-5);
+  width: 1.75rem;
+  height: 3px;
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-accent-strong);
+}
+
+.statements li:nth-child(2)::before {
+  background: var(--rz-moss-strong);
+}
+
+.statements li:nth-child(3)::before {
+  background: var(--rz-rust-strong);
+}
+
+.statements li:nth-child(4)::before {
+  background: var(--rz-cluster-4);
+}
+
+.statements li:hover {
+  transform: translateY(-2px);
+  border-color: var(--rz-border-strong);
+}
+
+.statements strong {
+  display: block;
+  margin-top: var(--rz-space-3);
+  color: var(--rz-text);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-lg);
+  font-weight: 600;
+}
+
+/* Showcase — one screenshot at a time, in a window frame */
+
+.showcase {
+  padding-block: var(--rz-space-8);
+  border-block: 1px solid var(--site-hairline);
+  background:
+    radial-gradient(60rem 30rem at 50% -10%, var(--site-glow-ochre), transparent 65%),
+    var(--rz-surface-sunken);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-2);
+  margin-bottom: var(--rz-space-5);
+}
+
+.tabs button {
+  padding: var(--rz-space-2) var(--rz-space-5);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-surface);
+  color: var(--rz-text-muted);
+  font: inherit;
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  cursor: pointer;
+  transition:
+    color var(--rz-duration-fast) var(--rz-ease),
+    border-color var(--rz-duration-fast) var(--rz-ease);
+}
+
+.tabs button:hover {
+  color: var(--rz-text);
+  border-color: var(--rz-border-strong);
+}
+
+.tabs button[aria-selected='true'] {
+  border-color: var(--rz-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--rz-accent-strong);
+  background: var(--rz-surface-raised);
+  color: var(--rz-text);
+}
+
+.frame {
+  margin: 0;
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--site-radius);
+  background: var(--rz-surface);
+  box-shadow: var(--rz-shadow-floating);
+  overflow: hidden;
+}
+
+.frame[hidden] {
+  display: none;
+}
+
+.frame__bar,
+.terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  padding: var(--rz-space-2) var(--rz-space-4);
+  border-bottom: 1px solid var(--site-hairline);
+  background: var(--rz-surface-raised);
+  color: var(--rz-text-faint);
+  font-family: var(--rz-font-mono);
   font-size: var(--rz-text-md);
 }
 
-.shots {
-  display: grid;
-  gap: var(--rz-space-7);
+.frame__dots {
+  display: inline-flex;
+  gap: 6px;
 }
 
-.shot {
-  margin: 0;
+.frame__dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-border-strong);
 }
 
-.shot img {
+.frame__dots i:first-child {
+  background: color-mix(in oklab, var(--rz-rust-strong) 70%, var(--rz-border-strong));
+}
+
+.frame__dots i:nth-child(2) {
+  background: color-mix(in oklab, var(--rz-ochre-strong) 70%, var(--rz-border-strong));
+}
+
+.frame__dots i:last-child {
+  background: color-mix(in oklab, var(--rz-moss-strong) 70%, var(--rz-border-strong));
+}
+
+.frame__path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frame img {
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid var(--rz-border);
-  border-radius: var(--rz-radius-md);
-  background: var(--rz-surface-sunken);
 }
 
-.shot figcaption {
-  margin-top: var(--rz-space-3);
-  max-width: var(--rz-measure);
+.frame figcaption {
+  padding: var(--rz-space-4) var(--rz-space-5);
+  border-top: 1px solid var(--site-hairline);
   color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
   font-size: var(--rz-text-md);
   line-height: var(--rz-leading-normal);
+}
+
+/* Running it */
+
+.run {
+  padding-block: var(--rz-space-8);
+}
+
+.run__inner {
+  display: grid;
+  gap: var(--rz-space-7);
+  align-items: center;
+}
+
+.terminal {
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--site-radius);
+  background: var(--rz-surface-sunken);
+  box-shadow: var(--rz-shadow-floating);
+  overflow: hidden;
 }
 
 .code {
   margin: 0;
-  padding: var(--rz-space-3) var(--rz-space-4);
+  padding: var(--rz-space-5);
   overflow-x: auto;
-  border: 1px solid var(--rz-border);
-  border-radius: var(--rz-radius-md);
-  background: var(--rz-surface-sunken);
   font-family: var(--rz-font-mono);
-  font-size: var(--rz-text-sm);
-  line-height: var(--rz-leading-normal);
-}
-
-.phases {
-  display: flex;
-  flex-direction: column;
-  gap: var(--rz-space-2) var(--rz-space-5);
-  margin: var(--rz-space-5) 0;
-  padding: 0;
-  list-style: none;
-  color: var(--rz-text-muted);
-  font-family: var(--rz-font-sans);
   font-size: var(--rz-text-md);
   line-height: var(--rz-leading-normal);
 }
 
-.phases li {
-  display: flex;
-  align-items: center;
-  gap: var(--rz-space-2);
+.code code {
+  font-size: inherit;
 }
 
-.phases__done .phases__n {
-  border-color: var(--rz-moss-strong);
+.c-env {
+  color: var(--rz-ochre-strong);
+}
+
+.c-arg {
+  color: var(--rz-text-muted);
+}
+
+.c-cmd {
   color: var(--rz-moss-strong);
 }
 
-.phases li[aria-current] {
+/* In the bar, not over the command: a button sitting on the text hides the end of it. */
+
+.copy {
+  margin-left: auto;
+  padding: 2px var(--rz-space-3);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface-raised);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  cursor: pointer;
+}
+
+.copy:hover {
   color: var(--rz-text);
+  border-color: var(--rz-border-strong);
 }
 
-.phases__n {
-  display: inline-grid;
-  place-items: center;
-  width: var(--rz-space-5);
-  height: var(--rz-space-5);
-  border: 1px solid currentColor;
-  border-radius: var(--rz-radius-full);
-  font-size: var(--rz-text-sm);
+/* Plans */
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+  gap: var(--rz-space-4);
+  margin: 0;
+}
+
+.plans__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rz-space-2);
+  padding: var(--rz-space-5);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--site-radius);
+  background: var(--site-wash);
+  transition:
+    transform var(--rz-duration-normal) var(--rz-ease),
+    border-color var(--rz-duration-normal) var(--rz-ease);
+}
+
+.plans__item:hover {
+  transform: translateY(-2px);
+  border-color: var(--rz-border-strong);
+}
+
+.plans dt {
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-xl);
   font-weight: 600;
-  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-.phases li[aria-current] .phases__n {
-  border-color: var(--rz-accent-strong);
-  background: var(--rz-accent-strong);
-  color: var(--rz-text-inverse);
+.plans dd {
+  margin: 0;
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+  color: var(--rz-text-muted);
 }
 
-@media (min-width: 40rem) {
-  .phases {
-    display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: repeat(3, auto);
-    justify-content: start;
-    column-gap: var(--rz-space-7);
-  }
-}
-
-/* Footer. As in the header, the font sits on the paragraphs so the .page row keeps its measure. */
-
-.site-footer {
-  padding-block: var(--rz-space-6) var(--rz-space-8);
-}
-
-.site-footer p {
+.chip {
+  display: inline-block;
+  padding: 2px var(--rz-space-3);
+  border: 1px solid var(--site-hairline);
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-surface);
   color: var(--rz-text-muted);
   font-family: var(--rz-font-sans);
   font-size: var(--rz-text-md);
   line-height: var(--rz-leading-normal);
 }
 
-.site-footer p + p {
-  margin-top: var(--rz-space-2);
+.chip--now {
+  border-color: color-mix(in oklab, var(--rz-moss-strong) 50%, transparent);
+  color: var(--rz-moss-strong);
 }
 
-.site-footer a {
+.chip--soon {
+  border-color: color-mix(in oklab, var(--rz-ochre-strong) 50%, transparent);
+  color: var(--rz-ochre-strong);
+}
+
+/* Status band and the phase rail */
+
+.status {
+  padding-block: var(--rz-space-8);
+  border-block: 1px solid var(--site-hairline);
+  background: var(--rz-surface-sunken);
+}
+
+.status__note {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-lg);
+  line-height: var(--rz-leading-normal);
+}
+
+.rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: var(--rz-space-4);
+  margin: var(--rz-space-6) 0 var(--rz-space-5);
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.rail__step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  padding-top: var(--rz-space-4);
+  border-top: 2px solid var(--rz-border);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.rail__step.is-done {
+  border-top-color: var(--rz-moss-strong);
+  color: var(--rz-text-muted);
+}
+
+.rail__step.is-current {
+  border-top-color: var(--rz-accent-strong);
   color: var(--rz-text);
 }
 
-/* Marginalia grid on wider screens */
+.rail__n {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border: 1px solid currentcolor;
+  border-radius: var(--rz-radius-full);
+  font-size: var(--rz-text-md);
+  font-variant-numeric: tabular-nums;
+}
 
-@media (min-width: 50rem) {
-  .hero,
-  .section,
-  .status__row,
+.rail__step.is-done .rail__n {
+  border-color: var(--rz-moss-strong);
+  background: color-mix(in oklab, var(--rz-moss-strong) 22%, transparent);
+  color: var(--rz-text);
+}
+
+.rail__step.is-current .rail__n {
+  border-color: var(--rz-accent-strong);
+  border-width: 2px;
+  background: color-mix(in oklab, var(--rz-ochre-strong) 22%, transparent);
+  color: var(--rz-text);
+}
+
+.status__more {
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+}
+
+/* Closing call */
+
+.cta {
+  padding-block: var(--rz-space-8);
+  text-align: center;
+}
+
+.cta__inner {
+  display: grid;
+  justify-items: center;
+  gap: var(--rz-space-4);
+}
+
+.cta h2 {
+  margin: 0;
+}
+
+.cta p {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-lg);
+  line-height: var(--rz-leading-normal);
+}
+
+.cta .hero__actions {
+  justify-content: center;
+  margin-top: var(--rz-space-2);
+}
+
+/* Footer */
+
+.site-footer {
+  padding-block: var(--rz-space-7);
+  border-top: 1px solid var(--site-hairline);
+  background: var(--rz-surface-sunken);
+}
+
+.site-footer__row {
+  display: grid;
+  gap: var(--rz-space-3);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+/* Wider screens: the running-it section becomes two columns. */
+
+@media (min-width: 52rem) {
+  .run__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  }
+
   .site-footer__row {
-    display: grid;
-    grid-template-columns: var(--site-aside) minmax(0, var(--rz-measure));
-    column-gap: var(--site-gap);
-  }
-
-  .hero {
-    padding-top: var(--rz-space-8);
-  }
-
-  h1 {
-    font-size: var(--rz-text-3xl);
-  }
-
-  .hero__lead {
-    font-size: var(--rz-text-xl);
-  }
-
-  .hero > h1,
-  .hero > .hero__lead,
-  .hero > .hero__actions,
-  .section > :not(h2),
-  .status__body,
-  .site-footer__row > p {
-    grid-column: 2;
-  }
-
-  .hero__status {
-    grid-column: 1;
-    grid-row: 2 / span 2;
-    align-self: start;
-    margin-top: 0;
-  }
-
-  .field {
-    grid-column: 1 / -1;
-  }
-
-  /* A margin, not padding, so the caption keeps its full measure beside the aside column. */
-
-  .field figcaption {
-    margin-left: calc(var(--site-aside) + var(--site-gap));
-  }
-
-  h2 {
-    grid-column: 1;
-    margin-bottom: 0;
-    font-size: var(--rz-text-xl);
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
   }
 }
 
-/* Forced colours (Windows High Contrast) drop backgrounds and shadows, so the two state cues
-   become outlines and borders. The system colour keyword is the one non-token colour here. */
+/* Scroll reveal. Only ever applied with JavaScript, so the page without it is simply visible. */
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 600ms var(--rz-ease),
+    transform 600ms var(--rz-ease);
+}
+
+.js .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Motion is decoration here: with reduced motion everything is simply where it belongs. */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .dot {
+    animation: none;
+  }
+
+  .js .reveal,
+  .js .reveal.is-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .button:hover,
+  .statements li:hover,
+  .plans__item:hover {
+    transform: none;
+  }
+}
+
+/* Forced colours (Windows High Contrast) drop backgrounds and shadows, so the state cues
+   become outlines and borders. The system colour keywords are the one non-token colours here. */
 
 @media (forced-colors: active) {
-  .theme-switch button[aria-pressed='true'] {
+  .theme-switch button[aria-pressed='true'],
+  .tabs button[aria-selected='true'] {
     outline: 2px solid ButtonText;
     outline-offset: -2px;
   }
 
-  .theme-switch button[aria-pressed='true']:focus-visible {
+  .theme-switch button[aria-pressed='true']:focus-visible,
+  .tabs button[aria-selected='true']:focus-visible {
     outline-offset: var(--rz-focus-offset);
   }
 
-  .phases li[aria-current] .phases__n {
+  .grad {
+    color: CanvasText;
+    background: none;
+  }
+
+  .rail__step.is-current .rail__n {
     border-width: 2px;
+  }
+
+  .hero__glow {
+    display: none;
   }
 }

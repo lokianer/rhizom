@@ -33,12 +33,15 @@
           /* Storage unavailable; the default theme applies. */
         }
       })();
+      // Enhancements that hide things until they scroll into view only run with JavaScript.
+      document.documentElement.classList.add('js');
     </script>
     <link rel="stylesheet" href="./tokens.css" />
     <link rel="stylesheet" href="./site.css" />
     <noscript>
       <style>
-        .theme-switch {
+        .theme-switch,
+        .copy {
           display: none;
         }
       </style>
@@ -49,12 +52,12 @@
 
     <header class="site-header">
       <div class="page site-header__row">
-        <span class="wordmark">
+        <a class="wordmark" href="#main">
           <svg
             class="mark"
             viewBox="0 0 24 24"
-            width="22"
-            height="22"
+            width="24"
+            height="24"
             aria-hidden="true"
             focusable="false"
           >
@@ -63,10 +66,13 @@
             <circle class="k3" cx="11" cy="17" r="5.5" />
           </svg>
           Rhizom
-        </span>
+        </a>
         <nav class="site-nav" aria-label="Primary">
-          <a href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md">Roadmap</a>
-          <a href="https://github.com/lokianer/rhizom">GitHub</a>
+          <a href="#idea">The idea</a>
+          <a href="#look">A look at it</a>
+          <a href="#run">Running it</a>
+          <a href="#roadmap">Roadmap</a>
+          <a class="site-nav__cta" href="https://github.com/lokianer/rhizom">GitHub</a>
         </nav>
         <div class="theme-switch" role="group" aria-label="Theme">
           <button type="button" data-set-theme="humus" aria-pressed="true">
@@ -81,135 +87,148 @@
     </header>
 
     <main id="main">
-      <div class="page">
-        <section class="hero" aria-labelledby="hero-title">
-          <h1 id="hero-title">Networked knowledge, kept in plain Markdown files.</h1>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__glow" aria-hidden="true"></div>
+        <div class="page hero__inner">
+          <p class="eyebrow">
+            <span class="dot"></span> Open source · AGPL-3.0 · runs on your own machine
+          </p>
+          <h1 id="hero-title">
+            Networked knowledge,<br />
+            kept in <span class="grad">plain Markdown files</span>.
+          </h1>
           <p class="hero__lead">
-            Rhizom is a self-hostable, open-source tool for networked knowledge. It reads a folder
-            of Markdown files, indexes the links between them and draws the vault as a field of
-            bubbles: notes as circles, folders and tags as colour, links as connections. Every vault
-            doubles as a wiki.
+            Rhizom reads a folder of Markdown files, indexes the links between them and draws the
+            vault as a field of bubbles: notes as circles, folders and tags as colour, links as
+            connections. Every vault doubles as a wiki.
           </p>
           <p class="hero__actions">
             <a class="button" href="https://github.com/lokianer/rhizom">View on GitHub</a>
-            <a class="link-quiet" href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md"
-              >Read the roadmap</a
-            >
+            <a class="button button--ghost" href="#run">Run it in one command</a>
           </p>
-          <p class="hero__status">
-            <strong>The first version is here.</strong> Open a vault, write, link, search and see
-            the field. Rough edges included — keep a backup of your notes.
-          </p>
+          <ul class="facts" role="list">
+            <li>
+              <span class="facts__value">0</span>
+              <span class="facts__label">accounts, trackers, cloud services</span>
+            </li>
+            <li>
+              <span class="facts__value">1</span>
+              <span class="facts__label">folder of Markdown — that is the whole format</span>
+            </li>
+            <li>
+              <span class="facts__value">&lt;100<span class="facts__unit">ms</span></span>
+              <span class="facts__label">to search a vault of 5,000 notes</span>
+            </li>
+          </ul>
+        </div>
 
-          <figure class="field">
-            <svg
-              viewBox="0 0 960 400"
-              preserveAspectRatio="xMidYMid slice"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <g class="edges">
-                <!-- moss -->
-                <line x1="150" y1="205" x2="96" y2="168" />
-                <line x1="150" y1="205" x2="108" y2="252" />
-                <line x1="150" y1="205" x2="198" y2="262" />
-                <line x1="150" y1="205" x2="218" y2="170" />
-                <line x1="96" y1="168" x2="56" y2="214" />
-                <line x1="108" y1="252" x2="56" y2="214" />
-                <line x1="198" y1="262" x2="172" y2="306" />
-                <!-- ochre -->
-                <line x1="445" y1="145" x2="382" y2="96" />
-                <line x1="445" y1="145" x2="508" y2="88" />
-                <line x1="445" y1="145" x2="528" y2="178" />
-                <line x1="445" y1="145" x2="384" y2="194" />
-                <line x1="445" y1="145" x2="458" y2="228" />
-                <line x1="508" y1="88" x2="568" y2="118" />
-                <line x1="528" y1="178" x2="568" y2="118" />
-                <line x1="382" y1="96" x2="326" y2="142" />
-                <line x1="384" y1="194" x2="326" y2="142" />
-                <line x1="384" y1="194" x2="458" y2="228" />
-                <!-- rust -->
-                <line x1="752" y1="242" x2="692" y2="292" />
-                <line x1="752" y1="242" x2="812" y2="198" />
-                <line x1="752" y1="242" x2="822" y2="302" />
-                <line x1="692" y1="292" x2="746" y2="334" />
-                <line x1="822" y1="302" x2="746" y2="334" />
-                <line x1="812" y1="198" x2="866" y2="250" />
-                <line x1="822" y1="302" x2="866" y2="250" />
-                <!-- moor -->
-                <line x1="592" y1="322" x2="540" y2="362" />
-                <line x1="592" y1="322" x2="644" y2="358" />
-                <line x1="592" y1="322" x2="626" y2="268" />
-                <line x1="592" y1="322" x2="520" y2="302" />
-                <line x1="540" y1="362" x2="520" y2="302" />
-                <!-- heather -->
-                <line x1="846" y1="82" x2="896" y2="124" />
-                <line x1="846" y1="82" x2="798" y2="44" />
-                <!-- bridges between clusters -->
-                <line x1="218" y1="170" x2="326" y2="142" />
-                <line x1="458" y1="228" x2="520" y2="302" />
-                <line x1="626" y1="268" x2="692" y2="292" />
-                <line x1="568" y1="118" x2="752" y2="242" />
-                <line x1="846" y1="82" x2="812" y2="198" />
-              </g>
-              <!-- Radii follow link degree: hubs 22-32, three links 14-16, two 11-13, one 10, none 8-9 -->
-              <g class="k1">
-                <circle cx="150" cy="205" r="26" />
-                <circle cx="96" cy="168" r="13" />
-                <circle cx="108" cy="252" r="12" />
-                <circle cx="198" cy="262" r="13" />
-                <circle cx="218" cy="170" r="12" />
-                <circle cx="172" cy="306" r="10" />
-                <circle cx="56" cy="214" r="11" />
-              </g>
-              <g class="k2">
-                <circle cx="445" cy="145" r="32" />
-                <circle cx="382" cy="96" r="12" />
-                <circle cx="508" cy="88" r="13" />
-                <circle cx="528" cy="178" r="12" />
-                <circle cx="384" cy="194" r="15" />
-                <circle cx="458" cy="228" r="14" />
-                <circle cx="568" cy="118" r="14" />
-                <circle cx="326" cy="142" r="14" />
-              </g>
-              <g class="k3">
-                <circle cx="752" cy="242" r="24" />
-                <circle cx="692" cy="292" r="15" />
-                <circle cx="812" cy="198" r="16" />
-                <circle cx="822" cy="302" r="14" />
-                <circle cx="746" cy="334" r="11" />
-                <circle cx="866" cy="250" r="11" />
-              </g>
-              <g class="k4">
-                <circle cx="592" cy="322" r="22" />
-                <circle cx="540" cy="362" r="12" />
-                <circle cx="644" cy="358" r="10" />
-                <circle cx="626" cy="268" r="11" />
-                <circle cx="520" cy="302" r="14" />
-              </g>
-              <g class="k6">
-                <circle cx="846" cy="82" r="15" />
-                <circle cx="896" cy="124" r="10" />
-                <circle cx="798" cy="44" r="10" />
-              </g>
-              <g class="k7">
-                <circle cx="302" cy="332" r="9" />
-              </g>
-              <g class="k8">
-                <circle cx="72" cy="66" r="8" />
-              </g>
-              <g class="k5">
-                <circle cx="924" cy="362" r="8" />
-              </g>
-            </svg>
-            <figcaption>
-              An illustration of the idea, not a screenshot: a few clusters of notes, some bridges
-              between them, and a couple of notes nothing links to yet.
-            </figcaption>
-          </figure>
-        </section>
+        <figure class="field">
+          <svg
+            viewBox="0 0 960 400"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <g class="edges">
+              <!-- moss -->
+              <line x1="150" y1="205" x2="96" y2="168" />
+              <line x1="150" y1="205" x2="108" y2="252" />
+              <line x1="150" y1="205" x2="198" y2="262" />
+              <line x1="150" y1="205" x2="218" y2="170" />
+              <line x1="96" y1="168" x2="56" y2="214" />
+              <line x1="108" y1="252" x2="56" y2="214" />
+              <line x1="198" y1="262" x2="172" y2="306" />
+              <!-- ochre -->
+              <line x1="445" y1="145" x2="382" y2="96" />
+              <line x1="445" y1="145" x2="508" y2="88" />
+              <line x1="445" y1="145" x2="528" y2="178" />
+              <line x1="445" y1="145" x2="384" y2="194" />
+              <line x1="445" y1="145" x2="458" y2="228" />
+              <line x1="508" y1="88" x2="568" y2="118" />
+              <line x1="528" y1="178" x2="568" y2="118" />
+              <line x1="382" y1="96" x2="326" y2="142" />
+              <line x1="384" y1="194" x2="326" y2="142" />
+              <line x1="384" y1="194" x2="458" y2="228" />
+              <!-- rust -->
+              <line x1="752" y1="242" x2="692" y2="292" />
+              <line x1="752" y1="242" x2="812" y2="198" />
+              <line x1="752" y1="242" x2="822" y2="302" />
+              <line x1="692" y1="292" x2="746" y2="334" />
+              <line x1="822" y1="302" x2="746" y2="334" />
+              <line x1="812" y1="198" x2="866" y2="250" />
+              <line x1="822" y1="302" x2="866" y2="250" />
+              <!-- moor -->
+              <line x1="592" y1="322" x2="540" y2="362" />
+              <line x1="592" y1="322" x2="644" y2="358" />
+              <line x1="592" y1="322" x2="626" y2="268" />
+              <line x1="592" y1="322" x2="520" y2="302" />
+              <line x1="540" y1="362" x2="520" y2="302" />
+              <!-- heather -->
+              <line x1="846" y1="82" x2="896" y2="124" />
+              <line x1="846" y1="82" x2="798" y2="44" />
+              <!-- bridges between clusters -->
+              <line x1="218" y1="170" x2="326" y2="142" />
+              <line x1="458" y1="228" x2="520" y2="302" />
+              <line x1="626" y1="268" x2="692" y2="292" />
+              <line x1="568" y1="118" x2="752" y2="242" />
+              <line x1="846" y1="82" x2="812" y2="198" />
+            </g>
+            <!-- Radii follow link degree: hubs 22-32, three links 14-16, two 11-13, one 10, none 8-9 -->
+            <g class="k1">
+              <circle cx="150" cy="205" r="26" />
+              <circle cx="96" cy="168" r="13" />
+              <circle cx="108" cy="252" r="12" />
+              <circle cx="198" cy="262" r="13" />
+              <circle cx="218" cy="170" r="12" />
+              <circle cx="172" cy="306" r="10" />
+              <circle cx="56" cy="214" r="11" />
+            </g>
+            <g class="k2">
+              <circle cx="445" cy="145" r="32" />
+              <circle cx="382" cy="96" r="12" />
+              <circle cx="508" cy="88" r="13" />
+              <circle cx="528" cy="178" r="12" />
+              <circle cx="384" cy="194" r="15" />
+              <circle cx="458" cy="228" r="14" />
+              <circle cx="568" cy="118" r="14" />
+              <circle cx="326" cy="142" r="14" />
+            </g>
+            <g class="k3">
+              <circle cx="752" cy="242" r="24" />
+              <circle cx="692" cy="292" r="15" />
+              <circle cx="812" cy="198" r="16" />
+              <circle cx="822" cy="302" r="14" />
+              <circle cx="746" cy="334" r="11" />
+              <circle cx="866" cy="250" r="11" />
+            </g>
+            <g class="k4">
+              <circle cx="592" cy="322" r="22" />
+              <circle cx="540" cy="362" r="12" />
+              <circle cx="644" cy="358" r="10" />
+              <circle cx="626" cy="268" r="11" />
+              <circle cx="520" cy="302" r="14" />
+            </g>
+            <g class="k6">
+              <circle cx="846" cy="82" r="15" />
+              <circle cx="896" cy="124" r="10" />
+              <circle cx="798" cy="44" r="10" />
+            </g>
+            <g class="k7">
+              <circle cx="302" cy="332" r="9" />
+            </g>
+            <g class="k8">
+              <circle cx="72" cy="66" r="8" />
+            </g>
+            <g class="k5">
+              <circle cx="924" cy="362" r="8" />
+            </g>
+          </svg>
+        </figure>
+      </section>
 
-        <section class="section" aria-labelledby="files-title">
+      <div class="page">
+        <section class="section" id="idea" aria-labelledby="files-title">
+          <p class="kicker">The idea</p>
           <h2 id="files-title">Files first</h2>
           <ul class="statements" role="list">
             <li>
@@ -227,11 +246,51 @@
             </li>
           </ul>
         </section>
+      </div>
 
-        <section class="section" aria-labelledby="look-title">
-          <h2 id="look-title">A look at it</h2>
-          <div class="shots">
-            <figure class="shot">
+      <section class="showcase" id="look" aria-labelledby="look-title">
+        <div class="page">
+          <p class="kicker">A look at it</p>
+          <h2 id="look-title">Three views of the same folder</h2>
+
+          <div class="tabs" role="tablist" aria-label="Screenshots">
+            <button
+              type="button"
+              role="tab"
+              id="tab-editor"
+              aria-controls="panel-editor"
+              aria-selected="true"
+            >
+              Editor
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-graph"
+              aria-controls="panel-graph"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Graph
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-wiki"
+              aria-controls="panel-wiki"
+              aria-selected="false"
+              tabindex="-1"
+            >
+              Wiki
+            </button>
+          </div>
+
+          <div class="frames">
+            <figure class="frame" role="tabpanel" id="panel-editor" aria-labelledby="tab-editor">
+              <div class="frame__bar" aria-hidden="true">
+                <span class="frame__dots"><i></i><i></i><i></i></span>
+                <span class="frame__path">localhost:3737 — Campaign / Silverstadt</span>
+              </div>
               <img
                 src="./shots/editor.png"
                 width="1440"
@@ -245,7 +304,18 @@
                 underneath.
               </figcaption>
             </figure>
-            <figure class="shot">
+
+            <figure
+              class="frame"
+              role="tabpanel"
+              id="panel-graph"
+              aria-labelledby="tab-graph"
+              hidden
+            >
+              <div class="frame__bar" aria-hidden="true">
+                <span class="frame__dots"><i></i><i></i><i></i></span>
+                <span class="frame__path">localhost:3737 — Graph</span>
+              </div>
               <img
                 src="./shots/graph.png"
                 width="1440"
@@ -259,7 +329,12 @@
                 colour the folder or the tag.
               </figcaption>
             </figure>
-            <figure class="shot">
+
+            <figure class="frame" role="tabpanel" id="panel-wiki" aria-labelledby="tab-wiki" hidden>
+              <div class="frame__bar" aria-hidden="true">
+                <span class="frame__dots"><i></i><i></i><i></i></span>
+                <span class="frame__path">localhost:3737 — Wiki</span>
+              </div>
               <img
                 src="./shots/wiki.png"
                 width="1440"
@@ -273,30 +348,48 @@
               </figcaption>
             </figure>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section class="section" aria-labelledby="start-title">
-          <h2 id="start-title">Running it</h2>
-          <p class="section__lead">
-            One container, or one process on a machine you control. Point it at a folder of Markdown
-            files — an Obsidian vault works as it is — and open
-            <code>localhost:3737</code>.
-          </p>
-          <pre class="code"><code>RHIZOM_VAULT=/path/to/your/vault docker compose up</code></pre>
-          <p class="section__note">
-            The index lives beside your notes and can be deleted at any time; the files are never
-            touched by it. Nothing leaves the machine: no telemetry, no account, no cloud.
-            <a href="https://github.com/lokianer/rhizom#quick-start">The full quick start</a> is in
-            the README.
-          </p>
-        </section>
+      <section class="run" id="run" aria-labelledby="start-title">
+        <div class="page run__inner">
+          <div class="run__text">
+            <p class="kicker">Running it</p>
+            <h2 id="start-title">One container, or one process</h2>
+            <p class="section__lead">
+              Point it at a folder of Markdown files — an Obsidian vault works as it is — and open
+              <code>localhost:3737</code>.
+            </p>
+            <p class="section__note">
+              The index lives beside your notes and can be deleted at any time; the files are never
+              touched by it. Nothing leaves the machine: no telemetry, no account, no cloud.
+              <a href="https://github.com/lokianer/rhizom#quick-start">The full quick start</a> is
+              in the README.
+            </p>
+          </div>
+          <div class="terminal">
+            <div class="terminal__bar">
+              <span class="frame__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="frame__path" aria-hidden="true">bash</span>
+              <button class="copy" type="button" data-copy="run-command">
+                Copy<span class="visually-hidden"> the command</span>
+              </button>
+            </div>
+            <pre
+              class="code"
+            ><code id="run-command"><span class="c-env">RHIZOM_VAULT</span>=<span class="c-arg">/path/to/your/vault</span> <span class="c-cmd">docker compose up</span></code></pre>
+          </div>
+        </div>
+      </section>
 
+      <div class="page">
         <section class="section" aria-labelledby="will-title">
-          <h2 id="will-title">What it does, and what comes next</h2>
+          <p class="kicker">What it does</p>
+          <h2 id="will-title">Here now, and what comes next</h2>
           <dl class="plans">
             <div class="plans__item">
               <dt>Editor</dt>
-              <dd class="plans__phase">Here now, expanded in Phase 2</dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 CodeMirror 6 with live preview, <code>[[</code> autocomplete across the whole vault,
                 a rendered pane beside the text, images by drag and drop, and links that offer to
@@ -305,7 +398,7 @@
             </div>
             <div class="plans__item">
               <dt>Bubble graph</dt>
-              <dd class="plans__phase">Here now</dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 Bubble size follows link degree, clusters take their colour from folder or tag, a
                 local graph shows the neighbourhood of one note, and any view exports as SVG or PNG.
@@ -314,25 +407,46 @@
             </div>
             <div class="plans__item">
               <dt>Wiki mode</dt>
-              <dd class="plans__phase">Here now</dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 A read-only view of the whole vault with rendered links, navigation and search.
               </dd>
             </div>
             <div class="plans__item">
+              <dt>Knowledge layer</dt>
+              <dd class="plans__phase">
+                <span class="chip chip--soon">Phase 2, being built</span>
+              </dd>
+              <dd>
+                Definitions with an automatic glossary, terms recognised wherever they are
+                mentioned, <code>![[transclusion]]</code>, the places a note is named without being
+                linked, and templates with a slash menu.
+              </dd>
+            </div>
+            <div class="plans__item">
               <dt>Self-hosting</dt>
-              <dd class="plans__phase">Here now, desktop installers in Phase 5</dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 One Docker command, or a native process on a machine you control. Installers for
                 Windows, macOS and Linux come later.
+              </dd>
+            </div>
+            <div class="plans__item">
+              <dt>Milieu axes</dt>
+              <dd class="plans__phase"><span class="chip">Phase 2</span></dd>
+              <dd>
+                Two freely named axes and the vault arranged between them, in the manner of the
+                Sinus-Milieu studies. Drag a note and the position is written back into its
+                frontmatter.
               </dd>
             </div>
           </dl>
         </section>
 
         <section class="section" aria-labelledby="who-title">
-          <h2 id="who-title">Who it is for</h2>
-          <ul class="statements" role="list">
+          <p class="kicker">Who it is for</p>
+          <h2 id="who-title">Four kinds of vault</h2>
+          <ul class="statements statements--audience" role="list">
             <li>
               <strong>The self-hosting community.</strong> It runs as one container or one process
               on your own hardware, with no third-party account and nothing that phones home.
@@ -354,31 +468,60 @@
         </section>
       </div>
 
-      <section class="status" aria-labelledby="status-title">
+      <section class="status" id="roadmap" aria-labelledby="status-title">
         <div class="page status__row">
-          <h2 id="status-title">Status</h2>
+          <p class="kicker">Status</p>
+          <h2 id="status-title">Six phases, two of them done</h2>
           <div class="status__body">
             <p class="status__note">
-              Two of six phases are done: the foundation, and the first version you can actually
-              use. Phase 2 adds the knowledge layer — definitions with a glossary, unlinked
-              mentions, transclusion, templates and live query blocks.
+              The foundation and the first version you can actually use are finished. Phase 2 adds
+              the knowledge layer — definitions with a glossary, unlinked mentions, transclusion,
+              templates and live query blocks.
             </p>
-            <ol class="phases" role="list">
-              <li class="phases__done"><span class="phases__n">0</span> Foundation</li>
-              <li class="phases__done"><span class="phases__n">1</span> Write, link, see</li>
-              <li aria-current="step">
-                <span class="phases__n">2</span> Knowledge layer and editor
+            <ol class="rail" role="list">
+              <li class="rail__step is-done">
+                <span class="rail__n">0</span><span class="rail__label">Foundation</span>
               </li>
-              <li><span class="phases__n">3</span> D&amp;D mode</li>
-              <li><span class="phases__n">4</span> Sharing, permissions, history</li>
-              <li><span class="phases__n">5</span> Desktop and ecosystem</li>
+              <li class="rail__step is-done">
+                <span class="rail__n">1</span><span class="rail__label">Write, link, see</span>
+              </li>
+              <li class="rail__step is-current" aria-current="step">
+                <span class="rail__n">2</span
+                ><span class="rail__label">Knowledge layer and editor</span>
+              </li>
+              <li class="rail__step">
+                <span class="rail__n">3</span><span class="rail__label">D&amp;D mode</span>
+              </li>
+              <li class="rail__step">
+                <span class="rail__n">4</span
+                ><span class="rail__label">Sharing, permissions, history</span>
+              </li>
+              <li class="rail__step">
+                <span class="rail__n">5</span><span class="rail__label">Desktop and ecosystem</span>
+              </li>
             </ol>
-            <p>
+            <p class="status__more">
               <a href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md"
                 >Read the full roadmap</a
               >
             </p>
           </div>
+        </div>
+      </section>
+
+      <section class="cta" aria-labelledby="cta-title">
+        <div class="page cta__inner">
+          <h2 id="cta-title">Your notes, your machine, your graph.</h2>
+          <p>
+            Rough edges included — keep a backup of your vault. The files are plain Markdown, so
+            nothing here can hold them hostage.
+          </p>
+          <p class="hero__actions">
+            <a class="button" href="https://github.com/lokianer/rhizom">Get it on GitHub</a>
+            <a class="button button--ghost" href="https://github.com/lokianer/rhizom/issues"
+              >Report something</a
+            >
+          </p>
         </div>
       </section>
     </main>
@@ -393,58 +536,7 @@
       </div>
     </footer>
 
-    <script>
-      (function () {
-        var root = document.documentElement;
-        var key = 'rhizom-theme';
-        var themes = ['humus', 'kalk', 'system'];
-        var buttons = document.querySelectorAll('[data-set-theme]');
-        var metas = document.querySelectorAll('meta[name="theme-color"]');
-        var scheme = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-
-        // Keep the browser chrome in step with the page background the tokens resolve to.
-        function syncChrome() {
-          var bg = getComputedStyle(root).backgroundColor;
-          for (var j = 0; j < metas.length; j++) {
-            metas[j].setAttribute('content', bg);
-          }
-        }
-
-        function apply(theme, persist) {
-          if (themes.indexOf(theme) < 0) theme = 'humus';
-          root.setAttribute('data-theme', theme);
-
-          for (var i = 0; i < buttons.length; i++) {
-            var pressed = buttons[i].getAttribute('data-set-theme') === theme;
-            buttons[i].setAttribute('aria-pressed', pressed ? 'true' : 'false');
-          }
-
-          syncChrome();
-
-          if (persist) {
-            try {
-              localStorage.setItem(key, theme);
-            } catch (e) {
-              /* Storage unavailable; the choice lasts for this page view only. */
-            }
-          }
-        }
-
-        // The head script has already restored a saved theme; this pass wires the controls.
-        apply(root.getAttribute('data-theme') || 'humus', false);
-
-        for (var k = 0; k < buttons.length; k++) {
-          buttons[k].addEventListener('click', function () {
-            apply(this.getAttribute('data-set-theme'), true);
-          });
-        }
-
-        if (scheme && scheme.addEventListener) {
-          scheme.addEventListener('change', function () {
-            if (root.getAttribute('data-theme') === 'system') syncChrome();
-          });
-        }
-      })();
-    </script>
+    <script src="./site.js" defer></script>
+    <script src="./field.js" defer></script>
   </body>
 </html>
