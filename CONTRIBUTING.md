@@ -50,10 +50,11 @@ container smoke test on Ubuntu. Run the same commands locally before pushing.
   an optional lower-case scope such as `feat(core): …` and a header of at most 100 characters.
   Keep commits small and atomic.
 - The `commit-msg` hook (installed by `pnpm install`, source in `scripts/commit-msg/`) rejects
-  headers that do not follow the convention and any tool attribution line
-  (`Co-Authored-By: <AI tool>`, "Generated with …", robot emoji). Do not bypass it with
-  `--no-verify`, `SKIP_SIMPLE_GIT_HOOKS` or a changed `core.hooksPath`. Co-author trailers
-  naming a human are fine.
+  headers that do not follow the convention and any attribution line: a trailer claiming
+  authorship (`Co-Authored-By:`, `Assisted-by:`, …), a "Generated with …" banner, a bot
+  signature, a robot emoji. `Signed-off-by:`, `Reviewed-by:` and `Reported-by:` are fine — they
+  say who vouches for a change, not who wrote it. Do not bypass the hook with `--no-verify`,
+  `SKIP_SIMPLE_GIT_HOOKS` or a changed `core.hooksPath`.
 - If a GUI git client reports `node: command not found` when committing, its `PATH` lacks your
   Node installation: point `SIMPLE_GIT_HOOKS_RC` at a file that exports the right `PATH`; the
   hook sources it before running.

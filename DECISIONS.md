@@ -104,11 +104,15 @@ a fixed type list, a lower-case scope and a 100-character limit; git's own merge
 subjects pass; `fixup!`/`squash!` prefixes are stripped first. Attribution: every line is
 checked after trimming (so indented `git merge --squash` bodies count), comment lines included
 (`git commit -m` keeps them) and folded trailers joined; rejected are a robot emoji, a line
-starting with "Generated with/by", and any `<key>-by:` trailer or credit phrasing ("written
-with", "implemented with", …) that names an AI tool, a bot or "AI". Tool names that are also
-ordinary words or first names (cursor, devin, codex, gemini) only count with context
-(`Cursor Agent`, `@cursor.com`), so editor commits and human co-authors pass. The hook is a
-safety net for what tools emit and for common credit phrasings, not a natural-language filter.
+starting with "Generated with/by", a trailer key that claims authorship (`Co-authored-by:`,
+`Assisted-by:`, `Generated-by:`, `On-behalf-of:`, …) and a `[bot]` signature under any key.
+`Signed-off-by:`, `Reviewed-by:` and `Reported-by:` pass: they say who vouches for a change or
+who found the problem, not who wrote it.
+
+The hook watches the shape of a trailer, not the language of a sentence. An earlier version
+also weighed credit phrasings in prose, which meant carrying a list of product names in the
+repository and getting the ordinary English of a commit body wrong; a body explains what was
+done, and that is none of the hook's business.
 
 ## 2026-09-18 — Server shape
 
@@ -542,3 +546,37 @@ rescan — a full-text query plus up to two hundred file reads is not something 
 keystrokes. And a mention that has been offered once keeps whatever answer it was given, because
 a scan can run again for reasons the reader had nothing to do with, and a batch that re-ticks
 the boxes they unticked would write the very notes they took out of it.
+
+## 2026-09-19 — Phase 2: a template is a note in a folder
+
+A template could be a note marked `type: template`, and the reserved vocabulary has had that key
+since definitions shipped. It is not what this vault does. The two templates in Rhizom's own
+example vault carry `type: npc` and `type: session` — the type of the note they _produce_, not of
+themselves — and so does every Obsidian vault, because Obsidian's Templates plugin keys on a
+folder. A rule on the frontmatter would find neither of them, and the key would copy itself into
+every note made from one. So the folder decides, and `type: template` stays reserved and unused
+for now.
+
+Which folder, in order: the operator's `RHIZOM_TEMPLATE_DIR`, then the vault's own
+`.obsidian/templates.json`, then a top-level folder called Templates in whatever case the vault
+spells it. Reading that one file is not indexing `.obsidian/` — no note comes out of it — but it
+is the difference between a vault that brings its templates along and one that silently has none.
+Its `dateFormat` and `timeFormat` come along too: the same template has to write the same date in
+both programmes.
+
+The placeholder syntax is Obsidian's for the same reason: `{{title}}`, `{{date}}`, `{{time}}`,
+each with an optional Moment format. Rhizom adds `{{roll:2d6+3}}`, `{{path}}` and `{{cursor}}`,
+which Obsidian will insert as dead text — a fair trade for a menu that stays useful. Templater's
+`<% %>` is never evaluated and never will be: it is JavaScript out of somebody else's vault, the
+same door the renderer keeps shut on embedded HTML.
+
+Three rules keep expansion from being a corruption. It happens **once**, when the text is
+inserted, so a note stays the file on disk rather than something that reads differently tomorrow.
+It leaves **code** alone, because `B{{date}}` is a hexagon in a Mermaid diagram and a code span is
+the only way to write a placeholder literally. And it leaves **anything it does not understand**
+exactly as it stands — an unknown name, an empty format, a malformed roll — because writing
+nothing in their place is a deletion nobody typed.
+
+Templates are otherwise ordinary notes: indexed, searched, in the graph, and as eligible for
+"Link all" as any other. A template that names a place by name is a template that produces linked
+notes, and that is the point.

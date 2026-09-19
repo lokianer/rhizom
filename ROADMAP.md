@@ -10,15 +10,14 @@ Status: **Phase 2 in progress** (Phases 0 and 1 complete).
 
 - [x] Monorepo scaffolding with pnpm workspaces: `packages/core`, `apps/server`, `apps/web`
 - [x] ESLint + Prettier, strict `tsconfig`, Vitest and Playwright each running one smoke test
-- [x] Git hygiene: a versioned `commit-msg` hook (simple-git-hooks) that rejects attribution
-      lines (`Co-Authored-By: Claude`, "Generated with", bot signatures, emoji markers) and
-      enforces Conventional Commits
+- [x] Git hygiene: a versioned `commit-msg` hook (simple-git-hooks) that enforces Conventional
+      Commits and rejects attribution lines — authorship trailers, "Generated with" banners,
+      bot signatures, emoji markers
 - [x] GitHub basics: README skeleton (vision, feature overview, screenshot/GIF placeholders),
       `LICENSE` (AGPL-3.0), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`,
       issue and pull request templates
 - [x] `ROADMAP.md` with this plan, `CHANGELOG.md` (Keep a Changelog + SemVer), `DECISIONS.md`
 - [x] CI workflow with a three-OS matrix; `Dockerfile` + `docker-compose.yml`
-- [x] `CLAUDE.md` summarizing the rules and the stack for future sessions
 - [x] Foundations required "from the start": i18n layer (English default, German second)
       and the theme token skeleton (Humus dark, Kalk light)
 - [x] Project landing page in `site/`, deployed to GitHub Pages by a workflow
@@ -46,8 +45,10 @@ Status: **Phase 2 in progress** (Phases 0 and 1 complete).
       maintained, alphabetical glossary page
 - [x] Unlinked mentions with a one-click "Link all" action
 - [x] Transclusion: `![[Note]]` and `![[Note#Heading]]`
-- [ ] Templates + slash commands (`/table`, `/definition`, `/date`, `/npc` …) with variables
-      (`{{date}}`, `{{title}}`, `{{roll:1d100}}`)
+- [x] Templates + slash commands (`/table`, `/definition`, `/date`, `/time`) with variables
+      (`{{date}}`, `{{title}}`, `{{time}}`, `{{path}}`, `{{cursor}}`, `{{roll:1d100}}`); the
+      templates themselves are the notes in the vault's template folder. `/npc` belongs to the
+      D&D module in Phase 3, where the NPC template lives.
 - [ ] Frontmatter editable as a form
 - [ ] Query blocks: a ` ```rhizom-query ` code block renders live tables/lists from the
       index (filter by type/tag/folder/frontmatter fields); saved searches appear as smart

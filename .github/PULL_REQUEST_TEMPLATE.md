@@ -9,7 +9,7 @@
 ## Checklist
 
 - [ ] Commits follow [Conventional Commits](https://www.conventionalcommits.org/) and are small and atomic
-- [ ] Commit messages contain no tool attribution lines (`Co-Authored-By: <AI tool>`, "Generated with …") — the `commit-msg` hook enforces this
+- [ ] Commit messages contain no attribution lines (authorship trailers, "Generated with …", bot signatures) — the `commit-msg` hook enforces this
 - [ ] `pnpm format:check`, `pnpm lint`, `pnpm typecheck` and `pnpm test` pass locally
 - [ ] New core logic has unit tests; new user flows have a Playwright test
 - [ ] Docs, `CHANGELOG.md` and (if an architecture choice was made) `DECISIONS.md` are updated

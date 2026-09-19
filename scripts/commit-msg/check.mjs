@@ -1,10 +1,11 @@
 // @ts-check
 // Commit message rules, shared by the git hook (cli.mjs) and its tests:
 //   1. the header follows Conventional Commits: <type>(<scope>)!: <subject>
-//   2. no attribution of any kind: AI co-author trailers, "generated with" banners, credits that
-//      name an AI tool, robot emoji
-// The hook is a safety net for what tools emit and for common credit phrasings, not a
-// natural-language filter.
+//   2. no attribution: this project has one author, so a commit says what changed and nothing
+//      about who or what helped — no authorship trailer, no "generated with" banner, no bot
+//      signature, no robot emoji
+// It is a safety net for what tools write into a message by themselves, not a filter on
+// language: a sentence in the body is prose, and prose is none of the hook's business.
 
 const TYPES = [
   'build',
@@ -30,18 +31,18 @@ const SCISSORS = /^# -+ >8 -+$/;
 // Zero-width characters and the byte order mark: invisible, so they must not hide anything.
 const INVISIBLE = /[\u200B-\u200D\u2060\uFEFF]/g;
 
-// Names that only ever mean an AI tool, plus names that need context because they are ordinary
-// words or first names on their own (cursor, devin, codex, gemini, bot).
-const TOOL_NAMES =
-  /\b(claude|anthropic|copilot|chatgpt|openai|windsurf|aider|gpt-?\d)\b|\bcursor\s+(agent|ai|ide)\b|@cursor\.(com|sh)\b|\bdevin\s+ai\b|@devin\.ai\b|\bcodex\s+(cli|agent)\b|\bgemini\s+(cli|code|ai)\b|\[bot\]|noreply@anthropic\.com/i;
-const GENERIC_AI = /\b(ai|llm)\b/i;
-// A line that starts with "Generated with/by …" is the banner form every tool emits.
-const GENERATED_BANNER = /^\W*generated\s+(with|by|using|via)\b/i;
-const GENERATED = /\bgenerated\s+(with|by|using|via)\b/i;
-const CREDIT =
-  /\b(written|co-written|made|created|built|authored|co-authored|assisted|produced|crafted|developed|implemented|refactored|drafted|coded|(pair-)?programmed)\s+(with|by|using|via)\b/i;
-// Any "<Something>-by:" or "<Something>-with:" trailer key, anywhere in the line.
-const TRAILER = /\b[a-z]+(-[a-z]+)*-(by|with)\s*:/i;
+// A trailer that says who made the change. `Signed-off-by:`, `Reviewed-by:` and `Reported-by:`
+// are deliberately not here: they say who vouches for a change or who found the problem, which
+// is a different claim from having written it.
+const AUTHORSHIP_TRAILER =
+  /(?:^|[\s("'[])(?:(?:co-)?(?:authored|written|created|made|built|crafted|produced|generated|assisted|drafted|coded|implemented|refactored|(?:pair-)?programmed)-(?:by|with)|on-behalf-of)\s*:/i;
+// A trailer whose value carries a bot's own signature, whatever the key says.
+const BOT_SIGNATURE = /^[a-z][a-z-]*\s*:.*\[bot\]/i;
+// A line that starts with "Generated with/by …" is the banner form tools write by themselves.
+// Leading punctuation is skipped, because the banner usually arrives behind an emoji or a
+// bullet — but not a quotation mark: a line that opens by quoting the banner is talking about
+// it, which is exactly what a commit touching this rule has to do.
+const GENERATED_BANNER = /^(?!["'`“„])\W*generated\s+(with|by|using|via)\b/i;
 const ROBOT_EMOJI = /\u{1F916}/u;
 
 /**
@@ -155,12 +156,12 @@ function fold(lines) {
  * @returns {boolean}
  */
 function isAttribution(rawLine) {
-  const line = rawLine.trim();
-  if (ROBOT_EMOJI.test(line) || GENERATED_BANNER.test(line)) {
-    return true;
-  }
-  if (!TOOL_NAMES.test(line) && !GENERIC_AI.test(line)) {
-    return false;
-  }
-  return TRAILER.test(line) || GENERATED.test(line) || CREDIT.test(line);
+  // A comment marker in front of a trailer hides nothing: `git commit -m` keeps those lines.
+  const line = rawLine.trim().replace(/^#+\s*/, '');
+  return (
+    ROBOT_EMOJI.test(line) ||
+    GENERATED_BANNER.test(line) ||
+    AUTHORSHIP_TRAILER.test(line) ||
+    BOT_SIGNATURE.test(line)
+  );
 }
