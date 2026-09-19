@@ -446,6 +446,23 @@ h1 {
   outline-color: var(--rz-focus-ring);
 }
 
+/* What the button does not say: what you are getting, and what you need for it. */
+
+.hero__fineprint {
+  margin-top: var(--rz-space-4);
+  max-width: var(--site-prose);
+  color: var(--rz-text-muted);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.run__links {
+  margin-top: var(--rz-space-5);
+  font-family: var(--rz-font-sans);
+  font-size: var(--rz-text-md);
+}
+
 /* Three numbers, because a landing page should say something measurable. */
 
 .facts {

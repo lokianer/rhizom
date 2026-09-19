@@ -103,8 +103,16 @@
             connections. Every vault doubles as a wiki.
           </p>
           <p class="hero__actions">
-            <a class="button" href="https://github.com/lokianer/rhizom">View on GitHub</a>
-            <a class="button button--ghost" href="#run">Run it in one command</a>
+            <a class="button" href="https://github.com/lokianer/rhizom/releases/latest"
+              >Download Rhizom 0.1.0</a
+            >
+            <a class="button button--ghost" href="https://github.com/lokianer/rhizom"
+              >View on GitHub</a
+            >
+          </p>
+          <p class="hero__fineprint">
+            One package for Linux, macOS and Windows · 23 MB · needs Node 22.22 or newer.
+            <a href="#run">Or run it in Docker.</a>
           </p>
           <ul class="facts" role="list">
             <li>
@@ -355,16 +363,29 @@
         <div class="page run__inner">
           <div class="run__text">
             <p class="kicker">Running it</p>
-            <h2 id="start-title">One container, or one process</h2>
+            <h2 id="start-title">A download, a container, or a checkout</h2>
             <p class="section__lead">
               Point it at a folder of Markdown files — an Obsidian vault works as it is — and open
               <code>localhost:3737</code>.
+            </p>
+            <p class="section__note">
+              <strong>The download</strong> is one package for all three operating systems and needs
+              nothing but Node 22.22 or newer: unpack it, then <code>cd server</code> and
+              <code>node dist/server.js</code>. The <code>README.txt</code> inside lists the
+              settings, and the checksum beside it says you got what was built.
             </p>
             <p class="section__note">
               The index lives beside your notes and can be deleted at any time; the files are never
               touched by it. Nothing leaves the machine: no telemetry, no account, no cloud.
               <a href="https://github.com/lokianer/rhizom#quick-start">The full quick start</a> is
               in the README.
+            </p>
+            <p class="run__links">
+              <a
+                class="button button--ghost"
+                href="https://github.com/lokianer/rhizom/releases/latest"
+                >Download 0.1.0</a
+              >
             </p>
           </div>
           <div class="terminal">
@@ -517,7 +538,9 @@
             nothing here can hold them hostage.
           </p>
           <p class="hero__actions">
-            <a class="button" href="https://github.com/lokianer/rhizom">Get it on GitHub</a>
+            <a class="button" href="https://github.com/lokianer/rhizom/releases/latest"
+              >Download it</a
+            >
             <a class="button button--ghost" href="https://github.com/lokianer/rhizom/issues"
               >Report something</a
             >
