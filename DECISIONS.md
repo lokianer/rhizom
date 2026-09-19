@@ -609,7 +609,7 @@ route that reads the same bytes without asking is a way around all of them.
 The static route now refuses `.md` and `.markdown`. One door to the notes, and it is the one that
 will be asked who is knocking.
 
-## 2026-09-19 — A note leaves as it arrived
+## 2026-09-19 — A note leaves as it arrived (superseded the same day, see below)
 
 Rhizom writes UTF-8. It does not read only UTF-8, and the difference is somebody's notes.
 
@@ -638,3 +638,23 @@ the mount point and shadows the real share when it returns.
 So a scan that finds nothing at all, in a vault the index knows notes for, removes nothing and
 says so in the log. Removing everything stays possible — it is what an explicit rebuild does.
 The watcher is not affected: it reports the notes that actually went away, one by one.
+
+## 2026-09-19 — Every note ends up UTF-8
+
+The entry above kept a note in whatever encoding it arrived in. That is one decision too
+careful. A vault is a folder other programmes read — an editor, a grep, a backup, a static site
+builder — and the one encoding all of them agree on is UTF-8. Keeping a UTF-16 note UTF-16
+preserves a property nobody asked for and leaves the vault mixed for ever.
+
+So: read everything, write UTF-8. A note saved as UTF-16 is decoded properly on the way in —
+that part of the fix stands, because reading it wrong was destroying text — and the first time
+it is saved it becomes UTF-8, without a byte order mark. The text carries over whole; only the
+spelling of the bytes changes. A UTF-8 file that has a mark keeps it, because that one is
+already UTF-8 and some Windows tools look for it.
+
+Umlauts and emoji are the same question asked twice. Both are ordinary text in UTF-8, and both
+have to survive every hop: the file, the index, the editor, a note's own name. An emoji is two
+code units in UTF-16 and up to four bytes in UTF-8, a flag is two of those, and a family is
+several joined with a zero-width joiner — which is why the slash menu matches on code points
+rather than on letters, and why the tests carry `🌱`, `🇩🇪` and `👨‍👩‍👧` rather than a polite
+`é`.

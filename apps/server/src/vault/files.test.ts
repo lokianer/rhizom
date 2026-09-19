@@ -170,20 +170,36 @@ describe('writeNote', () => {
 });
 
 describe('writeNote and encodings', () => {
-  it('writes a note back in the encoding it arrived in', async () => {
+  it('saves a UTF-16 note as UTF-8, text and all', async () => {
+    // Every vault ends up in one encoding, and the text survives the move whole: umlauts, an
+    // emoji made of two code units, and a family made of several joined together.
+    const text = '# Über die Wurzeln\n\nSchön 🌱 und 👨‍👩‍👧 dazu.\n';
     for (const encoding of ['utf16le', 'utf16be'] as const) {
       const path = `${encoding}.md`;
-      const little = Buffer.from(`${BOM}# Title\n\nOld.\n`, 'utf16le');
+      const little = Buffer.from(`${BOM}${text}`, 'utf16le');
       write(path, encoding === 'utf16le' ? little : Buffer.from(little).swap16());
 
-      const before = await vault.readNote(path);
-      await vault.writeNote(path, '# Title\n\nNew.\n');
-      const after = await vault.readNote(path);
+      expect((await vault.readNote(path)).encoding).toBe(encoding);
+      await vault.writeNote(path, text);
 
-      expect(after.content).toBe('# Title\n\nNew.\n');
-      expect(after.encoding).toBe(before.encoding);
-      expect(readFileSync(join(root, path))[0]).toBe(encoding === 'utf16le' ? 0xff : 0xfe);
+      const bytes = readFileSync(join(root, path));
+      expect(bytes.toString('utf8')).toBe(text);
+      expect(bytes[0]).not.toBe(0xff);
+      expect(bytes[0]).not.toBe(0xfe);
+
+      const after = await vault.readNote(path);
+      expect(after.content).toBe(text);
+      expect(after.encoding).toBe('utf8');
     }
+  });
+
+  it('carries umlauts and emoji through a plain save unchanged', async () => {
+    const text = '# Äpfel 🍎\n\nZwei Zeichen, vier Bytes: 𝄞 und 🇩🇪.\n';
+    write('Emoji.md', text);
+    await vault.writeNote('Emoji.md', `${text}Noch eins: 🙂\n`);
+    const after = await vault.readNote('Emoji.md');
+    expect(after.content).toBe(`${text}Noch eins: 🙂\n`);
+    expect([...after.content].length).toBeLessThan(after.content.length + 1);
   });
 
   it('writes a UTF-8 note as UTF-8, byte order mark and all', async () => {

@@ -70,8 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A note saved as UTF-16 is read as one. It used to arrive as mojibake and, on the next
-  autosave, be written back that way over the file it came from — the encoding is now kept and
-  the note leaves in the shape it arrived in.
+  autosave, be written back that way over the file it came from. Every note is now written as
+  UTF-8, so a vault converges on the one encoding every other tool in its life can read, and the
+  text — umlauts, emoji, a family made of several joined together — carries over whole.
+- The slash menu opens for a template named in any script, and for one named with an emoji.
 - A vault that reads as empty no longer empties the index. A mount point without its mount looks
   exactly like a vault somebody deleted every note from; the first is common and the second is
   rare, so a scan that finds nothing at all now keeps what it knows and says so.

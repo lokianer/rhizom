@@ -194,6 +194,25 @@ describe('vault API', () => {
     expect(hidden.statusCode).toBe(400);
   });
 
+  it('takes a note whose name and text are umlauts and emoji, all the way through', async () => {
+    const path = 'Garten/🌱 Über Wurzeln.md';
+    const content = '# Über Wurzeln 🌱\n\nSchön: 👨‍👩‍👧 und 🇩🇪 und 𝄞.\n';
+    const created = await app.inject({
+      method: 'POST',
+      url: '/api/notes',
+      payload: { path, content },
+    });
+    expect(created.statusCode).toBe(201);
+
+    const read = await app.inject({ method: 'GET', url: `/api/notes/${encodeURI(path)}` });
+    expect(read.statusCode).toBe(200);
+    const note: NoteDocument = read.json();
+    expect(note.content).toBe(content);
+    expect(note.title).toBe('Über Wurzeln 🌱');
+    // And the bytes on disk are UTF-8, which is what every other tool in the vault's life reads.
+    expect(readFileSync(join(root, 'Garten', '🌱 Über Wurzeln.md'), 'utf8')).toBe(content);
+  });
+
   it('creates a note, indexes it and refuses to create it twice', async () => {
     const created = await app.inject({
       method: 'POST',

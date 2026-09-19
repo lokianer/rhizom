@@ -27,6 +27,9 @@ const notes: readonly NoteSummary[] = [
   // What an Obsidian vault's templates look like: the title is the placeholder itself.
   note('Templates/NPC.md', '{{title}}', 'Templates'),
   note('Templates/Campaign/Session.md', '{{title}}', 'Templates/Campaign'),
+  // People name their notes what they like.
+  note('Templates/Übung.md', 'Übung', 'Templates'),
+  note('Templates/🌱 Seedling.md', 'Seedling', 'Templates'),
 ];
 
 function contextValue(overrides: Partial<EditorContextValue> = {}): EditorContextValue {
@@ -75,6 +78,8 @@ describe('slashCompletion', () => {
       'time',
       'NPC',
       'Session',
+      'Übung',
+      '🌱 Seedling',
     ]);
   });
 
@@ -87,6 +92,13 @@ describe('slashCompletion', () => {
     const table = complete('/')?.options[0];
     expect(table?.label).toBe('table');
     expect(table?.displayLabel).toBe('Tabelle');
+  });
+
+  it('opens for a name in any script, and for one made of emoji', () => {
+    expect(complete('/Ü')?.options.some((option) => option.label === 'Übung')).toBe(true);
+    expect(complete('/🌱')?.options.some((option) => option.label.includes('Seedling'))).toBe(true);
+    // A joined emoji is one name, not the end of the word.
+    expect(complete('/👨‍👩‍👧')).not.toBeNull();
   });
 
   it('stays shut in the middle of a word', () => {
@@ -131,6 +143,8 @@ describe('templateNotes', () => {
     expect(templateNotes(notes, settings).map((found) => found.path)).toEqual([
       'Templates/NPC.md',
       'Templates/Campaign/Session.md',
+      'Templates/Übung.md',
+      'Templates/🌱 Seedling.md',
     ]);
   });
 

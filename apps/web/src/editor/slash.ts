@@ -31,12 +31,14 @@ import {
 import { editorContext, frontmatterEnd, NOT_PROSE, type EditorContextValue } from './context.js';
 
 /**
- * `/` at the start of a line or after a space, plus the word typed so far. The word is Unicode:
- * a template called `Übung` has to be reachable by typing its name. A space is not part of it,
- * so `Daily Note` is picked from the list rather than typed out in full — letting the query run
+ * `/` at the start of a line or after a space, plus the word typed so far. The word is whatever
+ * a note may be called: letters of any script, marks, digits — and emoji, because a vault whose
+ * templates are named `📓 Daily` is a vault somebody made on purpose. A space is not part of it,
+ * so `Daily Note` is picked from the list rather than typed out in full; letting the query run
  * across spaces would keep the menu open over a whole sentence.
  */
-const QUERY = /(?:^|\s)\/[\p{L}\p{N}\p{M}_-]*$/u;
+const QUERY =
+  /(?:^|\s)\/(?:[\p{L}\p{N}\p{M}\p{Extended_Pictographic}\p{Regional_Indicator}_-]|\u200d|\ufe0f)*$/u;
 /** An unfinished wikilink; its target may hold slashes, and the note list belongs to it. */
 const OPEN_WIKILINK = /\[\[[^[\]\n]*$/;
 

@@ -35,9 +35,9 @@ export interface NoteFile {
 export type LineEnding = '\n' | '\r\n';
 
 /**
- * How the bytes on disk spell the text. Rhizom writes UTF-8, but it reads what is there: a note
- * saved as UTF-16 by a Windows editor is a note, and opening it must not be the moment it turns
- * into rubbish. Whatever a file arrives as, it leaves as.
+ * How the bytes on disk spell the text. Rhizom reads what is there — a note saved as UTF-16 by a
+ * Windows editor is a note, and opening it must not be the moment it turns into rubbish — and
+ * always writes UTF-8, so a vault converges on one encoding as its notes are edited.
  */
 export type NoteEncoding = 'utf8' | 'utf16le' | 'utf16be';
 
@@ -218,7 +218,7 @@ async function writeNote(
   const path = validateNotePath(input);
   let eol: LineEnding = '\n';
   let bom = false;
-  let encoding: NoteEncoding = 'utf8';
+
   const existing = await readNote(root, path).catch((error: unknown) => {
     if (error instanceof VaultError && error.code === 'NOT_FOUND' && expectedHash === undefined) {
       return undefined;
@@ -230,11 +230,12 @@ async function writeNote(
       throw new VaultError('HASH_MISMATCH', `Note changed on disk since it was loaded: ${path}`);
     }
     eol = existing.eol;
-    bom = existing.bom;
-    encoding = existing.encoding;
+    // A note that was UTF-16 becomes UTF-8 the first time it is saved, and loses its byte
+    // order mark with it: the text carries over whole, only the spelling of the bytes changes.
+    bom = existing.bom && existing.encoding === 'utf8';
   }
   const absolute = absoluteOf(root, path);
-  await atomicWrite(absolute, serialize(content, eol, bom, encoding));
+  await atomicWrite(absolute, serialize(content, eol, bom));
   const info = await stat(absolute);
   return { path, hash: hashOf(content), modifiedAt: info.mtime };
 }
@@ -250,7 +251,7 @@ async function createNote(
   if ((await existingNameLike(dirname(absolute), basename(absolute))) !== undefined) {
     throw new VaultError('EXISTS', `Note already exists: ${path}`);
   }
-  await atomicWrite(absolute, serialize(content, '\n', false, 'utf8'));
+  await atomicWrite(absolute, serialize(content, '\n', false));
   return { path, hash: hashOf(content) };
 }
 
@@ -310,18 +311,9 @@ async function uniqueName(directory: string, name: string): Promise<string> {
  * The bytes to write: the text with the line endings the file had, behind the byte order mark it
  * had, in the encoding it had. Nobody asked for a conversion, so nothing is converted.
  */
-function serialize(
-  content: string,
-  eol: LineEnding,
-  bom: boolean,
-  encoding: NoteEncoding,
-): string | Buffer {
+function serialize(content: string, eol: LineEnding, bom: boolean): string {
   const text = eol === '\n' ? content : content.replaceAll('\n', eol);
-  if (encoding === 'utf8') {
-    return bom ? `${BOM}${text}` : text;
-  }
-  const marked = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]);
-  return encoding === 'utf16le' ? marked : swapPairs(marked);
+  return bom ? `${BOM}${text}` : text;
 }
 
 /**
