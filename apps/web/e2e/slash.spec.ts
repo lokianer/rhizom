@@ -5,6 +5,9 @@ const suggestions = (page: import('@playwright/test').Page) =>
 
 /** Empties the scratch note and waits for the save, so the next spec finds it as it was. */
 async function clearScratch(page: import('@playwright/test').Page): Promise<void> {
+  // An open completion tooltip covers the editor, and a click on what is underneath it waits
+  // for the cover to go away. Escape closes it and does nothing when none is open.
+  await page.keyboard.press('Escape');
   await page.locator('.cm-content').click();
   await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.press('Backspace');
