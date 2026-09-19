@@ -100,7 +100,8 @@ describe('parseNote', () => {
         line: 16,
       },
     ]);
-    expect(note.links.some((l) => l.target.includes('example.com'))).toBe(false);
+    // The external link in the fixture is not a link into the vault, so it is not listed at all.
+    expect(note.links.every((l) => !/^[a-z][a-z0-9+.-]*:/i.test(l.target))).toBe(true);
     expect(note.links.some((l) => l.target === 'NotALink')).toBe(false);
   });
 

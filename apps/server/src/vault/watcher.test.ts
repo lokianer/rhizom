@@ -44,6 +44,14 @@ async function writeUntilReported(paths: readonly string[]): Promise<void> {
   );
 }
 
+/** Waits for a removal to be reported, in whichever batch the platform puts it. */
+async function removalReported(path: string): Promise<void> {
+  await vi.waitFor(() => expect(batches.flatMap((batch) => batch.removed)).toContain(path), {
+    timeout: 15_000,
+    interval: 200,
+  });
+}
+
 async function nextBatch(): Promise<VaultChanges> {
   const before = batches.length;
   await vi.waitFor(() => expect(batches.length).toBeGreaterThan(before), { timeout: 10_000 });
@@ -63,6 +71,12 @@ beforeEach(async () => {
     maxWaitMs: 1_000,
   });
   await watcher.ready;
+  // Ready means the first scan is done, not that the platform is delivering yet: on macOS the
+  // fsevents stream starts a moment later and swallows what happens in between. A probe note is
+  // written until it comes back, which proves events are flowing; then the log is cleared. It
+  // stays in the vault — removing it would put an event nobody asked for into the next test.
+  await writeUntilReported(['Probe.md']);
+  batches = [];
 });
 
 afterEach(async () => {
@@ -83,20 +97,23 @@ describe('watchVault', () => {
   });
 
   it('reports removed notes', async () => {
+    // A removal cannot be repeated the way a write can, so this waits for the removal itself
+    // rather than for the next batch, whichever batch it arrives in.
     rmSync(join(root, 'Notes', 'Alpha.md'));
-    const batch = await nextBatch();
-    expect(batch.removed).toEqual(['Notes/Alpha.md']);
+    await removalReported('Notes/Alpha.md');
     // macOS may also list an unchanged neighbour; the removed note itself never counts as changed.
-    expect(batch.changed).not.toContain('Notes/Alpha.md');
+    expect(batches.flatMap((batch) => batch.changed)).not.toContain('Notes/Alpha.md');
     expectOnlyNotes();
   });
 
   it('reports a rename as a removal plus a change', async () => {
     renameSync(join(root, 'Notes', 'Alpha.md'), join(root, 'Notes', 'Gamma.md'));
-    const batch = await nextBatch();
-    expect(batch.removed).toEqual(['Notes/Alpha.md']);
-    expect(batch.changed).toContain('Notes/Gamma.md');
-    expect(batch.changed).not.toContain('Notes/Alpha.md');
+    await removalReported('Notes/Alpha.md');
+    await vi.waitFor(
+      () => expect(batches.flatMap((batch) => batch.changed)).toContain('Notes/Gamma.md'),
+      { timeout: 15_000, interval: 200 },
+    );
+    expect(batches.flatMap((batch) => batch.changed)).not.toContain('Notes/Alpha.md');
     expectOnlyNotes();
   });
 
