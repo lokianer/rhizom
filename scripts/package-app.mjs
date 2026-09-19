@@ -30,7 +30,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'dist', 'package');
 const server = join(out, 'server');
 
-/** What `pnpm deploy` copies along with the package and a running server has no use for. */
+/** What `pnpm deploy` copies along and a running server has no use for. */
 const UNUSED = [
   'src',
   'data',
@@ -114,6 +114,9 @@ if (!existsSync(join(server, 'package.json'))) {
 for (const name of UNUSED) {
   rmSync(join(server, name), { recursive: true, force: true });
 }
+// The command shims: symlinks on Linux and macOS, and nothing here ever runs a package's
+// binary. They would be the one thing in the package an archive could not carry.
+rmSync(join(server, 'node_modules', '.bin'), { recursive: true, force: true });
 
 // Where the server looks for the web app: two levels up from its own dist/, then web/dist.
 const web = join(root, 'apps', 'web', 'dist');
