@@ -580,3 +580,31 @@ nothing in their place is a deletion nobody typed.
 Templates are otherwise ordinary notes: indexed, searched, in the graph, and as eligible for
 "Link all" as any other. A template that names a place by name is a template that produces linked
 notes, and that is the point.
+
+## 2026-09-19 — Versions: 0.x until the end of Phase 5
+
+Everything up to and including Phase 5 carries a `0.x` number. Not modesty: the vault format is
+still moving. A reserved frontmatter key, the shape of a GM-only block, what a tie in the
+frontmatter looks like — each of those is something a vault will carry for years, and each is
+still being decided. A `0.x` says so honestly, and every move in that stretch is written into the
+changelog.
+
+The end of Phase 5 is 1.0. From there the files are a promise: what Rhizom writes into a vault
+changes only with a documented migration, and a vault written by 1.0 opens in every 1.x. The
+index keeps its own rule and is exempt — it is derived, it is thrown away and rebuilt, and its
+schema version has nothing to do with the version on the box.
+
+## 2026-09-19 — The notes have one door
+
+`/api/assets/*` served the vault folder statically, and a folder of Markdown files served
+statically is a folder of Markdown files served: `GET /api/assets/Home.md` answered with the note,
+although `GET /api/assets` — the listing beside it — leaves notes out by definition.
+
+Today that leaks nothing, because `/api/notes/*` hands out the same file to anybody who asks and
+the whole tool runs on one person's machine. It is still wrong, and it gets worse on a schedule:
+Phase 3 puts sections in a note that the wiki may not show, Phase 4 puts a lock on folders and a
+publish flag on notes. Every one of those is a decision made where notes are read, and a second
+route that reads the same bytes without asking is a way around all of them.
+
+The static route now refuses `.md` and `.markdown`. One door to the notes, and it is the one that
+will be asked who is knocking.
