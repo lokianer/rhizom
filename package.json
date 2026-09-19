@@ -1,6 +1,6 @@
 {
   "name": "rhizom",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Self-hostable tool for networked knowledge: Markdown editor, local index and a bubble-field graph",
   "license": "AGPL-3.0-only",

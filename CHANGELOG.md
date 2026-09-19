@@ -9,37 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Monorepo foundation: pnpm 12 workspace with `packages/core`, `apps/server` and `apps/web`,
-  strict TypeScript project references, ESLint 10 with type-aware rules, Prettier, Vitest 5
-  with an 80 % coverage gate for `packages/core`, and Playwright smoke tests.
-- `commit-msg` git hook that enforces Conventional Commits and rejects attribution lines.
-- Fastify server with `GET /api/health` and a history-API fallback for the built web app.
-- React web shell with the i18n layer (English default, German) and the Humus/Kalk design
-  tokens.
-- GitHub Actions CI matrix (Ubuntu, macOS, Windows × Node 22, 24) plus a Docker build and
-  container smoke test; `Dockerfile` and `docker-compose.yml`.
-- Project landing page in `site/`, deployed to GitHub Pages.
-- Repository documentation: README, roadmap, decisions log, contributing guide, code of
-  conduct, security policy, issue and pull request templates.
-- `packages/core`: Markdown parsing (frontmatter, wikilinks, embeds, tags, headings),
-  Obsidian-style link resolution through paths, names and aliases, fuzzy matching and graph
-  building with folder or tag clusters.
-- `apps/server`: vault access with atomic writes, `If-Match` conflict detection and a
-  `.trash/` folder; a SQLite index with FTS5 search that is synced incrementally and kept
-  current by a file watcher; the REST API under `/api` (vault info, tree, notes, links,
-  backlinks, search, tags, graph, assets, rebuild) with server-sent index events, an OpenAPI
-  document at `/api/openapi.json` and Swagger UI at `/api/docs`.
-- `apps/web`: the Phase 1 interface — CodeMirror 6 editor with live preview, `[[`
-  autocompletion and image drop, an optional preview pane beside the editor, file tree,
-  backlinks, full-text search with snippets, command palette, the bubble graph on a canvas
-  (force layout in a worker) with SVG and PNG export, and read-only wiki mode, all in English
-  and German with the Humus and Kalk themes.
-- Notes can be created from the palette, from a missing link or from a folder in the tree, and
-  moved to the vault’s `.trash` folder from the note header.
-- Example vault in `examples/vault` with a manifest of what the index must find and an
-  acceptance test that checks the server against it.
-- Docker image with `/vault` and `/data` volumes; `RHIZOM_VAULT_DIR` and `RHIZOM_DATA_DIR`
-  configure the server.
 - Reserved frontmatter vocabulary: a flat `type:` key with the values `definition`, `template`,
   `query` and `axes`, beside the `aliases:` and `tags:` keys Obsidian established.
 - Term index: a note with `type: definition` contributes its title and every alias as a term of
@@ -68,6 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cannot be linked, because no wikilink may contain a line break. Inside a table cell the alias
   separator is written `\|`, the way Obsidian writes it, so the row keeps its columns — and a
   link written that way is now read back with the backslash stripped.
+- Templates and a slash menu: `/` at the start of a line or after a space offers a table, the
+  date, the time, "mark as a definition" — which writes `type: definition` into the frontmatter
+  — and every note in the vault's template folder. The folder is the one Obsidian's own settings
+  name, `RHIZOM_TEMPLATE_DIR`, or simply a folder called Templates, so a vault brought from
+  Obsidian keeps its templates without being changed.
+- Template placeholders in Obsidian's syntax: `{{title}}`, `{{date}}`, `{{time}}`, each with an
+  optional format (`{{date:DD.MM.YYYY}}`) in the Moment tokens, plus Rhizom's `{{roll:2d6+3}}`,
+  `{{path}}` and `{{cursor}}`. They are filled once, when the text is inserted, in the language
+  the app is read in and the formats the vault is set to. A placeholder in code, one nobody
+  knows, and one whose format says nothing are all left exactly as they stand.
 - A glossary page listing every definition alphabetically, grouped by first letter, with the
   aliases each also answers to. It is a view of the index, not a file written into the vault, so
   it cannot go stale. Reachable from the navigation and from the command palette.
@@ -114,5 +93,43 @@ city]]` is `See the city`, not `See Silverstadt|the city`, and slugs the way Obs
 
 - The unused `@fastify/sensible` dependency, the leftover Phase 0 `App.tsx` shell and the
   `app.tagline` translation key it was the only reader of.
+
+## [0.1.0] - 2026-09-18
+
+Phase 1: open a vault, write in it, link it and see the field.
+
+### Added
+
+- Monorepo foundation: pnpm 12 workspace with `packages/core`, `apps/server` and `apps/web`,
+  strict TypeScript project references, ESLint 10 with type-aware rules, Prettier, Vitest 5
+  with an 80 % coverage gate for `packages/core`, and Playwright smoke tests.
+- `commit-msg` git hook that enforces Conventional Commits and rejects attribution lines.
+- Fastify server with `GET /api/health` and a history-API fallback for the built web app.
+- React web shell with the i18n layer (English default, German) and the Humus/Kalk design
+  tokens.
+- GitHub Actions CI matrix (Ubuntu, macOS, Windows × Node 22, 24) plus a Docker build and
+  container smoke test; `Dockerfile` and `docker-compose.yml`.
+- Project landing page in `site/`, deployed to GitHub Pages.
+- Repository documentation: README, roadmap, decisions log, contributing guide, code of
+  conduct, security policy, issue and pull request templates.
+- `packages/core`: Markdown parsing (frontmatter, wikilinks, embeds, tags, headings),
+  Obsidian-style link resolution through paths, names and aliases, fuzzy matching and graph
+  building with folder or tag clusters.
+- `apps/server`: vault access with atomic writes, `If-Match` conflict detection and a
+  `.trash/` folder; a SQLite index with FTS5 search that is synced incrementally and kept
+  current by a file watcher; the REST API under `/api` (vault info, tree, notes, links,
+  backlinks, search, tags, graph, assets, rebuild) with server-sent index events, an OpenAPI
+  document at `/api/openapi.json` and Swagger UI at `/api/docs`.
+- `apps/web`: the Phase 1 interface — CodeMirror 6 editor with live preview, `[[`
+  autocompletion and image drop, an optional preview pane beside the editor, file tree,
+  backlinks, full-text search with snippets, command palette, the bubble graph on a canvas
+  (force layout in a worker) with SVG and PNG export, and read-only wiki mode, all in English
+  and German with the Humus and Kalk themes.
+- Notes can be created from the palette, from a missing link or from a folder in the tree, and
+  moved to the vault’s `.trash` folder from the note header.
+- Example vault in `examples/vault` with a manifest of what the index must find and an
+  acceptance test that checks the server against it.
+- Docker image with `/vault` and `/data` volumes; `RHIZOM_VAULT_DIR` and `RHIZOM_DATA_DIR`
+  configure the server.
 
 [Unreleased]: https://github.com/lokianer/rhizom/commits/main
