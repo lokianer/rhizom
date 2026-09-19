@@ -5,7 +5,22 @@
 // prebuilt binary for each platform and picks the right one at startup, so a package assembled on
 // a Linux runner starts on Windows and macOS too — as long as Node is one of the versions the
 // server's `engines` field allows.
-import { cpSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+//
+// The tree the deploy leaves behind must be flat. pnpm's own layout is a farm of symlinks into a
+// virtual store, and an archive does not carry those reliably — a package whose links arrive as
+// empty files fails at the first import, on somebody else's machine, after the download. Hence
+// `--config.node-linker=hoisted` on the deploy, and the check at the end of this file: no
+// symlink leaves here, and the day that stops being true the packaging stops rather than the
+// server.
+import {
+  cpSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -111,6 +126,18 @@ cpSync(join(root, 'examples', 'vault'), join(out, 'example-vault'), { recursive:
 
 const stamp = `${version()} (${commit()})`;
 writeFileSync(join(out, 'README.txt'), readme(stamp), 'utf8');
+
+// Said out loud, because a package with one link left in it is a package that does not start
+// on the other side of an archive.
+const links = [];
+for (const entry of readdirSync(out, { withFileTypes: true, recursive: true })) {
+  if (entry.isSymbolicLink()) {
+    links.push(join(entry.parentPath, entry.name));
+  }
+}
+if (links.length > 0) {
+  throw new Error(`${String(links.length)} symlinks left in the package, first: ${links[0]}`);
+}
 
 const bytes = await totalBytes(out);
 console.log(`Package assembled in ${out} — ${(bytes / 1024 / 1024).toFixed(1)} MB, ${stamp}`);

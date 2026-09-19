@@ -81,8 +81,26 @@ jobs:
         # second pnpm hands it the inner package's bin directory, and the root `prepare` script
         # then looks for its tool on a PATH that does not have it.
         run: |
-          pnpm --filter @rhizom/server deploy --prod --legacy dist/package/server
+          pnpm --filter @rhizom/server deploy --prod --config.node-linker=hoisted dist/package/server
           node scripts/package-app.mjs
+
+      # The package has to start, not merely exist: the deploy tree is assembled differently
+      # from the one the tests ran against.
+      - name: Smoke-test the package
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 24
+        run: |
+          cd dist/package/server
+          RHIZOM_VAULT_DIR=../example-vault RHIZOM_DATA_DIR=../data PORT=3838 node dist/server.js &
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:3838/api/health && break
+            sleep 1
+          done
+          echo
+          curl -sf http://127.0.0.1:3838/api/health | grep '"status":"ok"'
+          curl -sf http://127.0.0.1:3838/api/vault | grep '"noteCount":38'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/api/docs)" = 200
+          kill %1
 
       - name: Upload the runnable build
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
