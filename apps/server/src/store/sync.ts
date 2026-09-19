@@ -20,6 +20,11 @@ export interface SyncResult {
   updated: number;
   removed: number;
   unchanged: number;
+  /**
+   * Notes the index knows and the scan did not find, but which were kept anyway because the
+   * whole vault had vanished at once. Zero in every ordinary sync.
+   */
+  keptDespiteMissing?: number;
 }
 
 export async function syncVault(
@@ -43,7 +48,14 @@ export async function syncVault(
     }
     pending.push({ path: file.path, isNew: state === undefined });
   }
-  const removed = [...states.keys()].filter((path) => !seen.has(path));
+  const missing = [...states.keys()].filter((path) => !seen.has(path));
+  // A folder that reads as empty while the index knows notes is more often a vault that is not
+  // there — a network share whose mount point survived without its mount, a drive letter that
+  // did not come back — than a vault somebody emptied by hand. Removing everything would be
+  // correct for the second and a fright for the first, and the index is not worth the risk: it
+  // is rebuilt from the files any time. Emptying it is left to an explicit rebuild.
+  const vanished = files.length === 0 && states.size > 0;
+  const removed = vanished ? [] : missing;
 
   let added = 0;
   let updated = 0;
@@ -71,7 +83,13 @@ export async function syncVault(
     index.resolveAll();
   }
   index.setMeta('indexedAt', new Date().toISOString());
-  return { added, updated, removed: removed.length, unchanged };
+  return {
+    added,
+    updated,
+    removed: removed.length,
+    unchanged,
+    ...(vanished ? { keptDespiteMissing: missing.length } : {}),
+  };
 }
 
 /**

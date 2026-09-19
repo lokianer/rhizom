@@ -69,6 +69,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A note saved as UTF-16 is read as one. It used to arrive as mojibake and, on the next
+  autosave, be written back that way over the file it came from — the encoding is now kept and
+  the note leaves in the shape it arrived in.
+- A vault that reads as empty no longer empties the index. A mount point without its mount looks
+  exactly like a vault somebody deleted every note from; the first is common and the second is
+  rare, so a scan that finds nothing at all now keeps what it knows and says so.
 - The notes have one door. `/api/assets/*` served the vault folder statically, so a note could
   be read through it as well — which the listing beside it never offered, and which would go
   around any lock a later phase puts on `/api/notes/*`.

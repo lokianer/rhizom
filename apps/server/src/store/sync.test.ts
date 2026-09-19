@@ -99,6 +99,34 @@ describe('syncVault', () => {
     expect(result.removed).toBe(1);
     expect(index.getNote('Broken.md')).toBeUndefined();
   });
+
+  it('keeps what it knows when the whole vault has vanished at once', async () => {
+    // A mount point without its mount reads as an empty folder. Emptying the index there would
+    // be a fright, and the one thing that would make it worse is a note written into the empty
+    // mount point afterwards.
+    await syncVault(vault, index);
+    const before = index.stats().noteCount;
+    expect(before).toBeGreaterThan(0);
+
+    for (const name of ['Home.md', 'Notes']) {
+      rmSync(join(root, name), { recursive: true, force: true });
+    }
+    const result = await syncVault(vault, index);
+
+    expect(result.removed).toBe(0);
+    expect(result.keptDespiteMissing).toBe(before);
+    expect(index.stats().noteCount).toBe(before);
+  });
+
+  it('still removes a note when the rest of the vault is there', async () => {
+    await syncVault(vault, index);
+    rmSync(join(root, 'Notes', 'Beta.md'));
+    const result = await syncVault(vault, index);
+
+    expect(result.removed).toBe(1);
+    expect(result.keptDespiteMissing).toBeUndefined();
+    expect(index.getNote('Notes/Beta.md')).toBeUndefined();
+  });
 });
 
 describe('indexPaths', () => {

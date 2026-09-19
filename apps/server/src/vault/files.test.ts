@@ -96,6 +96,23 @@ describe('readNote', () => {
     expect(note.bom).toBe(true);
   });
 
+  it('reads a note saved as UTF-16, which a Windows editor still writes', async () => {
+    // Read as UTF-8 this is a row of NUL bytes and mojibake — and saving it afterwards used to
+    // write that back, which is the one thing a tool that promises not to touch your files must
+    // never do.
+    write('Utf16.md', Buffer.from(`${BOM}# Über die Wurzeln\n\nSchön.\n`, 'utf16le'));
+    const note = await vault.readNote('Utf16.md');
+    expect(note.content).toBe('# Über die Wurzeln\n\nSchön.\n');
+    expect(note.encoding).toBe('utf16le');
+  });
+
+  it('reads the other byte order too', async () => {
+    write('Utf16be.md', Buffer.from(`${BOM}# Über\n`, 'utf16le').swap16());
+    const note = await vault.readNote('Utf16be.md');
+    expect(note.content).toBe('# Über\n');
+    expect(note.encoding).toBe('utf16be');
+  });
+
   it('accepts backslashes and different unicode normalisation in the path', async () => {
     const note = await vault.readNote('Research\\Über die Wurzeln.md');
     expect(note.path).toBe('Research/Über die Wurzeln.md');
@@ -149,6 +166,32 @@ describe('writeNote', () => {
     await vault.writeNote('Home.md', 'x\n', before.hash);
     const leftovers = (await vault.listAssets()).filter((a) => a.path.includes('.tmp'));
     expect(leftovers).toEqual([]);
+  });
+});
+
+describe('writeNote and encodings', () => {
+  it('writes a note back in the encoding it arrived in', async () => {
+    for (const encoding of ['utf16le', 'utf16be'] as const) {
+      const path = `${encoding}.md`;
+      const little = Buffer.from(`${BOM}# Title\n\nOld.\n`, 'utf16le');
+      write(path, encoding === 'utf16le' ? little : Buffer.from(little).swap16());
+
+      const before = await vault.readNote(path);
+      await vault.writeNote(path, '# Title\n\nNew.\n');
+      const after = await vault.readNote(path);
+
+      expect(after.content).toBe('# Title\n\nNew.\n');
+      expect(after.encoding).toBe(before.encoding);
+      expect(readFileSync(join(root, path))[0]).toBe(encoding === 'utf16le' ? 0xff : 0xfe);
+    }
+  });
+
+  it('writes a UTF-8 note as UTF-8, byte order mark and all', async () => {
+    write('Marked.md', `${BOM}# Title\n`);
+    await vault.writeNote('Marked.md', '# Title\n\nMore.\n');
+    const bytes = readFileSync(join(root, 'Marked.md'));
+    expect(bytes.subarray(0, 3)).toEqual(Buffer.from([0xef, 0xbb, 0xbf]));
+    expect((await vault.readNote('Marked.md')).encoding).toBe('utf8');
   });
 });
 

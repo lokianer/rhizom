@@ -608,3 +608,33 @@ route that reads the same bytes without asking is a way around all of them.
 
 The static route now refuses `.md` and `.markdown`. One door to the notes, and it is the one that
 will be asked who is knocking.
+
+## 2026-09-19 — A note leaves as it arrived
+
+Rhizom writes UTF-8. It does not read only UTF-8, and the difference is somebody's notes.
+
+A file saved as UTF-16 — which a Windows editor still offers, and which a vault carried across
+decades will contain — was read as UTF-8: a row of NUL bytes and mojibake where the text should
+be. That alone would be a display bug. The autosave made it a loss: the mojibake was written
+back, as UTF-8, over the file it came from.
+
+The encoding is now read from the byte order mark and kept beside the line ending and the mark
+itself, which the writer already preserved. UTF-16, in either byte order, is decoded on the way
+in and written back the way it came. Nobody asked for a conversion, so nothing is converted; a
+vault that arrives in one shape leaves in that shape. Converting a whole vault to UTF-8 is a
+thing a person might want one day, and then it is a thing they will ask for.
+
+## 2026-09-19 — An empty folder is not an empty vault
+
+A full scan removes from the index every note it no longer finds. That is right when somebody
+deleted the notes, and it is a fright when the folder is a mount point whose mount did not come
+back: the share is gone, the directory underneath it is still there and reads as empty, and the
+index — which knew five thousand notes a moment ago — is emptied to match.
+
+Nothing is lost on disk, and the index is rebuilt from the files at any time. What would be lost
+is the user's afternoon, and worse: a note written into what looks like an empty vault lands in
+the mount point and shadows the real share when it returns.
+
+So a scan that finds nothing at all, in a vault the index knows notes for, removes nothing and
+says so in the log. Removing everything stays possible — it is what an explicit rebuild does.
+The watcher is not affected: it reports the notes that actually went away, one by one.

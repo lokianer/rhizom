@@ -34,6 +34,13 @@ export interface NoteFile {
 
 export type LineEnding = '\n' | '\r\n';
 
+/**
+ * How the bytes on disk spell the text. Rhizom writes UTF-8, but it reads what is there: a note
+ * saved as UTF-16 by a Windows editor is a note, and opening it must not be the moment it turns
+ * into rubbish. Whatever a file arrives as, it leaves as.
+ */
+export type NoteEncoding = 'utf8' | 'utf16le' | 'utf16be';
+
 export interface NoteContent extends NoteFile {
   /** Text with LF line endings and without a byte order mark. */
   content: string;
@@ -41,6 +48,7 @@ export interface NoteContent extends NoteFile {
   hash: string;
   eol: LineEnding;
   bom: boolean;
+  encoding: NoteEncoding;
 }
 
 export interface AssetFile {
@@ -157,8 +165,7 @@ async function readNote(root: string, input: string): Promise<NoteContent> {
       throw notFoundOr(error, path);
     },
   );
-  const bom = buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf;
-  const text = (bom ? buffer.subarray(3) : buffer).toString('utf8');
+  const { text, bom, encoding } = decode(buffer);
   const eol: LineEnding = text.includes('\r\n') ? '\r\n' : '\n';
   const content = text.replaceAll('\r\n', '\n');
   return {
@@ -169,7 +176,37 @@ async function readNote(root: string, input: string): Promise<NoteContent> {
     hash: hashOf(content),
     eol,
     bom,
+    encoding,
   };
+}
+
+/**
+ * The text a file holds, and how it was spelt. A byte order mark says it outright; without one
+ * the bytes are UTF-8, which is what every editor in this decade writes by default.
+ */
+function decode(buffer: Buffer): { text: string; bom: boolean; encoding: NoteEncoding } {
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return { text: buffer.subarray(2).toString('utf16le'), bom: true, encoding: 'utf16le' };
+  }
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    // Node has no big-endian decoder; the pairs are swapped and read as little-endian.
+    return {
+      text: swapPairs(buffer.subarray(2)).toString('utf16le'),
+      bom: true,
+      encoding: 'utf16be',
+    };
+  }
+  const bom = buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf;
+  return { text: (bom ? buffer.subarray(3) : buffer).toString('utf8'), bom, encoding: 'utf8' };
+}
+
+/** A copy with every pair of bytes the other way round. */
+function swapPairs(buffer: Buffer): Buffer {
+  const swapped = Buffer.from(buffer);
+  if (swapped.length % 2 === 0) {
+    swapped.swap16();
+  }
+  return swapped;
 }
 
 async function writeNote(
@@ -181,6 +218,7 @@ async function writeNote(
   const path = validateNotePath(input);
   let eol: LineEnding = '\n';
   let bom = false;
+  let encoding: NoteEncoding = 'utf8';
   const existing = await readNote(root, path).catch((error: unknown) => {
     if (error instanceof VaultError && error.code === 'NOT_FOUND' && expectedHash === undefined) {
       return undefined;
@@ -193,9 +231,10 @@ async function writeNote(
     }
     eol = existing.eol;
     bom = existing.bom;
+    encoding = existing.encoding;
   }
   const absolute = absoluteOf(root, path);
-  await atomicWrite(absolute, serialize(content, eol, bom));
+  await atomicWrite(absolute, serialize(content, eol, bom, encoding));
   const info = await stat(absolute);
   return { path, hash: hashOf(content), modifiedAt: info.mtime };
 }
@@ -211,7 +250,7 @@ async function createNote(
   if ((await existingNameLike(dirname(absolute), basename(absolute))) !== undefined) {
     throw new VaultError('EXISTS', `Note already exists: ${path}`);
   }
-  await atomicWrite(absolute, serialize(content, '\n', false));
+  await atomicWrite(absolute, serialize(content, '\n', false, 'utf8'));
   return { path, hash: hashOf(content) };
 }
 
@@ -267,9 +306,22 @@ async function uniqueName(directory: string, name: string): Promise<string> {
   return candidate;
 }
 
-function serialize(content: string, eol: LineEnding, bom: boolean): string {
+/**
+ * The bytes to write: the text with the line endings the file had, behind the byte order mark it
+ * had, in the encoding it had. Nobody asked for a conversion, so nothing is converted.
+ */
+function serialize(
+  content: string,
+  eol: LineEnding,
+  bom: boolean,
+  encoding: NoteEncoding,
+): string | Buffer {
   const text = eol === '\n' ? content : content.replaceAll('\n', eol);
-  return bom ? `${BOM}${text}` : text;
+  if (encoding === 'utf8') {
+    return bom ? `${BOM}${text}` : text;
+  }
+  const marked = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]);
+  return encoding === 'utf16le' ? marked : swapPairs(marked);
 }
 
 /**

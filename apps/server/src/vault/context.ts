@@ -82,6 +82,11 @@ export async function openVaultContext(options: VaultContextOptions): Promise<Va
   options.onLog?.(
     `Indexed ${vault.name}: ${String(initial.added)} added, ${String(initial.updated)} updated, ${String(initial.removed)} removed, ${String(initial.unchanged)} unchanged`,
   );
+  if (initial.keptDespiteMissing !== undefined) {
+    options.onLog?.(
+      `${vault.name} looks empty, but the index knows ${String(initial.keptDespiteMissing)} notes — they were kept. Is the folder mounted?`,
+    );
+  }
 
   let watcher: VaultWatcher | undefined;
   if (options.watch !== false) {
