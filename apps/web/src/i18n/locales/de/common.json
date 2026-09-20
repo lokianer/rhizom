@@ -61,6 +61,8 @@
     "confirmDelete": "{{name}} in den Papierkorb verschieben?",
     "nameLabel": "Name",
     "namePlaceholder": "Ordner/Notizname",
+    "templateLabel": "Aus einer Vorlage",
+    "noTemplate": "Leere Notiz",
     "createButton": "Anlegen",
     "cancel": "Abbrechen",
     "inFolder": "in {{folder}}",

@@ -61,6 +61,8 @@
     "confirmDelete": "Move {{name}} to the trash?",
     "nameLabel": "Name",
     "namePlaceholder": "Folder/Note name",
+    "templateLabel": "From a template",
+    "noTemplate": "Empty note",
     "createButton": "Create",
     "cancel": "Cancel",
     "inFolder": "in {{folder}}",

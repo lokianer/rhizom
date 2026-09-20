@@ -84,8 +84,9 @@ changes only with a documented migration.
       a tag is written in two dialects: the exact span in the prose, `setFrontmatter` for the
       key. Renaming onto a tag that exists merges them, which the preview says rather than
       refuses — see `DECISIONS.md`
-- [ ] A new note can start from a template. The templates are there and the slash menu inserts
-      one, but only into a note that already exists
+- [x] A new note can start from a template: the new-note dialog offers the vault's templates by
+      file name, and the note is created with the expanded text in hand rather than created
+      empty and written to afterwards
 - [x] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes

@@ -133,6 +133,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its slug and a second id there is one the link side cannot use; a code block is refused,
   because the marker would be code — and both say so beside the save state instead of doing
   nothing.
+- A new note can start from a template. The new-note dialog offers the vault's templates by file
+  name, and `{{title}}`, `{{date}}` and the rest are filled in the way the slash menu fills them.
+  The choice is not remembered between notes, and a vault with no template folder does not see
+  the field at all.
 - Rename a tag across the vault, from the pencil beside it in the Tags panel. A dry run first:
   which notes change, the line each occurrence stands on, and what it would read afterwards.
   Then the write, with a hash per file, so a note that changed meanwhile is reported rather than

@@ -4,15 +4,20 @@ import { useTranslation } from 'react-i18next';
 export interface NewNoteDialogProps {
   /** The folder the note goes into, '' for the vault root; null keeps the dialog closed. */
   folder: string | null;
+  /** The vault's templates, by path and by the file name they are offered under. */
+  templates: readonly { path: string; name: string }[];
   onCancel: () => void;
-  onCreate: (path: string) => void;
+  onCreate: (path: string, template: string | null) => void;
 }
 
-export function NewNoteDialog({ folder, onCancel, onCreate }: NewNoteDialogProps) {
+export function NewNoteDialog({ folder, templates, onCancel, onCreate }: NewNoteDialogProps) {
   const { t } = useTranslation();
   const id = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [name, setName] = useState('');
+  // '' is the empty note. The choice is not remembered between notes: the next one is far more
+  // often a plain note than another of the same kind.
+  const [template, setTemplate] = useState('');
 
   const open = folder !== null;
   useEffect(() => {
@@ -44,7 +49,11 @@ export function NewNoteDialog({ folder, onCancel, onCreate }: NewNoteDialogProps
             return;
           }
           setName('');
-          onCreate(folder === '' ? trimmed : `${folder}/${trimmed}`);
+          setTemplate('');
+          onCreate(
+            folder === '' ? trimmed : `${folder}/${trimmed}`,
+            template === '' ? null : template,
+          );
         }}
       >
         <h2 id={`${id}-title`}>{t('tree.newNote')}</h2>
@@ -61,6 +70,25 @@ export function NewNoteDialog({ folder, onCancel, onCreate }: NewNoteDialogProps
             setName(event.target.value);
           }}
         />
+        {templates.length === 0 ? null : (
+          <>
+            <label htmlFor={`${id}-template`}>{t('note.templateLabel')}</label>
+            <select
+              id={`${id}-template`}
+              value={template}
+              onChange={(event) => {
+                setTemplate(event.target.value);
+              }}
+            >
+              <option value="">{t('note.noTemplate')}</option>
+              {templates.map((entry) => (
+                <option key={entry.path} value={entry.path}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
         <div className="rz-dialog-actions">
           <button type="button" onClick={onCancel}>
             {t('note.cancel')}

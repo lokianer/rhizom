@@ -4,13 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
-import { expandTemplate, noteNameOf, type TemplateSettings } from '@rhizom/core';
+import {
+  ensureMarkdownExtension,
+  expandTemplate,
+  noteNameOf,
+  type TemplateSettings,
+} from '@rhizom/core';
 
 import { api, ApiRequestError } from '../api/client.js';
 import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { TagRenameDialog } from '../components/TagRenameDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
+import { templateNotes } from '../editor/index.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore, type SidebarTab } from '../store/ui.js';
@@ -35,12 +41,12 @@ function modifierLabel(): string {
 }
 
 /**
- * The text a new day starts from: the vault's own daily template, expanded the way the slash
- * menu expands one, so `{{date}}` and `{{title}}` mean here what they mean there. A template
- * the setting names and the vault no longer holds is not an error — the day starts empty, which
- * is what it would have done without a template at all.
+ * The text a new note starts from: a template of the vault's, expanded the way the slash menu
+ * expands one, so `{{date}}` and `{{title}}` mean here what they mean there. A template that is
+ * named and no longer there is not an error — the note starts empty, which is what it would
+ * have done without a template at all.
  */
-async function dailyTemplateText(
+async function templateText(
   template: string | null,
   path: string,
   templates: TemplateSettings | undefined,
@@ -123,13 +129,21 @@ export function Layout() {
   );
 
   const createNote = useCallback(
-    async (path: string) => {
+    async (path: string, template: string | null) => {
       setNewNoteFolder(null);
-      const created = await api.createNote({ path });
+      // A note made from a template is made with its text in hand rather than created empty and
+      // then written to: one request, and nothing to clean up if the second one never happens.
+      const content = await templateText(
+        template,
+        ensureMarkdownExtension(path),
+        templates,
+        i18n.language,
+      );
+      const created = await api.createNote(content === '' ? { path } : { path, content });
       await refresh();
       void navigate(noteHref(created.path));
     },
-    [navigate, refresh],
+    [i18n.language, navigate, refresh, templates],
   );
 
   // Today's note: the vault says where it goes and what a day is called, and the note is made
@@ -148,7 +162,7 @@ export function Layout() {
       }
       await api.createNote({
         path,
-        content: await dailyTemplateText(daily?.template ?? null, path, templates, i18n.language),
+        content: await templateText(daily?.template ?? null, path, templates, i18n.language),
       });
       await refresh();
     }
@@ -183,6 +197,19 @@ export function Layout() {
       }
     }
   }, [navigate, notes, openNotePath, refresh]);
+
+  // The notes a new one can start from: the vault's template folder, by file name, because that
+  // is the name the slash menu offers them under and the name their own heading does not give.
+  const templateChoices = useMemo(
+    () =>
+      templates === undefined
+        ? []
+        : templateNotes(notes, templates).map((note) => ({
+            path: note.path,
+            name: noteNameOf(note.path),
+          })),
+    [notes, templates],
+  );
 
   const commands = useMemo<PaletteCommand[]>(
     () => [
@@ -516,11 +543,12 @@ export function Layout() {
 
       <NewNoteDialog
         folder={newNoteFolder}
+        templates={templateChoices}
         onCancel={() => {
           setNewNoteFolder(null);
         }}
-        onCreate={(path) => {
-          void createNote(path);
+        onCreate={(path, template) => {
+          void createNote(path, template);
         }}
       />
 

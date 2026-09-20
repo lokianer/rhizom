@@ -39,6 +39,9 @@ Type `/` at the start of a line or after a space:
 - `/date`, `/time` — today, in the format this vault is set to
 - …and every note in the vault's template folder, by name
 
+A template is also what a note can start from: **New note** offers the vault's templates by
+name, and the placeholders are filled in as the note is made.
+
 A template is just a note in that folder. Inside one, these stand in for something:
 
 `{{title}}` the new note's name · `{{date}}` and `{{time}}`, each with an optional format such as
