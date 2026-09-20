@@ -771,3 +771,60 @@ strings in every reader the vault will meet.
 The form is folded away to start with. The frontmatter is already in the note, three lines above
 the cursor — the form is there to edit it, not to read it, and a panel open by default would take
 a third of the page from the text the reader came for.
+
+## 2026-09-20 — Two dependencies, both of them optional at run time
+
+Rule 6 asks for a justification before a larger dependency. Two went in on the same day, and the
+justification is the same for both: they are the only way to have the thing at all, and neither
+is downloaded by somebody who does not use it.
+
+**`mermaid`** is the largest thing this application pulls in. It is also the only serious way to
+draw a diagram from text, and a vault written in Obsidian will already hold `mermaid` blocks. It
+is loaded through a dynamic import, so it lands in a chunk of its own and is fetched the first
+time a note with a diagram is on screen — a vault without one never asks for it. It runs with
+`securityLevel: 'strict'`, because diagram source is text out of a folder that may have come from
+anywhere, and it is themed from the `--rz-*` tokens so a diagram belongs to the page it is on.
+
+**`@replit/codemirror-vim`** is small, is the CodeMirror 6 Vim implementation, and there is no
+version of "optional Vim mode" that does not include it. It is loaded the first time the mode is
+switched on, through a compartment, so turning it off gives the editor back unchanged.
+
+What this does not open: a diagram renderer per syntax, or a second editor. Both of these answer
+a line the roadmap already committed to, and the next dependency gets the same question again.
+
+## 2026-09-20 — A milieu field is a note, like a saved search
+
+The bubble graph draws what the links say. The milieu field draws what somebody decided, and a
+decision has to live somewhere. It lives in the vault:
+
+- The field is a note with `type: axes`. Six flat keys name the two axes and the words at their
+  ends, and a `rhizom-query` block in the same note says which notes appear in it — the same
+  arrangement a `type: query` note already has, so there is one idea to learn rather than two.
+- A placed note carries its own position, in its own frontmatter, under the keys the axes name.
+  So the arrangement is readable without Rhizom, survives a copy, and diffs in Git like anything
+  else. Nothing about a milieu field lives in a database or in a browser's storage.
+
+Two consequences worth stating. A note can appear in more than one field with a different
+position in each, because the keys are named per field and a note may carry several. And moving a
+note in one field never moves it in another, which is what anybody who has kept two maps of the
+same material would expect.
+
+**Dragging a note writes a file by itself.** It is the only gesture in Rhizom that does, and it is
+held to the rules the rest of the application follows: one write when the bubble is let go rather
+than a stream while it moves, the hash the note was loaded at, a refusal put back on screen rather
+than swallowed, and the watcher's echo of its own write ignored so the bubble does not jump to
+where it already is. A value outside the scale is clamped for drawing and never rewritten.
+
+## 2026-09-20 — A tick changes a line, not a note
+
+Ticking a checkbox in the preview rewrites the three characters of the box and nothing else. Not
+the list, not the item, not the note: everything on that line — the text, the links, a trailing
+tag, the indentation of a nested list — has to come through exactly as it was, and a Markdown
+round trip would have reflowed all of it.
+
+The rendered item carries the line it begins on, and the writer checks that the line is still a
+task before touching it. The reader may have typed above the list since the page was drawn, and
+moving somebody's text because a stale line number said so is the one thing this must not do.
+
+In the wiki the box stays what the renderer makes it: disabled, a picture of what the file says.
+The wiki is read-only, and a box that looked clickable there would be lying about it.
