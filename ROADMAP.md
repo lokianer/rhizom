@@ -98,6 +98,19 @@ _The module is a vocabulary, not a second programme: templates, a handful of fro
 a few renderers and a graph colouring. It is system-agnostic — 5e is one stat block renderer
 among several — and it is not a virtual tabletop: no battle map, no tokens, no combat tracker._
 
+- [ ] More than one vault, and a way between them. The server serves one vault today; a game
+      master keeps one per campaign, a researcher one per project, and reopening the server with
+      another folder is not a way to work. The operator registers the vaults — an env var, or a
+      small list in the data directory — and **only a registered vault can be opened**: a browser
+      that may name any path is a browser that may read any folder on the machine, which is the
+      one thing a self-hosted server must never allow. Each vault keeps its own index file, opened
+      when it is first asked for and closed again when nothing has touched it for a while, so ten
+      vaults are not ten open databases. The vault stands in the URL (`/v/<id>/notes/…`), so a
+      link into one is a link, a bookmark works and two tabs can hold two vaults at once; the
+      switcher is a control in the header and a command in the palette. Links never cross a vault
+      boundary — a vault is what a name resolves inside, and a link that only Rhizom could follow
+      would break the promise that the files are the truth. A single-vault setup keeps working
+      exactly as it does now, with no switcher shown at all
 - [ ] The module is switched on by a note: `type: campaign` in the vault root names the system and
       enables the module's vocabulary. Its types (`npc`, `place`, `faction`, `item`, `quest`,
       `session`) count only while it is on, so the globally reserved set stays the four of Phase 2
@@ -204,21 +217,70 @@ engine._
 
 ## Phase 4 — Sharing, permissions, history
 
+_Up to here a vault has had one reader, who was also its writer. This phase is about the second
+person: what they may see, what they may change, and what happened to the file in between._
+
 - [ ] Multi-user: login, roles, per-folder permissions (read/write); GM content is filtered
       by permissions
 - [ ] Publish flag per note: public wiki and private area in the same vault
+- [ ] What is actually public, on one page. A publish flag is easy to set and hard to audit: the
+      page lists every note the flag exposes and, more importantly, every link that leaves the
+      public set — a public note pointing at a private one is either a leak or a dead link, and
+      both are worth seeing before somebody else finds them
+- [ ] Share one note by link, without an account: an operator-issued, expiring URL that opens
+      exactly that note and the embeds inside it. No sign-up, nothing to administer, and the link
+      can be withdrawn
 - [ ] Static export of the wiki as HTML (GitHub Pages-ready); Pandoc export (PDF/DOCX/EPUB)
       when Pandoc is installed
+- [ ] Export one note as a single file, with its transclusions, images and query results resolved
+      into it — the thing you send somebody who does not have the vault
 - [ ] Snapshots / version history (optionally Git-based) with diff view; "Random note";
       "On this day"
+- [ ] "What changed since I last read this": a per-note timeline, and a diff against the version
+      you last opened rather than against the previous save. Restoring an older version writes a
+      new one — history is added to, never rewritten
+- [ ] Two writers, one file: a save that would overwrite somebody else's already refuses. Beyond
+      that, the second writer's text is kept as its own file beside the note the way sync tools do
+      it, and named as such, so nothing is ever silently lost. The general sync-conflict story is
+      Phase 6; this is the narrow case of two people in one browser session apiece
+- [ ] Writes made while offline are queued and replayed on reconnect, with the same hash gate a
+      write has now — an offline edit that lost the race is a conflict, not an overwrite
 - [ ] PWA: installable, readable offline, sync on reconnect
+- [ ] Assets, looked after: which note uses which file, which files nothing uses any more, and a
+      way to move an asset with the links to it following, the way renaming a note already works
 - [ ] Graph extras: time-lapse slider (growth of the network over time), heatmap colouring
       (age / activity / word count), orphan view for unlinked notes, pinned bubbles
+- [ ] The graph in the export: the static wiki carries a rendered field with the same colours and
+      the same links, so somebody reading the published vault sees its shape and not only its pages
 
 ## Phase 5 — Desktop and ecosystem
 
-- [ ] Electron builds with electron-builder: installers for Windows, macOS and Linux;
-      auto-update
+_The end of this phase is 1.0, so this is the last stretch in which the format a vault is written
+in may still move._
+
+- [ ] **A desktop app — and it need not be Electron.** What is wanted is a window with an icon,
+      not a second programme: the server stays headless and the desktop build is a shell around
+      the very same Fastify server. Four ways to get there, to be decided before anything is
+      built:
+      **(a) Nothing but a launcher.** The release archive already starts a server and the browser
+      already renders the app; a small launcher that starts it and opens the default browser is
+      most of a desktop app for no new dependency. With the Phase 4 PWA installed it even gets
+      its own window and its own icon. No installer, no auto-update, no file associations.
+      **(b) Tauri 2.** A Rust shell around the system WebView: an installer of roughly ten
+      megabytes instead of Electron's hundred and fifty, and no second copy of Chromium on the
+      machine. The cost is a Rust toolchain in CI and shipping the Node server as a sidecar
+      binary, one per platform.
+      **(c) Electron with electron-builder.** The best-trodden path and the one with the fewest
+      surprises — auto-update, file associations, a tray, deep OS menus — at the price of the
+      largest download and a native module rebuilt against Electron's own ABI.
+      **(d) Neither, on purpose.** Say plainly that Rhizom is a server you run, and spend the
+      effort on the PWA instead.
+      The thing that decides it is `better-sqlite3`: a native module is what makes (b) and (c)
+      awkward in different ways. Worth measuring first whether Node's own `node:sqlite` can
+      replace it — if it can, and if it carries FTS5, every option above gets simpler, and the
+      server needs no compiler on any machine that runs it
+- [ ] Installers for Windows, macOS and Linux, with an update the user asks for rather than one
+      that happens to them — whichever shell the item above chooses
 - [ ] Published OpenAPI docs, webhooks, CLI (`rhizom new`, `rhizom search`, `rhizom export`)
 - [ ] Documented theme system (CSS variables) plus two example community themes
 - [ ] Spaced repetition: definitions as flashcards (SM-2 algorithm)
@@ -226,7 +288,21 @@ engine._
 - [ ] Interactive maps: upload an image, place pins, link pins to notes
 - [ ] Fantasy calendar (custom months/holidays, events) and initiative tracker
 - [ ] Obsidian import assistant for special cases (attachment paths, plugin leftovers)
+- [ ] The way out, as well as the way in: an export that another tool can read — Obsidian needs
+      none, but Logseq, Joplin and a plain folder of Pandoc-rendered pages do. A vault nobody can
+      leave is a vault nobody should enter
+- [ ] Search that speaks German. The index tokenises Unicode and folds case, and that is all: it
+      has no idea that _Wurzeln_ and _Wurzel_ are the same word, or that _Sinusmilieu_ contains
+      one. A stemmer and a compound splitter per vault language, switched on in the vault's own
+      settings, and the ranking measured against a real vault before and after
+- [ ] Open a note from outside: a `rhizom://` handler so a link in a mail, a task manager or
+      another editor lands on the right note in the right vault
+- [ ] Capture from a phone without a phone app: one page that does nothing but take a sentence, a
+      photo or a link and file it into today's note. The PWA from Phase 4 is what makes it an icon
+      on a home screen
 - [ ] Optional and strictly local: Ollama integration for "related notes" suggestions (opt-in)
+- [ ] A theme gallery that is itself a vault: each theme a note with its tokens in frontmatter and
+      a screenshot, so installing one is copying a file and reading the source is reading a note
 
 ## Phase 6 — Everything after
 

@@ -890,3 +890,30 @@ preview names the tags it would merge with and leaves the decision where it belo
 is what the tag tree already promises: asking for a level asks for everything under it. Only the
 level that was asked about changes, so `Campaign/NPCs` becomes `chronicle/NPCs` — the rest of the
 path keeps the spelling the file gave it.
+
+## 2026-09-20 — The desktop build is not decided, and Electron is not the default
+
+The roadmap has said "Electron builds with electron-builder" since it was written, which read as
+a decision and was never taken as one. It is now an open item with four candidates — a launcher
+plus the PWA, Tauri 2, Electron, or no desktop build at all — and this note records why the
+question is harder than it looks and what will decide it.
+
+The shape is fixed either way: the server stays headless and a desktop build is a shell around
+the same Fastify process. So the question is only what draws the window.
+
+What makes it awkward is `better-sqlite3`. It is a native module, and every option has to say
+what happens to it. Electron needs it rebuilt against Electron's own Node ABI — routine, and one
+more thing that can break on an upgrade. Tauri does not embed Node at all, so the server ships
+beside the shell as a sidecar binary, built per platform, with the compiled `.node` file next to
+it. A plain launcher has no problem at all, because it runs the release archive as it stands.
+
+So the first thing to measure is whether `node:sqlite`, which Node itself now carries, can do
+what the index needs — above all FTS5, which is not a given, and the synchronous API the store is
+written against. If it can, the native module goes away, the server needs no compiler on any
+machine, and every option above becomes easier at once. That measurement comes before the choice,
+not after it.
+
+The bias, stated so it can be argued with: a hundred and fifty megabytes of Chromium for a
+program whose whole point is that it is small and local is a poor trade, and the Phase 4 PWA
+already gives a window with an icon for nothing. Electron stays the answer if desktop integration
+— auto-update, file associations, a tray — turns out to matter more than size.
