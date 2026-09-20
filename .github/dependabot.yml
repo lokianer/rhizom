@@ -1,0 +1,71 @@
+# Dependency updates, opened as pull requests so CI decides whether they are safe.
+#
+# Every external version in this repository lives in the pnpm catalog
+# (`pnpm-workspace.yaml`); the package manifests only say `catalog:`. Dependabot edits the
+# catalog entry and the lockfile, which is exactly where a version belongs.
+#
+# Updates are grouped on purpose. One pull request a week per ecosystem, with the patch and
+# minor bumps in it, is something a single maintainer can read; twenty are something a single
+# maintainer stops reading. A major bump is not grouped — it wants its own pull request, its own
+# CI run and its own decision.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    labels:
+      - dependencies
+    groups:
+      # `vitest` and `@vitest/coverage-v8` must move together — the coverage package refuses to
+      # load against a different minor. Grouping them is the only way a bump can be green.
+      vitest:
+        patterns:
+          - vitest
+          - '@vitest/*'
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - vitest
+          - '@vitest/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    commit-message:
+      prefix: ci
+      include: scope
+    labels:
+      - dependencies
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    commit-message:
+      prefix: build
+      include: scope
+    labels:
+      - dependencies
