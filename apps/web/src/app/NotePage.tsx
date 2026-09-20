@@ -74,6 +74,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const splitView = useUiStore((state) => state.splitView);
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
   const renameRequest = useUiStore((state) => state.renameRequest);
+  const zen = useUiStore((state) => state.zen);
 
   const [doc, setDoc] = useState<NoteDocument | null>(null);
   const [state, setState] = useState<LoadState>('loading');
@@ -401,11 +402,13 @@ function NoteView({ path, revisions }: NoteViewProps) {
         </nav>
       </header>
 
-      <FrontmatterPanel
-        content={draft}
-        onChange={applyFrontmatter}
-        readOnly={saveState === 'conflict'}
-      />
+      {zen ? null : (
+        <FrontmatterPanel
+          content={draft}
+          onChange={applyFrontmatter}
+          readOnly={saveState === 'conflict'}
+        />
+      )}
 
       <div className={`rz-note-body${splitView ? ' rz-note-split' : ''}`}>
         <MarkdownEditor
@@ -462,21 +465,26 @@ function NoteView({ path, revisions }: NoteViewProps) {
         ) : null}
       </div>
 
-      <BacklinksPanel
-        path={doc.path}
-        elsewhere={revisionElsewhere(revisions, doc.path)}
-        onOpen={(target) => {
-          void navigate(noteHref(target));
-        }}
-      />
+      {/* Zen is the text and nothing else: the two shelves are what it is a mode away from. */}
+      {zen ? null : (
+        <>
+          <BacklinksPanel
+            path={doc.path}
+            elsewhere={revisionElsewhere(revisions, doc.path)}
+            onOpen={(target) => {
+              void navigate(noteHref(target));
+            }}
+          />
 
-      <MentionsPanel
-        path={doc.path}
-        elsewhere={revisionElsewhere(revisions, doc.path)}
-        onOpen={(target) => {
-          void navigate(noteHref(target));
-        }}
-      />
+          <MentionsPanel
+            path={doc.path}
+            elsewhere={revisionElsewhere(revisions, doc.path)}
+            onOpen={(target) => {
+              void navigate(noteHref(target));
+            }}
+          />
+        </>
+      )}
 
       <RenameDialog
         note={renaming ? { path: doc.path, title: doc.title } : null}

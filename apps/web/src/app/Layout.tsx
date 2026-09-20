@@ -83,6 +83,9 @@ export function Layout() {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
+  const zen = useUiStore((state) => state.zen);
+  const toggleZen = useUiStore((state) => state.toggleZen);
+  const leaveZen = useUiStore((state) => state.leaveZen);
   const sidebarTab = useUiStore((state) => state.sidebarTab);
   const setSidebarTab = useUiStore((state) => state.setSidebarTab);
   const graphTags = useUiStore((state) => state.graphTags);
@@ -234,6 +237,11 @@ export function Layout() {
         run: toggleSplitView,
       },
       {
+        id: 'toggleZen',
+        label: t('palette.commandNames.toggleZen'),
+        run: toggleZen,
+      },
+      {
         id: 'rebuild',
         label: t('palette.commandNames.rebuild'),
         run: () => {
@@ -254,6 +262,7 @@ export function Layout() {
       theme,
       toggleSidebar,
       toggleSplitView,
+      toggleZen,
     ],
   );
 
@@ -276,10 +285,28 @@ export function Layout() {
     };
   }, [setPaletteOpen]);
 
+  // Escape leaves zen. It is the key every full-screen thing on a computer answers to, and a
+  // mode that hid the way out of itself would be a trap; it is only listened for while the mode
+  // is on, so nothing else in the app loses an Escape to it.
+  useEffect(() => {
+    if (!zen) {
+      return undefined;
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && !event.isComposing) {
+        leaveZen();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [leaveZen, zen]);
+
   const isGraph = location.pathname.startsWith('/graph');
 
   return (
-    <div className={`rz-app${sidebarOpen ? '' : ' rz-app-collapsed'}`}>
+    <div className={`rz-app${sidebarOpen ? '' : ' rz-app-collapsed'}${zen ? ' rz-app-zen' : ''}`}>
       <a className="rz-skip" href="#rz-main">
         {t('app.skipToContent')}
       </a>

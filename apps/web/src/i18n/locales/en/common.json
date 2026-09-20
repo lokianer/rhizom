@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Rhizom",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "zenHint": "Leave zen mode with Escape."
   },
   "language": {
     "switch": "Language",
@@ -242,7 +243,8 @@
       "openOutline": "Open the outline",
       "rebuild": "Rebuild the index",
       "toggleSidebar": "Toggle the sidebar",
-      "togglePreview": "Toggle the preview"
+      "togglePreview": "Toggle the preview",
+      "toggleZen": "Zen mode"
     }
   },
   "status": {

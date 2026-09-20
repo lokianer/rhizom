@@ -153,6 +153,19 @@ mark {
     'main';
 }
 
+/* Zen: the text and nothing else. The header and the sidebar are taken out of the layout rather
+   than hidden behind it, so the editor really does get the window. */
+.rz-app-zen {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'main';
+}
+
+.rz-app-zen > .rz-header,
+.rz-app-zen > .rz-sidebar {
+  display: none;
+}
+
 .rz-header {
   grid-area: header;
   display: flex;

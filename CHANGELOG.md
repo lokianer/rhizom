@@ -80,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kind stays a blockquote.
 - Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
   is disabled for now — ticking one has to write the file, and that is a slice of its own.
+- Zen mode: the text and nothing else — no header, no sidebar, none of the shelves under the
+  editor. Escape leaves it, and it is deliberately not remembered between visits: coming back to
+  an application with no interface, and no memory of having asked for that, is a bad morning.
 - An outline panel: a fourth tab in the sidebar listing the open note's headings, indented by
   how deep each one hangs rather than by its level number, so a note that starts at `##` is not
   drawn as if a heading were missing. It follows the note as it is written.

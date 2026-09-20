@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Rhizom",
-    "skipToContent": "Zum Inhalt springen"
+    "skipToContent": "Zum Inhalt springen",
+    "zenHint": "Zen-Modus mit Escape verlassen."
   },
   "language": {
     "switch": "Sprache",
@@ -242,7 +243,8 @@
       "openOutline": "Gliederung öffnen",
       "rebuild": "Index neu aufbauen",
       "toggleSidebar": "Seitenleiste umschalten",
-      "togglePreview": "Vorschau umschalten"
+      "togglePreview": "Vorschau umschalten",
+      "toggleZen": "Zen-Modus"
     }
   },
   "status": {

@@ -66,9 +66,10 @@ changes only with a documented migration.
       by the index, never evaluated as code out of somebody else's vault
 - [x] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
 - [ ] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
-      optional Vim mode (split view already shipped with Phase 1). Callouts and task checkboxes
-      are in; a ticked box is read, not yet written, which wants a slice of its own. Mermaid
-      needs a rendering library and therefore a decision before it is built
+      optional Vim mode (split view already shipped with Phase 1). The outline, callouts, task
+      checkboxes and zen mode are in; a ticked box is read, not yet written, which wants a slice
+      of its own. **Mermaid and the Vim mode each need a dependency** — a rendering library and
+      `@replit/codemirror-vim` — and rule 6 wants a justification before either is added
 - [ ] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes

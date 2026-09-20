@@ -13,6 +13,12 @@ export interface UiState {
   sidebarOpen: boolean;
   /** Show the rendered note next to the editor. */
   splitView: boolean;
+  /**
+   * Nothing but the text: no header, no sidebar, none of the shelves under the editor. Not
+   * remembered between visits, unlike the rest of this — coming back to an application with no
+   * interface and no memory of having asked for that is a bad morning.
+   */
+  zen: boolean;
   /** Folders opened in the file tree, as vault paths. */
   expandedFolders: string[];
   clusterBy: ClusterBy;
@@ -30,6 +36,8 @@ export interface UiState {
   setSidebarTab: (tab: SidebarTab) => void;
   toggleSidebar: () => void;
   toggleSplitView: () => void;
+  toggleZen: () => void;
+  leaveZen: () => void;
   toggleFolder: (path: string) => void;
   expandFolders: (paths: readonly string[]) => void;
   setClusterBy: (clusterBy: ClusterBy) => void;
@@ -47,6 +55,7 @@ export const useUiStore = create<UiState>()(
       sidebarTab: 'tree',
       sidebarOpen: true,
       splitView: false,
+      zen: false,
       expandedFolders: [],
       clusterBy: 'folder',
       graphDepth: 0,
@@ -64,6 +73,12 @@ export const useUiStore = create<UiState>()(
       },
       toggleSplitView: () => {
         set((state) => ({ splitView: !state.splitView }));
+      },
+      toggleZen: () => {
+        set((state) => ({ zen: !state.zen }));
+      },
+      leaveZen: () => {
+        set({ zen: false });
       },
       toggleFolder: (path) => {
         set((state) => ({
