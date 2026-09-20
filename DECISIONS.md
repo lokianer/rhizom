@@ -860,3 +860,33 @@ now scoped to the title and body columns. The scan ignores frontmatter on purpos
 [Mira]` names Mira without mentioning her — so a note matched through the alias column would be
 read and thrown away, and would take a place in the candidate limit from a note with something
 to say.
+
+## Renaming a tag: two writers, one operation
+
+Renaming a tag follows the note rename in everything that matters — a dry run that says which
+files change and on which line, a hash per file, and a file that moved on reported rather than
+overwritten. What is different is that a tag is written in two dialects, and each needs its own
+writer.
+
+**In the prose it is a word in a sentence.** `findTagRefs` hands back the exact span, taken from
+the parser's offsets, and the same rule the indexer counts by decides what is a tag at all: a
+`#campaign` in a code span, a fenced block, the frontmatter, raw HTML or a link's text is not
+one, so it is not renamed. A vault that documents its own tag scheme in a code block keeps that
+block exactly as it was. Every span is read back before it is used, so a line the parser decoded
+differently — an escaped `\#` earlier on — drops out rather than being rewritten at a guess.
+
+**In the frontmatter it is a YAML value**, and `setFrontmatter` already knows how to change one
+without disturbing the comments, the key order or the neighbouring values, so the rename never
+edits the block itself. A list keeps its entries and their order; a string keeps its separators,
+because `tags: a, b` is as common as a list and turning one into the other is a change nobody
+asked for. The quoting is the writer's, as it is everywhere a value is rewritten.
+
+**A merge is shown, not refused.** A note keeps its identity through a rename; a tag is only its
+name. Renaming `campaign` onto an existing `chronicle` makes them one tag and nothing remembers
+there were two. Refusing would be wrong — merging two tags is a thing people want — so the
+preview names the tags it would merge with and leaves the decision where it belongs.
+
+**A hierarchy renames whole.** `campaign` takes `campaign/silverstadt/npcs` with it, because that
+is what the tag tree already promises: asking for a level asks for everything under it. Only the
+level that was asked about changes, so `Campaign/NPCs` becomes `chronicle/NPCs` — the rest of the
+path keeps the spelling the file gave it.

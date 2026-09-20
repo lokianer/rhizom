@@ -48,6 +48,7 @@ function contextValue(overrides: Partial<EditorContextValue> = {}): EditorContex
         onOpenLink: () => undefined,
         onUpload: () => Promise.resolve(''),
         onReadNote: () => Promise.resolve(''),
+        onBlockLink: () => undefined,
       },
     },
     ...overrides,

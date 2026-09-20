@@ -9,6 +9,7 @@ import { expandTemplate, noteNameOf, type TemplateSettings } from '@rhizom/core'
 import { api, ApiRequestError } from '../api/client.js';
 import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
+import { TagRenameDialog } from '../components/TagRenameDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
@@ -96,11 +97,13 @@ export function Layout() {
   const paletteOpen = useUiStore((state) => state.paletteOpen);
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen);
   const requestRename = useUiStore((state) => state.requestRename);
+  const requestBlockLink = useUiStore((state) => state.requestBlockLink);
   const daily = useVaultStore((state) => state.info?.daily);
   const templates = useVaultStore((state) => state.info?.templates);
 
   const revisions = useIndexEvents();
   const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
+  const [renamingTag, setRenamingTag] = useState<string | null>(null);
 
   useEffect(() => {
     void load();
@@ -259,6 +262,13 @@ export function Layout() {
                 void duplicateNote();
               },
             },
+            {
+              id: 'copyBlockLink',
+              label: t('palette.commandNames.copyBlockLink'),
+              // Like the rename: only the open editor knows where the cursor is, so all this
+              // does is ask, and the editor answers with the key's own command.
+              run: requestBlockLink,
+            },
           ]),
       {
         id: 'renameNote',
@@ -324,6 +334,7 @@ export function Layout() {
       openNotePath,
       openToday,
       refresh,
+      requestBlockLink,
       requestRename,
       setSidebarTab,
       setTheme,
@@ -458,7 +469,12 @@ export function Layout() {
             <SearchPanel activePath={openNotePath} onOpen={openNote} />
           ) : null}
           {sidebarTab === 'tags' ? (
-            <TagList tags={tags} selected={graphTags} onToggle={toggleGraphTag} />
+            <TagList
+              tags={tags}
+              selected={graphTags}
+              onToggle={toggleGraphTag}
+              onRename={setRenamingTag}
+            />
           ) : null}
           {sidebarTab === 'outline' ? (
             <OutlinePanel
@@ -505,6 +521,24 @@ export function Layout() {
         }}
         onCreate={(path) => {
           void createNote(path);
+        }}
+      />
+
+      <TagRenameDialog
+        tag={renamingTag}
+        onCancel={() => {
+          setRenamingTag(null);
+        }}
+        onConfirm={async (preview) => {
+          await api.renameTag({
+            from: preview.from,
+            to: preview.to,
+            files: preview.files.map((file) => ({ source: file.source, hash: file.hash })),
+          });
+          setRenamingTag(null);
+          // The tag chips, the filters and every note that carried the tag come from the index,
+          // so one refresh is what puts the new name everywhere it is shown.
+          await refresh();
         }}
       />
     </div>

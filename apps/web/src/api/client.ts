@@ -16,6 +16,8 @@ import type {
   RenameNoteRequest,
   RenameNoteResult,
   RenamePreview,
+  TagRenamePreview,
+  TagRenameResult,
   SaveNoteRequest,
   SearchResponse,
   TagCount,
@@ -162,6 +164,17 @@ export const api = {
 
   renameNote: (body: RenameNoteRequest, options?: RequestOptions) =>
     request<RenameNoteResult>('/api/rename', { method: 'POST', ...json(body), ...options }),
+
+  tagRenamePreview: (from: string, to: string, options?: RequestOptions) =>
+    request<TagRenamePreview>(
+      `/api/tags/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      options,
+    ),
+
+  renameTag: (
+    body: { from: string; to: string; files: { source: string; hash: string }[] },
+    options?: RequestOptions,
+  ) => request<TagRenameResult>('/api/tags/rename', { method: 'POST', ...json(body), ...options }),
 
   graph: (clusterBy: 'folder' | 'tag', options?: RequestOptions) =>
     request<GraphResponse>(`/api/graph?clusterBy=${clusterBy}`, options),

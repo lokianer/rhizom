@@ -44,7 +44,8 @@
     "empty": "Keine Schlagwörter in diesem Tresor.",
     "count_one": "{{count}} Notiz",
     "count_other": "{{count}} Notizen",
-    "filter": "Graph nach {{tag}} filtern"
+    "filter": "Graph nach {{tag}} filtern",
+    "rename": "Schlagwort {{tag}} umbenennen"
   },
   "outline": {
     "label": "Gliederung",
@@ -76,6 +77,14 @@
     "uploadFailed": "{{name}} konnte nicht hochgeladen werden: {{message}}",
     "templateFailed": "{{name}} konnte nicht gelesen werden: {{message}}",
     "preview": "Vorschau",
+    "blockLink": {
+      "copied": "{{link}} kopiert",
+      "manual": "Die Zwischenablage gibt ein Browser nur über https und von localhost heraus. Der Link lautet {{link}}",
+      "failed": "Der Link konnte nicht kopiert werden: {{message}}",
+      "heading": "Auf eine Überschrift zeigt man mit ihrem Text, nicht mit einer eigenen ID.",
+      "code": "Eine ID in einem Codeblock wäre Teil des Codes und keine Adresse.",
+      "noBlock": "Hier ist kein Block, auf den ein Link zeigen könnte."
+    },
     "slash": {
       "table": "Tabelle",
       "definition": "Als Definition kennzeichnen",
@@ -205,6 +214,29 @@
     "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und blieben unberührt.",
     "mentionLabel": "In {{note}}: {{line}}"
   },
+  "tagRename": {
+    "title": "Schlagwort umbenennen",
+    "nameLabel": "Neuer Name",
+    "button": "Umbenennen",
+    "files_one": "{{count}} Notiz wird umgeschrieben",
+    "files_other": "{{count}} Notizen werden umgeschrieben",
+    "occurrences_one": "{{count}} Stelle ändert sich",
+    "occurrences_other": "{{count}} Stellen ändern sich",
+    "more_one": "und {{count}} weitere Stelle in dieser Notiz",
+    "more_other": "und {{count}} weitere Stellen in dieser Notiz",
+    "inFrontmatter": "im Frontmatter",
+    "unseenForms": "Ein Schlagwort, das der Index nicht zählt, bleibt unverändert: in Code, in einem Codeblock oder in einem Link.",
+    "merges": "Diese Schlagwörter gibt es schon: {{tags}}. Durch das Umbenennen werden sie eins, und niemand weiß danach, dass es zwei waren.",
+    "refusal": {
+      "notFound": "Keine Notiz trägt dieses Schlagwort mehr.",
+      "unwritableName": "Das lässt sich nicht als Schlagwort schreiben: ein Schlagwort ist ein Wort aus Buchstaben, Ziffern, _, - und / .",
+      "same": "So heißt es bereits.",
+      "tooMany": "Zu viele Notizen tragen dieses Schlagwort für eine einzelne Umbenennung."
+    },
+    "conflicts_one": "{{count}} Notiz wurde zwischenzeitlich geändert und behielt das alte Schlagwort.",
+    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten das alte Schlagwort.",
+    "done": "Umbenannt in {{tag}}."
+  },
   "rename": {
     "action": "Umbenennen oder verschieben…",
     "title": "Notiz umbenennen",
@@ -268,6 +300,7 @@
       "openToday": "Notiz von heute",
       "randomNote": "Zufällige Notiz öffnen",
       "duplicateNote": "Diese Notiz duplizieren",
+      "copyBlockLink": "Link auf diesen Block kopieren",
       "renameNote": "Diese Notiz umbenennen",
       "search": "Alle Notizen durchsuchen",
       "openOutline": "Gliederung öffnen",

@@ -288,6 +288,56 @@ export interface RenameNoteResult {
   skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
 }
 
+/** One place a tag stands, as the rename preview reports it. */
+export interface TagRenameRef {
+  /** 1-based line in the source note. */
+  line: number;
+  /** The tag as the file spells it now, and as it would read afterwards, both without the `#`. */
+  before: string;
+  after: string;
+  /** In the prose, or as a value of the note's `tags` key. */
+  where: 'inline' | 'frontmatter';
+  /** The line it stands in, trimmed. */
+  context: string;
+}
+
+export interface TagRenameFile {
+  source: string;
+  sourceTitle: string;
+  /** Content hash when the preview read the file; sent back so a changed file is refused. */
+  hash: string;
+  refs: TagRenameRef[];
+  /** Occurrences past the 50 listed per file. The write still covers all of them. */
+  more: number;
+}
+
+/** `GET /api/tags/rename` — what renaming a tag would change, before anything is written. */
+export interface TagRenamePreview {
+  from: string;
+  to: string;
+  /**
+   * Why nothing can happen, when that is the answer. `files` is then empty: `notFound` when no
+   * note carries the tag, `unwritableName` when the new name is not one a tag can have, `same`
+   * when the two names mean the same tag, `tooMany` when more files carry it than one operation
+   * should touch.
+   */
+  refusal?: 'notFound' | 'unwritableName' | 'same' | 'tooMany';
+  files: TagRenameFile[];
+  /**
+   * Tags that already exist under the new name. A tag has no identity beyond its name, so this
+   * makes the two one tag and there is no way back; the preview says so rather than refusing.
+   */
+  merges: string[];
+}
+
+/** `POST /api/tags/rename`. */
+export interface TagRenameResult {
+  from: string;
+  to: string;
+  rewritten: { source: string; count: number }[];
+  skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
+}
+
 /** `POST /api/query` — the text of a `rhizom-query` block, run against the index. */
 export interface QueryRequest {
   /** The text between the fences, exactly as the note writes it. */

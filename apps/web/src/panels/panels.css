@@ -373,6 +373,40 @@
   color: var(--rz-text);
 }
 
+/* Chip and its rename, one unit: the pair is what hovering and focus apply to. */
+.rz-tag-chip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-1);
+}
+
+.rz-tag-rename {
+  border: none;
+  background: none;
+  padding: 0 var(--rz-space-1);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  line-height: 1;
+  opacity: 0;
+}
+
+/* Reachable by keyboard before it is visible, so the opacity follows the focus as well as the
+   pointer. Where the pointer cannot hover, it stays: the pair is never the only way to a tag. */
+.rz-tag-chip-group:hover .rz-tag-rename,
+.rz-tag-chip-group:focus-within .rz-tag-rename {
+  opacity: 1;
+}
+
+.rz-tag-rename:hover {
+  color: var(--rz-text);
+}
+
+@media (hover: none) {
+  .rz-tag-rename {
+    opacity: 1;
+  }
+}
+
 .rz-tag-count {
   font-size: var(--rz-text-sm);
   font-variant-numeric: tabular-nums;

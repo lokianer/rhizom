@@ -573,6 +573,23 @@ export class VaultIndex {
   }
 
   /**
+   * Every note carrying this tag or one below it, which is what renaming a level has to reach:
+   * `campaign` takes `campaign/silverstadt/npcs` with it. The `like` runs on a literal prefix
+   * with its wildcards escaped, so a tag with a `%` or a `_` in it matches itself and nothing
+   * else — and `campaigns` is not below `campaign`, because the slash is part of the prefix.
+   */
+  notesUnderTag(tag: string): string[] {
+    const prefix = `${tag.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')}/`;
+    const rows = this.sqlite
+      .prepare(
+        `select distinct path from note_tags
+         where tag = ? or tag like ? escape '\\' order by path`,
+      )
+      .all(tag, `${prefix}%`) as { path: string }[];
+    return rows.map((row) => row.path);
+  }
+
+  /**
    * One entry per note that defines something, alphabetical by title. The `terms` table is what
    * finds those notes: without it this would parse the frontmatter of every note in the vault,
    * on a path the browser reloads after every save.

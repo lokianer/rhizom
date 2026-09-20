@@ -20,6 +20,7 @@ import {
   type KeyBinding,
 } from '@codemirror/view';
 
+import { blockLinkKeymap } from './block-link.js';
 import { wikilinkCompletion } from './completion.js';
 import { definitionMarks, definitionTooltip } from './definitions.js';
 import { editorContext } from './context.js';
@@ -86,6 +87,7 @@ export function baseExtensions(): Extension {
       // Ahead of the defaults, whose platform-dependent half reaches for some of these letters:
       // in a Markdown editor the three of them mean bold, italic and a link.
       ...formatKeymap,
+      ...blockLinkKeymap,
       ...closeBracketsKeymap,
       ...completionKeymap,
       ...searchKeymap,

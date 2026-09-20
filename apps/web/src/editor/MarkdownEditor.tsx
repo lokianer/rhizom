@@ -4,6 +4,7 @@ import type { NoteSummary, TemplateSettings, TermMatcher } from '@rhizom/core';
 import { useCallback, useEffect, useMemo, useRef, type JSX } from 'react';
 
 import { useUiStore } from '../store/ui.js';
+import { copyBlockLink, type BlockLinkResult } from './block-link.js';
 import {
   buildNoteIndex,
   editorContext,
@@ -41,6 +42,8 @@ export interface MarkdownEditorProps {
   onUpload: (file: File) => Promise<string>;
   /** The Markdown of another note, for inserting a template. */
   onReadNote: (path: string) => Promise<string>;
+  /** A link to the block the cursor is in, for the clipboard — or the reason there is none. */
+  onBlockLink: (result: BlockLinkResult) => void;
   /** Accessible name for the editor (already translated by the caller). */
   ariaLabel: string;
 }
@@ -113,12 +116,16 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     onOpenLink,
     onUpload,
     onReadNote,
+    onBlockLink,
     ariaLabel,
   } = props;
 
   // The one thing this editor reads for itself rather than being handed: the note page knows
   // nothing about how a person likes to type, and the setting outlives every open note.
   const vimMode = useUiStore((state) => state.vimMode);
+  // And the one thing it is asked for from outside: the palette can want a link to the block the
+  // cursor is in, and this is the only component that knows where the cursor is.
+  const blockLinkRequest = useUiStore((state) => state.blockLinkRequest);
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sessionRef = useRef<EditorSession | null>(null);
@@ -128,6 +135,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     onOpenLink,
     onUpload,
     onReadNote,
+    onBlockLink,
   });
   /** The content last handed to `onChange`, so the flush on unmount knows what is pending. */
   const reportedRef = useRef(content);
@@ -143,7 +151,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
   // Runs before the effect below on every commit, so a rebuilt editor starts from fresh props
   // while a re-rendered one keeps its view.
   useEffect(() => {
-    handlersRef.current = { onChange, onSave, onOpenLink, onUpload, onReadNote };
+    handlersRef.current = { onChange, onSave, onOpenLink, onUpload, onReadNote, onBlockLink };
     latestRef.current = { content, readOnly, ariaLabel, context, vimMode };
   });
 
@@ -259,6 +267,20 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
       applyVimMode(session, vimMode);
     }
   }, [applyVimMode, vimMode]);
+
+  // The palette asked for a link to the block the cursor is in. A counter rather than a flag, and
+  // answered by running the very command the key runs, so the two ways in cannot drift apart.
+  const askedBlockLink = useRef(blockLinkRequest);
+  useEffect(() => {
+    if (askedBlockLink.current === blockLinkRequest) {
+      return;
+    }
+    askedBlockLink.current = blockLinkRequest;
+    const session = sessionRef.current;
+    if (session !== null) {
+      copyBlockLink(session.view);
+    }
+  }, [blockLinkRequest]);
 
   useEffect(() => {
     const session = sessionRef.current;

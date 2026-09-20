@@ -47,6 +47,12 @@ export interface UiState {
    * flag: the note page owns the dialog, and two requests in a row have to reach it as two.
    */
   renameRequest: number;
+  /**
+   * Bumped whenever something asks for a link to the block the cursor stands in. A counter for
+   * the same reason the rename is one — only the open editor knows where the cursor is, and two
+   * requests in a row have to reach it as two.
+   */
+  blockLinkRequest: number;
   setTheme: (theme: ThemeChoice) => void;
   setSidebarTab: (tab: SidebarTab) => void;
   toggleSidebar: () => void;
@@ -64,6 +70,7 @@ export interface UiState {
   clearGraphTags: () => void;
   setPaletteOpen: (open: boolean) => void;
   requestRename: () => void;
+  requestBlockLink: () => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -83,6 +90,7 @@ export const useUiStore = create<UiState>()(
       graphTags: [],
       paletteOpen: false,
       renameRequest: 0,
+      blockLinkRequest: 0,
       setTheme: (theme) => {
         set({ theme });
       },
@@ -146,6 +154,9 @@ export const useUiStore = create<UiState>()(
       },
       requestRename: () => {
         set((state) => ({ renameRequest: state.renameRequest + 1 }));
+      },
+      requestBlockLink: () => {
+        set((state) => ({ blockLinkRequest: state.blockLinkRequest + 1 }));
       },
     }),
     {

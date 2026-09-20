@@ -30,6 +30,10 @@ export type {
   SearchHit,
   SearchResponse,
   TagCount,
+  TagRenameFile,
+  TagRenamePreview,
+  TagRenameRef,
+  TagRenameResult,
   TemplateSettings,
   TreeEntry,
   UploadResponse,
@@ -163,3 +167,12 @@ export {
 } from './render.js';
 export { sliceBlock, sliceSection } from './section.js';
 export { isTaskLine, setTask } from './tasks.js';
+export {
+  findTagRefs,
+  isTagName,
+  normaliseTag,
+  renamedTag,
+  rewriteTags,
+  type TagEdit,
+  type TagRef,
+} from './tagrefs.js';

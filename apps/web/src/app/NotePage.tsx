@@ -22,7 +22,12 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
 import { RenameDialog } from '../components/RenameDialog.js';
-import { MarkdownEditor, SLASH_COMMANDS } from '../editor/index.js';
+import {
+  MarkdownEditor,
+  SLASH_COMMANDS,
+  type BlockLinkRefusal,
+  type BlockLinkResult,
+} from '../editor/index.js';
 import { BacklinksPanel, FrontmatterPanel, MentionsPanel } from '../panels/index.js';
 import { filesFor } from '../panels/rename-model.js';
 import { useUiStore } from '../store/ui.js';
@@ -43,6 +48,16 @@ const NO_TEMPLATES: TemplateSettings = Object.freeze({
 const NotePreview = lazy(async () => ({ default: (await import('./NotePreview.js')).NotePreview }));
 
 const AUTOSAVE_MS = 800;
+
+/**
+ * What the page says when a block cannot be given an id. The keys are spelled out rather than
+ * built from the reason, so the translation types check them one by one.
+ */
+const BLOCK_LINK_REFUSALS = {
+  heading: 'editor.blockLink.heading',
+  code: 'editor.blockLink.code',
+  noBlock: 'editor.blockLink.noBlock',
+} as const satisfies Record<BlockLinkRefusal, string>;
 
 type LoadState = 'loading' | 'ready' | 'missing' | 'error';
 type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
@@ -81,6 +96,12 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const [state, setState] = useState<LoadState>('loading');
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [message, setMessage] = useState('');
+  /**
+   * What the block-link command has just said, shown beside the save state. Its own line rather
+   * than the save state's: nothing here is about saving, and the save state's failure is framed
+   * as "Could not save …", which a link that did not reach the clipboard has nothing to do with.
+   */
+  const [notice, setNotice] = useState('');
   const [externalContent, setExternalContent] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState('');
   const [askDelete, setAskDelete] = useState(false);
@@ -112,6 +133,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
     setState('ready');
     setSaveState('idle');
     setMessage('');
+    setNotice('');
   }, []);
 
   const applyLoadFailure = useCallback((error: unknown) => {
@@ -168,6 +190,9 @@ function NoteView({ path, revisions }: NoteViewProps) {
     (content: string) => {
       pending.current = content;
       setDraft(content);
+      // Typing moves on from whatever the last command said. The block-link command writes its
+      // marker before it reports, so its own notice is set after this one clears it.
+      setNotice('');
       if (timer.current !== null) {
         clearTimeout(timer.current);
       }
@@ -312,6 +337,42 @@ function NoteView({ path, revisions }: NoteViewProps) {
       .then(() => navigate('/'));
   }, [navigate, path, refreshVault]);
 
+  /**
+   * The editor has found — or written — the id of the block the cursor stands in. The clipboard
+   * is asked for here rather than in the editor, because it is a browser capability with a
+   * promise on the end of it, and because the page is the half of the app that can say so.
+   *
+   * A vault served over plain http to another machine on the network has no clipboard at all:
+   * the browser hands it out over https and from localhost only. That is not a failure worth an
+   * apology, so the link itself is put on the screen, where it can be selected and copied.
+   */
+  const announceBlockLink = useCallback(
+    (result: BlockLinkResult) => {
+      if (!result.ok) {
+        setNotice(t(BLOCK_LINK_REFUSALS[result.reason]));
+        return;
+      }
+      const { link } = result;
+      if (typeof navigator.clipboard?.writeText !== 'function') {
+        setNotice(t('editor.blockLink.manual', { link }));
+        return;
+      }
+      void navigator.clipboard.writeText(link).then(
+        () => {
+          setNotice(t('editor.blockLink.copied', { link }));
+        },
+        (error: unknown) => {
+          setNotice(
+            t('editor.blockLink.failed', {
+              message: error instanceof Error ? error.message : String(error),
+            }),
+          );
+        },
+      );
+    },
+    [t],
+  );
+
   const openTarget = useCallback(
     (target: string) => {
       const resolution = resolver.resolve(target, path);
@@ -359,6 +420,8 @@ function NoteView({ path, revisions }: NoteViewProps) {
         <p className="rz-muted">
           {doc.path}
           <SaveStatus state={saveState} message={message} />
+          {/* Beside the save state, and announced: nothing moved on the screen to show for it. */}
+          <span role="status">{notice === '' ? null : <> · {notice}</>}</span>
         </p>
         <nav className="rz-note-actions">
           <button type="button" aria-pressed={splitView} onClick={toggleSplitView}>
@@ -442,6 +505,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
             void save(content);
           }}
           onOpenLink={openTarget}
+          onBlockLink={announceBlockLink}
           onReadNote={async (target) => {
             try {
               return (await api.note(target)).content;

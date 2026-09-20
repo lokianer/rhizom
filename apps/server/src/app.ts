@@ -20,6 +20,7 @@ import { registerRenameRoutes } from './routes/rename.js';
 import { HealthSchema, TreeEntrySchema } from './routes/schemas.js';
 import { registerMentionRoutes } from './routes/mentions.js';
 import { registerSearchRoutes } from './routes/search.js';
+import { registerTagRenameRoutes } from './routes/tag-rename.js';
 import { registerTermRoutes } from './routes/terms.js';
 import { openVaultContext, type VaultContext } from './vault/context.js';
 
@@ -130,6 +131,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   registerNoteRoutes(app, requireContext);
   registerRenameRoutes(app, requireContext);
   registerSearchRoutes(app, requireContext);
+  registerTagRenameRoutes(app, requireContext);
   registerQueryRoutes(app, requireContext);
   registerTermRoutes(app, requireContext);
   registerMentionRoutes(app, requireContext);

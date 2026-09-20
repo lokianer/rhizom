@@ -78,9 +78,12 @@ changes only with a documented migration.
       already owns an id (its slug) and an element has only one; and Obsidian sometimes writes an
       id on a line of its own after a table or a list, which Rhizom does not read. Both want
       checking against a real Obsidian vault
-- [ ] Rename a tag across the vault, under the rules renaming a note works by: a dry run, a hash
+- [x] Rename a tag across the vault, under the rules renaming a note works by: a dry run, a hash
       per file, a file that changed meanwhile reported rather than overwritten. A tag is a
-      hierarchy now, so renaming a level takes the levels under it with it
+      hierarchy now, so renaming a level takes the levels under it with it. Two writers, because
+      a tag is written in two dialects: the exact span in the prose, `setFrontmatter` for the
+      key. Renaming onto a tag that exists merges them, which the preview says rather than
+      refuses — see `DECISIONS.md`
 - [ ] A new note can start from a template. The templates are there and the slash menu inserts
       one, but only into a note that already exists
 - [x] Milieu axes mode: two freely named axes; position from frontmatter values or by drag

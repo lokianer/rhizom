@@ -21,6 +21,7 @@ const context: EditorContextValue = {
       onOpenLink: () => undefined,
       onUpload: () => Promise.resolve(''),
       onReadNote: () => Promise.resolve(''),
+      onBlockLink: () => undefined,
     },
   },
 };

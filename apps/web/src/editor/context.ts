@@ -12,6 +12,10 @@ import {
   type TermMatcher,
 } from '@rhizom/core';
 
+// Type-only, so the two modules do not import each other at runtime: the command needs the
+// facet, and the facet needs to know what the command reports.
+import type { BlockLinkResult } from './block-link.js';
+
 // Anything whose text is not prose. A term inside a link would give the same word two things to
 // do, and one inside code is not a mention of anything.
 export const NOT_PROSE: ReadonlySet<string> = new Set([
@@ -55,6 +59,11 @@ export interface EditorHandlers {
   onUpload: (file: File) => Promise<string>;
   /** The Markdown of another note, for inserting a template. */
   onReadNote: (path: string) => Promise<string>;
+  /**
+   * A link to the block the cursor stands in — or the reason there is none. The clipboard and
+   * the sentence about it both belong to the page; the editor only knows what it wrote.
+   */
+  onBlockLink: (result: BlockLinkResult) => void;
 }
 
 export interface EditorContextValue {

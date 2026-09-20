@@ -44,7 +44,8 @@
     "empty": "No tags in this vault.",
     "count_one": "{{count}} note",
     "count_other": "{{count}} notes",
-    "filter": "Filter the graph by {{tag}}"
+    "filter": "Filter the graph by {{tag}}",
+    "rename": "Rename the tag {{tag}}"
   },
   "outline": {
     "label": "Outline",
@@ -76,6 +77,14 @@
     "uploadFailed": "Could not upload {{name}}: {{message}}",
     "templateFailed": "Could not read {{name}}: {{message}}",
     "preview": "Preview",
+    "blockLink": {
+      "copied": "Copied {{link}}",
+      "manual": "A browser hands out the clipboard over https and from localhost only. The link is {{link}}",
+      "failed": "The link could not be copied: {{message}}",
+      "heading": "A heading is pointed at by its text, not by an id of its own.",
+      "code": "An id inside a code block would be part of the code, not an address.",
+      "noBlock": "There is no block here to point at."
+    },
     "slash": {
       "table": "Table",
       "definition": "Mark as a definition",
@@ -205,6 +214,29 @@
     "conflicts_other": "{{count}} notes changed meanwhile and were left alone.",
     "mentionLabel": "In {{note}}: {{line}}"
   },
+  "tagRename": {
+    "title": "Rename tag",
+    "nameLabel": "New name",
+    "button": "Rename",
+    "files_one": "{{count}} note is rewritten",
+    "files_other": "{{count}} notes are rewritten",
+    "occurrences_one": "{{count}} place changes",
+    "occurrences_other": "{{count}} places change",
+    "more_one": "and {{count}} more place in this note",
+    "more_other": "and {{count}} more places in this note",
+    "inFrontmatter": "in the frontmatter",
+    "unseenForms": "A tag the index does not count stays as it is: one inside a code span, a fenced block or a link.",
+    "merges": "These tags already exist: {{tags}}. Renaming makes them one tag, and nothing remembers they were two.",
+    "refusal": {
+      "notFound": "No note carries this tag any more.",
+      "unwritableName": "That cannot be written as a tag: a tag is one word of letters, digits, _, - and / .",
+      "same": "That is the name it already has.",
+      "tooMany": "Too many notes carry this tag for one rename to carry."
+    },
+    "conflicts_one": "{{count}} note changed meanwhile and kept the old tag.",
+    "conflicts_other": "{{count}} notes changed meanwhile and kept the old tag.",
+    "done": "Renamed to {{tag}}."
+  },
   "rename": {
     "action": "Rename or move…",
     "title": "Rename note",
@@ -268,6 +300,7 @@
       "openToday": "Today's note",
       "randomNote": "Open a random note",
       "duplicateNote": "Duplicate this note",
+      "copyBlockLink": "Copy a link to this block",
       "renameNote": "Rename this note",
       "search": "Search all notes",
       "openOutline": "Open the outline",

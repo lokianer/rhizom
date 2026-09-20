@@ -278,6 +278,22 @@ describe('tags, tree and graph', () => {
     ]);
   });
 
+  it('finds every note under a tag level, and nothing that merely starts alike', () => {
+    expect(index.notesUnderTag('campaign')).toEqual([
+      'Campaign/NPCs/Mira the Ledger-Keeper.md',
+      'Campaign/Places/Silverstadt.md',
+    ]);
+    expect(index.notesUnderTag('npcs')).toEqual(['Campaign/NPCs/Mira the Ledger-Keeper.md']);
+    expect(index.notesUnderTag('camp')).toEqual([]);
+  });
+
+  it('treats a tag with a wildcard character in it as the literal tag', () => {
+    index.upsertNote(note('Odd.md', '# Odd\n\n#a_b/one and #axb/two'));
+    // `_` is any single character to SQL's `like`, so without escaping this would also find the
+    // note under `axb`.
+    expect(index.notesUnderTag('a_b')).toEqual(['Odd.md']);
+  });
+
   it('builds a folder tree with folders first and notes sorted by name', () => {
     expect(index.tree()).toEqual([
       {

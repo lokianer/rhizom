@@ -124,6 +124,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rather than the list around it, a whole quotation rather than the paragraph inside it, and a
   whole table rather than the row, because a row cut out of a table is a line with pipes in it.
   Nothing goes into the index: a block embed has the target's own text in hand.
+- "Copy a link to this block", from the palette or with Ctrl/Cmd+Shift+X: the block the cursor
+  stands in is given an id if it has none — one transaction, so one undo takes it back — and
+  `[[Note#^id]]` goes on the clipboard, written the way this vault writes a link to this note.
+  The id is the block's own first words rather than a random string, so the marker and the link
+  both say what they point at and the file stays readable without Rhizom; a block with no ASCII
+  letters in it falls back to six random characters. A heading is refused, because its anchor is
+  its slug and a second id there is one the link side cannot use; a code block is refused,
+  because the marker would be code — and both say so beside the save state instead of doing
+  nothing.
+- Rename a tag across the vault, from the pencil beside it in the Tags panel. A dry run first:
+  which notes change, the line each occurrence stands on, and what it would read afterwards.
+  Then the write, with a hash per file, so a note that changed meanwhile is reported rather than
+  overwritten. A level takes the levels under it with it, in the prose and in the frontmatter
+  alike, and a tag in a code span, a fenced block or a link is left where it is. Renaming onto a
+  tag that already exists merges the two, which the preview says before anything happens.
 - Find and replace in the editor, with Ctrl/Cmd+F and Ctrl/Cmd+H. The keys were bound from the
   start and the panel they belong to was never installed, so the editor answered them by doing
   nothing at all; it also highlights the other occurrences of whatever is selected.

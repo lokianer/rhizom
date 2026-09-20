@@ -1706,6 +1706,346 @@
         }
       }
     },
+    "/api/tags/rename": {
+      "get": {
+        "summary": "What renaming a tag would change, before anything is written",
+        "tags": ["tags"],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 200,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "from",
+            "required": true
+          },
+          {
+            "schema": {
+              "minLength": 1,
+              "maxLength": 200,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "to",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["from", "to", "files", "merges"],
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "refusal": {
+                      "description": "Why the rename cannot happen at all; files is then empty",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["notFound"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["unwritableName"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["same"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["tooMany"]
+                        }
+                      ]
+                    },
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "sourceTitle", "hash", "refs", "more"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "sourceTitle": {
+                            "type": "string"
+                          },
+                          "hash": {
+                            "description": "Send back when renaming, so a changed file is refused",
+                            "type": "string"
+                          },
+                          "refs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": ["line", "before", "after", "where", "context"],
+                              "properties": {
+                                "line": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "before": {
+                                  "type": "string"
+                                },
+                                "after": {
+                                  "type": "string"
+                                },
+                                "where": {
+                                  "description": "In the prose, or as a value of the tags key",
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": ["inline"]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": ["frontmatter"]
+                                    }
+                                  ]
+                                },
+                                "context": {
+                                  "description": "The line it stands in, for the preview",
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "more": {
+                            "minimum": 0,
+                            "description": "Occurrences beyond the 50 listed per file",
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "merges": {
+                      "description": "Tags that already exist under the new name, so the two become one",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Rewrites the tag in every file that was listed",
+        "tags": ["tags"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["from", "to", "files"],
+                "properties": {
+                  "from": {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "to": {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "files": {
+                    "minItems": 0,
+                    "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["source", "hash"],
+                      "properties": {
+                        "source": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "hash": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["from", "to", "rewritten", "skipped"],
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "rewritten": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "count"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "reason"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": ["conflict"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["notFound"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["nothing"]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/query": {
       "post": {
         "summary": "Runs a rhizom-query block against the index",
