@@ -21,6 +21,7 @@
     "files": "Files",
     "search": "Search",
     "tags": "Tags",
+    "outline": "Outline",
     "empty": "This vault has no notes yet."
   },
   "tree": {
@@ -43,6 +44,12 @@
     "count_one": "{{count}} note",
     "count_other": "{{count}} notes",
     "filter": "Filter the graph by {{tag}}"
+  },
+  "outline": {
+    "label": "Outline",
+    "noNote": "No note is open.",
+    "empty": "This note has no headings.",
+    "untitled": "Heading without text"
   },
   "note": {
     "loading": "Loading…",
@@ -232,6 +239,7 @@
       "openToday": "Today's note",
       "renameNote": "Rename this note",
       "search": "Search all notes",
+      "openOutline": "Open the outline",
       "rebuild": "Rebuild the index",
       "toggleSidebar": "Toggle the sidebar",
       "togglePreview": "Toggle the preview"

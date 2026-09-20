@@ -28,6 +28,13 @@
   color: var(--rz-text-muted);
 }
 
+/* A panel line that reports a failure reads as one. This stylesheet is loaded after base.css,
+   so .rz-error alone would lose the colour to the muted rule above it. */
+.rz-panel-empty.rz-error,
+.rz-panel-status.rz-error {
+  color: var(--rz-danger);
+}
+
 .rz-visually-hidden {
   position: absolute;
   width: 1px;
@@ -45,7 +52,8 @@
    ROW_HEIGHT in tree-model.ts), and the smart folders above it borrow the row and must stand
    exactly as tall, or the sidebar would read as two lists in two hands. */
 .rz-tree-scroll,
-.rz-smart {
+.rz-smart,
+.rz-outline {
   --rz-tree-row-height: 30px;
 }
 
@@ -208,6 +216,43 @@
   line-height: var(--rz-leading-normal);
 }
 
+/* --- outline ------------------------------------------------------------------------------ */
+
+/* The open note's headings. Each row is a tree row, so the outline stands in the same grid as
+   the files and the saved searches; only the chrome of the link carrying it has to come off,
+   and the indent comes from the row itself, one step per heading it hangs under. */
+.rz-outline {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.rz-outline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rz-outline-row {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding-inline-end: var(--rz-space-2);
+  color: var(--rz-text);
+  text-decoration: none;
+}
+
+.rz-outline-row:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: calc(var(--rz-focus-offset) * -1);
+}
+
+/* The parts of the note, as opposed to the parts of its parts. */
+.rz-outline-row[data-depth='0'] .rz-tree-label {
+  font-weight: 600;
+}
+
 /* --- search ------------------------------------------------------------------------------ */
 
 .rz-search-input {
@@ -303,11 +348,14 @@
 
 .rz-tag-chips {
   list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--rz-space-2);
+}
+
+/* A wrapped row of leaves keeps the branch's indent and line, and loses the grid. */
+.rz-tag-children.rz-tag-chips {
+  display: flex;
 }
 
 .rz-tag-chip {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { noteHref, notePathFromLocation, notePathFromParam } from './paths.js';
+import { headingHref, noteHref, notePathFromLocation, notePathFromParam } from './paths.js';
 
 describe('noteHref', () => {
   it('drops the extension and encodes each segment on its own', () => {
@@ -17,6 +17,17 @@ describe('noteHref', () => {
 
   it('leaves a path without a Markdown extension alone', () => {
     expect(noteHref('Notes/v2.0 Notes.md')).toBe('/notes/Notes/v2.0%20Notes');
+  });
+});
+
+describe('headingHref', () => {
+  it('hangs the bare slug onto the note, the way a link to a heading is written', () => {
+    expect(headingHref('Campaign/Places/Silverstadt.md', 'districts')).toBe(
+      '/notes/Campaign/Places/Silverstadt#districts',
+    );
+    expect(headingHref('Research/Über die Wurzeln.md', 'über-die-wurzeln')).toBe(
+      '/notes/Research/%C3%9Cber%20die%20Wurzeln#über-die-wurzeln',
+    );
   });
 });
 

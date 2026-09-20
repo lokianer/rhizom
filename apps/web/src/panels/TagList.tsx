@@ -45,14 +45,26 @@ interface TagBranchProps {
 }
 
 function TagBranch({ node, chosen, onToggle }: TagBranchProps) {
+  // A level whose children are all leaves lays them out as a wrapped row rather than one row
+  // each: `npc` with six kinds under it is one line of chips, not six, and the sidebar stays a
+  // sidebar. Where a child has children of its own the rows come back, because that is where
+  // the indent is carrying meaning.
+  const leaves = node.children.every((child) => child.children.length === 0);
+
   return (
     <li className="rz-tag-branch">
       <TagChip node={node} pressed={chosen.has(node.tag)} onToggle={onToggle} />
       {node.children.length === 0 ? null : (
-        <ul className="rz-tag-children">
-          {node.children.map((child) => (
-            <TagBranch key={child.tag} node={child} chosen={chosen} onToggle={onToggle} />
-          ))}
+        <ul className={leaves ? 'rz-tag-children rz-tag-chips' : 'rz-tag-children'}>
+          {node.children.map((child) =>
+            leaves ? (
+              <li key={child.tag}>
+                <TagChip node={child} pressed={chosen.has(child.tag)} onToggle={onToggle} />
+              </li>
+            ) : (
+              <TagBranch key={child.tag} node={child} chosen={chosen} onToggle={onToggle} />
+            ),
+          )}
         </ul>
       )}
     </li>

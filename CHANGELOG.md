@@ -80,6 +80,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kind stays a blockquote.
 - Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
   is disabled for now — ticking one has to write the file, and that is a slice of its own.
+- An outline panel: a fourth tab in the sidebar listing the open note's headings, indented by
+  how deep each one hangs rather than by its level number, so a note that starts at `##` is not
+  drawn as if a heading were missing. It follows the note as it is written.
+- A heading in the address now scrolls the rendered note to it. `[[Note#Heading]]` and the
+  outline both navigate to `…#slug`, and the renderer has always put that slug on the heading as
+  an id, but nothing read it: the address changed and the page stayed where it was. The app never
+  reloads, so the browser never does this by itself.
 - Tag hierarchies: the tag panel nests `campaign/silverstadt/npcs` as three levels rather than
   showing one long word, and a level nobody wrote on its own is still there, because that row is
   how you ask for everything below it. Asking for a level now means asking for its whole subtree:

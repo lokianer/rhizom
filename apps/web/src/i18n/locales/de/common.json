@@ -21,6 +21,7 @@
     "files": "Dateien",
     "search": "Suche",
     "tags": "Schlagwörter",
+    "outline": "Gliederung",
     "empty": "In diesem Tresor liegen noch keine Notizen."
   },
   "tree": {
@@ -43,6 +44,12 @@
     "count_one": "{{count}} Notiz",
     "count_other": "{{count}} Notizen",
     "filter": "Graph nach {{tag}} filtern"
+  },
+  "outline": {
+    "label": "Gliederung",
+    "noNote": "Es ist keine Notiz geöffnet.",
+    "empty": "Diese Notiz hat keine Überschriften.",
+    "untitled": "Überschrift ohne Text"
   },
   "note": {
     "loading": "Wird geladen…",
@@ -232,6 +239,7 @@
       "openToday": "Notiz von heute",
       "renameNote": "Diese Notiz umbenennen",
       "search": "Alle Notizen durchsuchen",
+      "openOutline": "Gliederung öffnen",
       "rebuild": "Index neu aufbauen",
       "toggleSidebar": "Seitenleiste umschalten",
       "togglePreview": "Vorschau umschalten"

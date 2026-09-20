@@ -1,4 +1,4 @@
-// The frame around every view: header, the sidebar with its three panels, and the command
+// The frame around every view: header, the sidebar with its four panels, and the command
 // palette. Everything that needs the whole app (theme, shortcuts, note creation) lives here.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,13 +11,21 @@ import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
-import { FileTree, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
-import { useUiStore } from '../store/ui.js';
+import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
+import { useUiStore, type SidebarTab } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { dailyNotePath } from './daily.js';
-import { noteHref, notePathFromLocation } from './paths.js';
+import { headingHref, noteHref, notePathFromLocation } from './paths.js';
 import { applyTheme } from './theme.js';
-import { useIndexEvents } from './useIndexEvents.js';
+import { revisionOf, useIndexEvents } from './useIndexEvents.js';
+
+/** The sidebar's tabs in the order they stand, each with the key that names it. */
+const SIDEBAR_TABS = [
+  { tab: 'tree', label: 'sidebar.files' },
+  { tab: 'search', label: 'sidebar.search' },
+  { tab: 'tags', label: 'sidebar.tags' },
+  { tab: 'outline', label: 'sidebar.outline' },
+] as const satisfies readonly { tab: SidebarTab; label: string }[];
 
 /** The modifier the shortcuts use, Command on Apple systems and Control everywhere else. */
 function modifierLabel(): string {
@@ -96,9 +104,11 @@ export function Layout() {
     applyTheme(theme);
   }, [theme]);
 
+  // The one way into a note from the sidebar. A fragment names a heading in it: the outline
+  // sends one, everything else opens the note at the top and leaves the argument out.
   const openNote = useCallback(
-    (path: string) => {
-      void navigate(noteHref(path));
+    (path: string, fragment?: string) => {
+      void navigate(fragment === undefined ? noteHref(path) : headingHref(path, fragment));
     },
     [navigate],
   );
@@ -207,6 +217,13 @@ export function Layout() {
         },
       },
       {
+        id: 'openOutline',
+        label: t('palette.commandNames.openOutline'),
+        run: () => {
+          setSidebarTab('outline');
+        },
+      },
+      {
         id: 'toggleSidebar',
         label: t('palette.commandNames.toggleSidebar'),
         run: toggleSidebar,
@@ -306,7 +323,7 @@ export function Layout() {
       {sidebarOpen ? (
         <aside className="rz-sidebar">
           <div className="rz-tabs" role="tablist" aria-label={t('sidebar.toggle')}>
-            {(['tree', 'search', 'tags'] as const).map((tab) => (
+            {SIDEBAR_TABS.map(({ tab, label }) => (
               <button
                 key={tab}
                 type="button"
@@ -316,13 +333,7 @@ export function Layout() {
                   setSidebarTab(tab);
                 }}
               >
-                {t(
-                  tab === 'tree'
-                    ? 'sidebar.files'
-                    : tab === 'search'
-                      ? 'sidebar.search'
-                      : 'sidebar.tags',
-                )}
+                {t(label)}
               </button>
             ))}
           </div>
@@ -344,6 +355,13 @@ export function Layout() {
           ) : null}
           {sidebarTab === 'tags' ? (
             <TagList tags={tags} selected={graphTags} onToggle={toggleGraphTag} />
+          ) : null}
+          {sidebarTab === 'outline' ? (
+            <OutlinePanel
+              activePath={openNotePath}
+              revision={revisionOf(revisions, openNotePath)}
+              onOpen={openNote}
+            />
           ) : null}
         </aside>
       ) : null}

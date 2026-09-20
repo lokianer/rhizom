@@ -14,9 +14,9 @@ import {
   type QueryLinks,
   type QueryResult,
 } from '@rhizom/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 
 import { api } from '../api/client.js';
 import { useNoteSources } from '../store/notes.js';
@@ -24,6 +24,19 @@ import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
 import { createAssetResolver, createResolver } from './links.js';
 import { noteHref } from './paths.js';
+
+/**
+ * The slug a fragment names. A browser percent-encodes a fragment holding anything but ASCII,
+ * which a German or emoji heading has, and a fragment that will not decode is taken as written
+ * rather than thrown away.
+ */
+function decodeSlug(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
 
 // A stable identity, so a keystroke does not look like a different vault to the renderer.
 const assetUrlOf = (vaultPath: string): string => api.assetUrl(vaultPath);
@@ -51,6 +64,8 @@ export interface NotePreviewProps {
 
 export function NotePreview({ path, content, mode = 'notes', label }: NotePreviewProps) {
   const navigate = useNavigate();
+  const { hash } = useLocation();
+  const container = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const notes = useVaultStore((state) => state.notes);
   const assets = useVaultStore((state) => state.assets);
@@ -222,10 +237,29 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
     };
   }, [queryBodies, requestQuery]);
 
+  // `[[Note#Heading]]` and the outline both navigate to `…#slug`, and the renderer puts that
+  // slug on the heading as an id. Nothing was reading it, so the address changed and the page
+  // stayed where it was. It is done here rather than by the browser because the app never
+  // reloads: a fragment only ever arrives through the router, which does not scroll.
+  //
+  // Watched on the rendered HTML as well as the fragment, because the heading may not be in the
+  // page yet — an embed can still be on its way when the link is followed.
+  useEffect(() => {
+    const slug = hash.startsWith('#') ? decodeSlug(hash.slice(1)) : '';
+    if (slug === '') {
+      return;
+    }
+    // Inside this preview only: the wiki and the editor's preview can both be on screen, and a
+    // fragment means the one the reader is looking at.
+    const heading = container.current?.querySelector(`[id="${CSS.escape(slug)}"]`);
+    heading?.scrollIntoView({ block: 'start' });
+  }, [hash, html]);
+
   return (
     // renderNoteWithEmbeds sanitises its output; the click handler keeps navigation inside the
     // app instead of reloading the page.
     <div
+      ref={container}
       className="rz-prose"
       {...(label === undefined ? {} : { 'aria-label': label, role: 'region' })}
       onClick={(event) => {

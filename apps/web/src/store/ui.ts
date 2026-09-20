@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemeChoice = 'humus' | 'kalk' | 'system';
-export type SidebarTab = 'tree' | 'search' | 'tags';
+export type SidebarTab = 'tree' | 'search' | 'tags' | 'outline';
 export type ClusterBy = 'folder' | 'tag';
 
 export interface UiState {

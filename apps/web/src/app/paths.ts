@@ -10,6 +10,18 @@ export function noteHref(path: string, mode: 'notes' | 'wiki' = 'notes'): string
   return `/${mode}/${withoutExtension.split('/').map(encodeURIComponent).join('/')}`;
 }
 
+/**
+ * The address of one heading inside a note: `Campaign/Places/Silverstadt.md` and `districts`
+ * make `/notes/Campaign/Places/Silverstadt#districts`.
+ *
+ * The fragment is the bare slug, because that is what the renderer writes — both the ids it
+ * puts on the headings and the `#fragment` a wikilink to a heading carries. An outline that
+ * encoded it would point somewhere else than a link to the same heading.
+ */
+export function headingHref(path: string, slug: string): string {
+  return `${noteHref(path)}#${slug}`;
+}
+
 /** The open note of a `/notes/…` or `/wiki/…` URL, for components above those routes. */
 export function notePathFromLocation(pathname: string): string | null {
   const match = /^\/(?:notes|wiki)\/(.+)$/.exec(pathname);
