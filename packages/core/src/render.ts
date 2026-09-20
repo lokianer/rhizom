@@ -166,7 +166,7 @@ const sanitizeSchema: SanitizeSchema = {
     // Task lists: the class the stylesheet drops the bullets by, and the one that says "ticked".
     ul: allowFor('ul', ['rz-tasks']),
     ol: allowFor('ol', ['rz-tasks']),
-    li: allowFor('li', ['rz-task', 'rz-task-done']),
+    li: allowFor('li', ['rz-task', 'rz-task-done'], 'dataTaskLine'),
     // `span` is an allowed tag in the default schema but has no attribute rules of its own, so
     // without this the element would survive and its class would be filtered away in silence.
     span: allowFor('span', ['rz-term'], 'dataTerm'),
@@ -493,6 +493,11 @@ function markTasks(list: List): void {
     itemData.hProperties = {
       ...itemData.hProperties,
       className: item.checked === true ? ['rz-task', 'rz-task-done'] : ['rz-task'],
+      // The line the box stands on, so that ticking one in the rendered view can find the `[ ]`
+      // it belongs to in the note's own text. It is the line rather than an offset because the
+      // reader may have typed above it since this HTML was made, and a line survives that
+      // better than a character count; the writer checks the line before touching it anyway.
+      ...(item.position === undefined ? {} : { dataTaskLine: item.position.start.line }),
     };
   }
 }

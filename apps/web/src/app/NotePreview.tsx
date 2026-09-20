@@ -59,10 +59,21 @@ export interface NotePreviewProps {
   content: string;
   /** Where a link inside the preview leads: back into the editor, or deeper into the wiki. */
   mode?: 'notes' | 'wiki';
+  /**
+   * Ticking a task off. Given, the checkboxes become controls; left out, they stay what the
+   * renderer makes them — a picture of what the file says, which is what the wiki wants.
+   */
+  onToggleTask?: (line: number, done: boolean) => void;
   label?: string | undefined;
 }
 
-export function NotePreview({ path, content, mode = 'notes', label }: NotePreviewProps) {
+export function NotePreview({
+  path,
+  content,
+  mode = 'notes',
+  label,
+  onToggleTask,
+}: NotePreviewProps) {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const container = useRef<HTMLDivElement>(null);
@@ -237,6 +248,20 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
     };
   }, [queryBodies, requestQuery]);
 
+  // The renderer writes every checkbox `disabled`, because in the wiki it is a picture of what
+  // the file says rather than a control. Where somebody can write, it becomes one — done here
+  // rather than in the renderer so that the HTML the wiki serves is unchanged.
+  useEffect(() => {
+    if (onToggleTask === undefined) {
+      return;
+    }
+    for (const box of container.current?.querySelectorAll(
+      '.rz-task > input[type="checkbox"][disabled]',
+    ) ?? []) {
+      box.removeAttribute('disabled');
+    }
+  }, [html, onToggleTask]);
+
   // `[[Note#Heading]]` and the outline both navigate to `…#slug`, and the renderer puts that
   // slug on the heading as an id. Nothing was reading it, so the address changed and the page
   // stayed where it was. It is done here rather than by the browser because the app never
@@ -263,7 +288,17 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
       className="rz-prose"
       {...(label === undefined ? {} : { 'aria-label': label, role: 'region' })}
       onClick={(event) => {
-        const href = (event.target as HTMLElement).closest('a')?.getAttribute('href') ?? '';
+        const target = event.target as HTMLElement;
+        const box = target.closest('.rz-task > input[type="checkbox"]');
+        if (box !== null && onToggleTask !== undefined) {
+          const line = Number(box.closest('[data-task-line]')?.getAttribute('data-task-line'));
+          if (Number.isInteger(line)) {
+            // The box has already drawn itself ticked; the note is what has to agree with it.
+            onToggleTask(line, (box as HTMLInputElement).checked);
+          }
+          return;
+        }
+        const href = target.closest('a')?.getAttribute('href') ?? '';
         if (!href.startsWith('/')) {
           return;
         }

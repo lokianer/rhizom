@@ -556,6 +556,11 @@ details.rz-callout[open] > summary::before {
   accent-color: var(--rz-accent-strong);
 }
 
+/* Where the box is a control rather than a picture of the file, it says so under the pointer. */
+.rz-task > input[type='checkbox']:not(:disabled) {
+  cursor: pointer;
+}
+
 .rz-task-done {
   color: var(--rz-text-muted);
   text-decoration: line-through;

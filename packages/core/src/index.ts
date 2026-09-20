@@ -148,3 +148,4 @@ export {
   type RenderedNote,
 } from './render.js';
 export { sliceSection } from './section.js';
+export { isTaskLine, setTask } from './tasks.js';

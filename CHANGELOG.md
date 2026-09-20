@@ -78,8 +78,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a `<details>`, so it works with JavaScript switched off, and the colours come out of the vault's
   own palette rather than the blue-red-green every other tool uses. A blockquote that names no
   kind stays a blockquote.
-- Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
-  is disabled for now — ticking one has to write the file, and that is a slice of its own.
+- Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. Beside
+  the editor the box is a control — clicking it writes the tick into the note, through the same
+  autosave typing goes through — and in the wiki it stays what it was, a picture of what the file
+  says. Only the three characters of the box change; the rest of the line, links and trailing tags
+  and indentation, comes through untouched, and a line that is no longer a task is refused rather
+  than written into.
 - Zen mode: the text and nothing else — no header, no sidebar, none of the shelves under the
   editor. Escape leaves it, and it is deliberately not remembered between visits: coming back to
   an application with no interface, and no memory of having asked for that, is a bad morning.

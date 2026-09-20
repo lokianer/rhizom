@@ -2,6 +2,7 @@
 // loaded with, and reloaded when the file changes on disk while nothing is unsaved.
 import {
   createTermMatcher,
+  setTask,
   type NoteDocument,
   type RenamePreview,
   type TemplateSettings,
@@ -282,6 +283,21 @@ function NoteView({ path, revisions }: NoteViewProps) {
     [scheduleSave],
   );
 
+  // A box ticked in the preview changes the note's own text, so it goes the way the frontmatter
+  // form goes: into the draft, into the editor, onto the autosave. A stale line — the reader
+  // typed above the list since the page was drawn — is refused by `setTask`, which hands the
+  // text back unchanged, and nothing happens.
+  const toggleTask = useCallback(
+    (line: number, done: boolean) => {
+      const source = pending.current ?? draft;
+      const next = setTask(source, line, done);
+      if (next !== source) {
+        applyFrontmatter(next);
+      }
+    },
+    [applyFrontmatter, draft],
+  );
+
   const remove = useCallback(() => {
     setAskDelete(false);
     // A pending autosave would recreate the file right after it was moved away.
@@ -459,7 +475,12 @@ function NoteView({ path, revisions }: NoteViewProps) {
         {splitView ? (
           <div className="rz-note-preview">
             <Suspense fallback={<p className="rz-muted">{t('note.loading')}</p>}>
-              <NotePreview path={doc.path} content={previewContent} label={t('wiki.label')} />
+              <NotePreview
+                path={doc.path}
+                content={previewContent}
+                label={t('wiki.label')}
+                onToggleTask={toggleTask}
+              />
             </Suspense>
           </div>
         ) : null}

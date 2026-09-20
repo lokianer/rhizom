@@ -185,9 +185,12 @@ describe('renderNote: callouts', () => {
     const html = render('> [!todo] Before the session\n> - [ ] print the map\n> - [x] pack dice');
     expect(html).toContain('<div class="rz-callout rz-callout-todo">');
     expect(html).toContain('<ul class="rz-tasks">');
-    expect(html).toContain('<li class="rz-task"><input type="checkbox" disabled> print the map');
     expect(html).toContain(
-      '<li class="rz-task rz-task-done"><input type="checkbox" checked disabled> pack dice',
+      '<li class="rz-task" data-task-line="2"><input type="checkbox" disabled> print the map',
+    );
+    expect(html).toContain(
+      '<li class="rz-task rz-task-done" data-task-line="3">' +
+        '<input type="checkbox" checked disabled> pack dice',
     );
   });
 

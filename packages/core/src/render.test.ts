@@ -305,22 +305,34 @@ describe('renderNote: task lists', () => {
   it('renders a task as a disabled checkbox in front of what the item says', () => {
     expect(render('- [ ] print the map\n- [x] pack the dice')).toBe(
       '<ul class="rz-tasks">\n' +
-        '<li class="rz-task"><input type="checkbox" disabled> print the map</li>\n' +
-        '<li class="rz-task rz-task-done"><input type="checkbox" checked disabled> ' +
-        'pack the dice</li>\n' +
+        '<li class="rz-task" data-task-line="1"><input type="checkbox" disabled> ' +
+        'print the map</li>\n' +
+        '<li class="rz-task rz-task-done" data-task-line="2">' +
+        '<input type="checkbox" checked disabled> pack the dice</li>\n' +
         '</ul>',
     );
   });
 
+  it('says which line each task stands on, so ticking one can find it in the note', () => {
+    // The property has to be named the way hast names one — `dataTaskLine`, not the spelling it
+    // ends up with in the HTML — or the sanitiser drops it and the box becomes unclickable with
+    // nothing to show for it. That mistake is invisible except here.
+    const html = render('# Before\n\ntext\n\n- [ ] one\n- [ ] two\n');
+    expect(html).toContain('data-task-line="5"');
+    expect(html).toContain('data-task-line="6"');
+  });
+
   it('reads a capital X as ticked', () => {
     expect(render('- [X] done')).toContain(
-      '<li class="rz-task rz-task-done"><input type="checkbox" checked disabled>',
+      '<li class="rz-task rz-task-done" data-task-line="1"><input type="checkbox" checked disabled>',
     );
   });
 
   it('keeps the content of a task, links and all', () => {
     const html = render('- [ ] visit [[Silverstadt]] and [the guild](Factions/Harbour%20Guild.md)');
-    expect(html).toContain('<li class="rz-task"><input type="checkbox" disabled> visit ');
+    expect(html).toContain(
+      '<li class="rz-task" data-task-line="1"><input type="checkbox" disabled> visit ',
+    );
     expect(html).toContain('<a href="/wiki/Silverstadt.md" class="rz-wikilink">Silverstadt</a>');
     expect(html).toContain('<a href="/wiki/Factions/Harbour%20Guild.md" class="rz-wikilink">');
   });
@@ -338,10 +350,10 @@ describe('renderNote: task lists', () => {
     expect(render('1. [ ] a task\n2. [x] another')).toContain('<ol class="rz-tasks">');
   });
 
-  it('marks a nested task list on its own', () => {
+  it('marks a nested task list on its own, and numbers it by its own line', () => {
     const html = render('- a heading item\n  - [ ] a nested task');
     expect(html).toContain('<ul>\n<li>a heading item');
-    expect(html).toContain('<ul class="rz-tasks">\n<li class="rz-task">');
+    expect(html).toContain('<ul class="rz-tasks">\n<li class="rz-task" data-task-line="2">');
   });
 });
 
