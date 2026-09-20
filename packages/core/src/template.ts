@@ -56,8 +56,11 @@ const DEFAULT_TIME = 'HH:mm';
  * `{{name}}` or `{{name:argument}}`. The argument runs to the closing braces but never past the
  * end of the line: a `{{date:` somebody left open would otherwise reach for the next `}}` in the
  * file and swallow every paragraph in between.
+ *
+ * Exported because the parser needs it too: a template's heading is a placeholder and not a
+ * title, and that has to be the same idea of a placeholder in both places.
  */
-const PLACEHOLDER = /\{\{([a-z]+)(?::([^{}\r\n]*))?\}\}/gi;
+export const PLACEHOLDER = /\{\{([a-z]+)(?::([^{}\r\n]*))?\}\}/gi;
 
 /** `2d6`, `1d100`, `3d8+2`, `1d20-1`. Case-insensitive, spaces allowed around the sign. */
 const DICE = /^(\d{1,3})?\s*d\s*(\d{1,4})\s*(?:([+-])\s*(\d{1,4}))?$/i;

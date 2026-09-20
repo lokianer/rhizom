@@ -333,7 +333,7 @@
     "Daily/Scratch.md": "Scratch",
     "Research/Sinus-Milieus.md": "Sinus-Milieus",
     "Research/Über die Wurzeln.md": "Über die Wurzeln",
-    "Templates/NPC.md": "{{title}}"
+    "Templates/NPC.md": "NPC"
   },
   "titleRule": "frontmatter title, else the first level-1 heading, else the file name without extension",
   "featureLocations": {

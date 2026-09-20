@@ -45,6 +45,19 @@ describe('parseNote', () => {
     expect(parseNote('just text', { fallbackTitle: 'File' }).title).toBe('File');
   });
 
+  it('does not take a placeholder for a title, so templates keep their file names', () => {
+    // Three templates whose heading is `# {{title}}` would otherwise be three notes all called
+    // `{{title}}` — in the tree, in the palette, in search.
+    expect(parseNote('# {{title}}\n\ntext', { fallbackTitle: 'NPC' }).title).toBe('NPC');
+    expect(parseNote('---\ntitle: "{{title}}"\n---\n# x\n', { fallbackTitle: 'NPC' }).title).toBe(
+      'x',
+    );
+    // A placeholder inside a title that says something else is part of the title.
+    expect(parseNote('# {{date}} session\n', { fallbackTitle: 'F' }).title).toBe(
+      '{{date}} session',
+    );
+  });
+
   it('exposes the frontmatter and its aliases', () => {
     expect(note.frontmatter).toMatchObject({ type: 'npc', title: 'Mira the Ledger-Keeper' });
     expect(note.aliases).toEqual(['Mira', 'The Ledger']);

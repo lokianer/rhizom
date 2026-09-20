@@ -209,6 +209,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A template no longer appears under the name `{{title}}`. Its heading is a placeholder for the
+  title of the note somebody makes from it, not a title this file has, so a vault with three
+  templates showed three notes all called `{{title}}` — in the file tree, in the palette and in
+  search. A title with nothing in it but placeholders is no title now, and the file name stands
+  in; a placeholder inside a real title is left alone. The index is version 5 and rebuilds itself
+  once on the next start.
 - A note saved as UTF-16 is read as one. It used to arrive as mojibake and, on the next
   autosave, be written back that way over the file it came from. Every note is now written as
   UTF-8, so a vault converges on the one encoding every other tool in its life can read, and the

@@ -12,6 +12,8 @@ import { parse as parseYaml } from 'yaml';
 
 import type { Heading, LinkKind } from './api.js';
 import { remarkWikilink } from './remark-wikilink.js';
+import { normaliseTag } from './tagrefs.js';
+import { PLACEHOLDER } from './template.js';
 import { parseWikilink } from './wikilink.js';
 
 export interface ParsedLink {
@@ -87,10 +89,11 @@ export function parseNote(markdown: string, options: ParseOptions): ParsedNote {
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{2,}/g, '\n')
     .trim();
-  const title =
-    typeof frontmatter.title === 'string' && frontmatter.title.trim() !== ''
-      ? frontmatter.title.trim()
-      : (state.firstHeading ?? options.fallbackTitle);
+  const title = titleOf(
+    typeof frontmatter.title === 'string' ? frontmatter.title : undefined,
+    state.firstHeading,
+    options.fallbackTitle,
+  );
 
   const note: ParsedNote = {
     title,
@@ -303,6 +306,30 @@ function frontmatterTags(frontmatter: Record<string, unknown>): string[] {
     .filter((tag): tag is string => tag !== undefined);
 }
 
+/**
+ * The note's title: the frontmatter's, else the first heading, else the file name.
+ *
+ * A template is why this is a function. Its heading is `# {{title}}`, which is a placeholder for
+ * the title of the note somebody will make from it and not a title this file has — and a vault
+ * with three templates in it would otherwise show three notes all called `{{title}}`, in the
+ * tree, in the palette, in search and wherever else a note is named. So a title with nothing in
+ * it but placeholders is no title, and the file name stands in. A placeholder inside a real
+ * title is left alone: `# {{date}} session` reads as itself.
+ */
+function titleOf(
+  fromFrontmatter: string | undefined,
+  firstHeading: string | undefined,
+  fallback: string,
+): string {
+  for (const candidate of [fromFrontmatter, firstHeading]) {
+    const title = candidate?.trim() ?? '';
+    if (title !== '' && title.replace(PLACEHOLDER, '').trim() !== '') {
+      return title;
+    }
+  }
+  return fallback;
+}
+
 function frontmatterList(frontmatter: Record<string, unknown>, keys: string[]): string[] {
   const values: string[] = [];
   for (const key of keys) {
@@ -318,15 +345,6 @@ function frontmatterList(frontmatter: Record<string, unknown>, keys: string[]): 
     }
   }
   return values.map((value) => value.trim()).filter((value) => value !== '');
-}
-
-/** Lower-cases a tag and drops the leading #; tags made only of digits are not tags. */
-function normaliseTag(raw: string): string | undefined {
-  const tag = raw.replace(/^#+/, '').trim().toLowerCase();
-  if (tag === '' || !/[\p{L}_/-]/u.test(tag)) {
-    return undefined;
-  }
-  return tag;
 }
 
 /** Splits a relative URL into a decoded path and fragment; undefined for external or empty URLs. */

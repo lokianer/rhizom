@@ -11,7 +11,7 @@ import Database from 'better-sqlite3';
  * rebuilt: `syncVault` skips a file whose size and modification time are unchanged and would
  * otherwise keep the old answer forever.
  */
-export const INDEX_SCHEMA_VERSION = 4;
+export const INDEX_SCHEMA_VERSION = 5;
 
 const DDL = `
 create table if not exists notes (
