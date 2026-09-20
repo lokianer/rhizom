@@ -69,3 +69,11 @@ updates:
       include: scope
     labels:
       - dependencies
+    ignore:
+      # The base image's major is the Node version this project supports, and `engines` in
+      # package.json names it: 22, 24, and 26 onwards. The odd-numbered releases in between
+      # are short-lived and never become LTS, so a bump to one of them is a bump to a runtime
+      # that is already out of support. Majors here are chosen by hand, with the engines field.
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
