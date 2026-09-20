@@ -9,7 +9,7 @@ import {
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';
-import { searchKeymap } from '@codemirror/search';
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
 import { EditorState, type Extension } from '@codemirror/state';
 import {
   drawSelection,
@@ -68,6 +68,11 @@ export function baseExtensions(): Extension {
     syntaxHighlighting(markdownHighlight),
     autocompletion({ activateOnTypingDelay: 0, icons: false }),
     closeBrackets(),
+    // The search keys were bound long before this: without the panel they belong to, Ctrl+F and
+    // Ctrl+H were keystrokes the editor answered by doing nothing at all. The panel sits at the
+    // top, where it does not cover the line somebody is looking at near the end of a note.
+    search({ top: true }),
+    highlightSelectionMatches(),
     livePreviewMarks,
     definitionMarks,
     definitionTooltip,

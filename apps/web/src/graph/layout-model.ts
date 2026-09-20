@@ -12,6 +12,22 @@ export interface LayoutPayload {
   edges: Uint32Array;
 }
 
+/**
+ * How long an edge wants to be. Both simulations — the one in the worker and the one on the
+ * main thread — ask this, so the field looks the same whichever is drawing it; it used to be
+ * written out twice and the two could drift.
+ *
+ * The length grows with the *lesser* of the two degrees: an edge between two well-connected
+ * notes needs room, while a leaf hanging off a hub should sit close to it. The square root
+ * keeps a hub with forty links from pushing everything to the rim.
+ */
+export function linkDistance(edge: {
+  source: { degree: number };
+  target: { degree: number };
+}): number {
+  return 36 + 9.6 * Math.sqrt(Math.min(edge.source.degree, edge.target.degree));
+}
+
 /** How hard the layout may work: the per-tick cost has to stay bearable on large vaults. */
 export interface LayoutTuning {
   /** Collision is the priciest force and only cosmetic, so large fields go without it. */

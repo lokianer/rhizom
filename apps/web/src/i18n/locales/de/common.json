@@ -129,7 +129,31 @@
     "nodes_other": "{{count}} Notizen",
     "edges_one": "{{count}} Verweis",
     "edges_other": "{{count}} Verweise",
-    "resetView": "Ansicht zurücksetzen"
+    "resetView": "Ansicht zurücksetzen",
+    "layout": "Darstellung",
+    "bubbles": "Blasenfeld",
+    "milieu": "Milieufeld"
+  },
+  "axes": {
+    "field": "Feld",
+    "label": "Milieufeld: {{title}}",
+    "noFields": "Noch kein Feld",
+    "empty": "Keine Notiz dieses Vaults erklärt ein Milieufeld. Eine Notiz mit type: axes im Frontmatter, zwei Achsenschlüsseln und einem Abfrageblock wird zu einem.",
+    "noAxes": "Diese Notiz nennt weniger als zwei Achsen. Ein Feld braucht xKey und yKey, und beide müssen sich unterscheiden.",
+    "noBlock": "Diese Notiz enthält keinen Abfrageblock, also gibt es nichts, was in ihrem Feld stehen könnte.",
+    "hint": "Eine Notiz ziehen verschiebt sie; die Position wird in ihr Frontmatter geschrieben. Ein Klick öffnet sie.",
+    "tray": "Notizen ohne Position",
+    "trayTitle_one": "{{count}} Notiz ohne Position",
+    "trayTitle_other": "{{count}} Notizen ohne Position",
+    "trayEmpty": "Jede Notiz, die das Feld findet, hat eine Position.",
+    "missingOne": "kein {{key}}",
+    "missingBoth": "kein {{x}}, kein {{y}}",
+    "placed_one": "{{count}} Notiz platziert",
+    "placed_other": "{{count}} Notizen platziert",
+    "unplaced_one": "{{count}} wartet",
+    "unplaced_other": "{{count}} warten",
+    "changedOnDisk": "{{title}} hat sich auf der Platte geändert, die Position wurde nicht geschrieben.",
+    "writeFailed": "Die Position ließ sich nicht schreiben: {{message}}"
   },
   "embed": {
     "loading": "{{target}} wird geladen …",
@@ -153,6 +177,10 @@
       "modified": "Geändert",
       "size": "Größe"
     }
+  },
+  "mermaid": {
+    "failed": "Noch kein Diagramm: {{message}}",
+    "failedPlain": "Noch kein Diagramm."
   },
   "smartFolders": {
     "title": "Intelligente Ordner",
@@ -244,7 +272,8 @@
       "rebuild": "Index neu aufbauen",
       "toggleSidebar": "Seitenleiste umschalten",
       "togglePreview": "Vorschau umschalten",
-      "toggleZen": "Zen-Modus"
+      "toggleZen": "Zen-Modus",
+      "toggleVim": "Vim-Modus"
     }
   },
   "status": {

@@ -13,6 +13,7 @@ import {
   type SimulationNodeDatum,
 } from 'd3-force';
 
+import { linkDistance } from './layout-model.js';
 import { clusterSlot } from './palette.js';
 
 export interface SimNode extends SimulationNodeDatum {
@@ -118,8 +119,8 @@ export function createFieldSimulation(events: SimulationEvents): FieldSimulation
   let links: SimLink[] = [];
 
   // Force accessors are evaluated once per initialize, after the endpoints are node objects.
-  const link: ForceLink<SimNode, SimLink> = forceLink<SimNode, SimLink>().distance(
-    (edge) => 30 + 8 * Math.sqrt(Math.min(edge.source.degree, edge.target.degree)),
+  const link: ForceLink<SimNode, SimLink> = forceLink<SimNode, SimLink>().distance((edge) =>
+    linkDistance(edge),
   );
 
   const simulation: Simulation<SimNode, SimLink> = forceSimulation<SimNode, SimLink>()

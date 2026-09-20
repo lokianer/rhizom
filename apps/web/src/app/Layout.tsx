@@ -85,6 +85,8 @@ export function Layout() {
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
   const zen = useUiStore((state) => state.zen);
   const toggleZen = useUiStore((state) => state.toggleZen);
+  const vimMode = useUiStore((state) => state.vimMode);
+  const toggleVimMode = useUiStore((state) => state.toggleVimMode);
   const leaveZen = useUiStore((state) => state.leaveZen);
   const sidebarTab = useUiStore((state) => state.sidebarTab);
   const setSidebarTab = useUiStore((state) => state.setSidebarTab);
@@ -242,6 +244,13 @@ export function Layout() {
         run: toggleZen,
       },
       {
+        id: 'toggleVim',
+        label: t('palette.commandNames.toggleVim'),
+        // The editor fetches the keymap itself the first time this is asked for; whoever never
+        // asks never downloads it.
+        run: toggleVimMode,
+      },
+      {
         id: 'rebuild',
         label: t('palette.commandNames.rebuild'),
         run: () => {
@@ -262,6 +271,7 @@ export function Layout() {
       theme,
       toggleSidebar,
       toggleSplitView,
+      toggleVimMode,
       toggleZen,
     ],
   );
@@ -293,15 +303,22 @@ export function Layout() {
       return undefined;
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && !event.isComposing) {
-        leaveZen();
+      if (event.key !== 'Escape' || event.isComposing) {
+        return;
       }
+      // Except in Vim mode, where Escape is how you leave insert mode and so the most pressed
+      // key in the editor. Being thrown out of zen on every one of them would make the two
+      // modes unusable together; from anywhere else on the page Escape still means "out".
+      if (vimMode && event.target instanceof Element && event.target.closest('.cm-editor')) {
+        return;
+      }
+      leaveZen();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [leaveZen, zen]);
+  }, [leaveZen, vimMode, zen]);
 
   const isGraph = location.pathname.startsWith('/graph');
 

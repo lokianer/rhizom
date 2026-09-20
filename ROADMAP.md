@@ -65,11 +65,22 @@ changes only with a documented migration.
       folders in the sidebar. A closed set of keys and no expression language: a query is read
       by the index, never evaluated as code out of somebody else's vault
 - [x] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
-- [ ] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
-      optional Vim mode (split view already shipped with Phase 1). The outline, callouts, task
-      checkboxes and zen mode are in; a ticked box is read, not yet written, which wants a slice
-      of its own. **Mermaid and the Vim mode each need a dependency** — a rendering library and
-      `@replit/codemirror-vim` — and rule 6 wants a justification before either is added
+- [x] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
+      optional Vim mode (split view already shipped with Phase 1). Ticking a box beside the
+      editor writes it into the note; in the wiki it stays a picture of what the file says.
+      Find and replace came with it: the keys had been bound since Phase 1 and the panel they
+      belong to was never installed. Both dependencies — `mermaid` and `@replit/codemirror-vim`
+      — are behind a dynamic import, so neither is downloaded by somebody who does not use it;
+      the justification is in `DECISIONS.md`
+- [ ] Block references: `[[Note#^id]]` and `![[Note#^id]]`. The parser has read the id since
+      Phase 1 and nothing has ever used it; transclusion can show a note and a section but not
+      the one paragraph somebody meant to point at. No index change — a block embed has the
+      target's own text in hand
+- [ ] Rename a tag across the vault, under the rules renaming a note works by: a dry run, a hash
+      per file, a file that changed meanwhile reported rather than overwritten. A tag is a
+      hierarchy now, so renaming a level takes the levels under it with it
+- [ ] A new note can start from a template. The templates are there and the slash menu inserts
+      one, but only into a note that already exists
 - [ ] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes

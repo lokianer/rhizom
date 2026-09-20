@@ -13,7 +13,7 @@ import {
   type SimulationNodeDatum,
 } from 'd3-force';
 
-import { alphaDecayFor, layoutTuning, type LayoutPayload } from './layout-model.js';
+import { alphaDecayFor, layoutTuning, linkDistance, type LayoutPayload } from './layout-model.js';
 
 export type LayoutRequest =
   | ({ type: 'data'; alpha: number } & LayoutPayload)
@@ -109,9 +109,7 @@ function build(request: Extract<LayoutRequest, { type: 'data' }>): void {
   const next = forceSimulation<Node, Link>(nodes)
     .force(
       'link',
-      forceLink<Node, Link>(links).distance(
-        (edge) => 30 + 8 * Math.sqrt(Math.min(edge.source.degree, edge.target.degree)),
-      ),
+      forceLink<Node, Link>(links).distance((edge) => linkDistance(edge)),
     )
     .force(
       'charge',

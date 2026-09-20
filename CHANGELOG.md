@@ -84,9 +84,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   says. Only the three characters of the box change; the rest of the line, links and trailing tags
   and indentation, comes through untouched, and a line that is no longer a task is refused rather
   than written into.
+- Find and replace in the editor, with Ctrl/Cmd+F and Ctrl/Cmd+H. The keys were bound from the
+  start and the panel they belong to was never installed, so the editor answered them by doing
+  nothing at all; it also highlights the other occurrences of whatever is selected.
 - Zen mode: the text and nothing else — no header, no sidebar, none of the shelves under the
   editor. Escape leaves it, and it is deliberately not remembered between visits: coming back to
   an application with no interface, and no memory of having asked for that, is a bad morning.
+- Vim mode, for those who want it: a palette command switches the editor to Vim keybindings,
+  with Vim's own mode line under the text saying which mode it is in. Unlike zen it is
+  remembered, because how a person types is a preference and not a mood. The keymap is a
+  package of its own and is downloaded the first time the mode is switched on — never by
+  somebody who leaves it off — and it goes in and out through a CodeMirror compartment, so
+  switching it leaves the text, the undo history and the cursor exactly where they were.
 - An outline panel: a fourth tab in the sidebar listing the open note's headings, indented by
   how deep each one hangs rather than by its level number, so a note that starts at `##` is not
   drawn as if a heading were missing. It follows the note as it is written.
@@ -114,9 +123,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of note links, a table of the columns the block named, or cards. The links are ordinary note
   links, so a click inside a result navigates like any other. Everything a row carries — a title,
   a folder, a tag, a frontmatter field — is written as text and can never become markup.
-
-### Changed
-
+- Mermaid diagrams: a ` ```mermaid ` fence is drawn as the diagram it describes, in the wiki and
+  in the editor's preview, in the colours of the theme the page is set in — and it follows a
+  switch between Humus and Kalk without a reload. Mermaid is the largest dependency this app
+  has, so it is fetched only when a note on screen actually holds a diagram: a vault without one
+  never downloads a byte of it. It runs with `securityLevel: 'strict'`, because a vault can come
+  from anywhere and the text between the fences is somebody else's. A diagram mermaid will not
+  read — which a half-written one is on nearly every keystroke — keeps its source on screen and
+  says in one muted line what was wrong.
 - Case-insensitive comparisons in the index no longer fold only ASCII. SQLite's own `lower()`
   leaves `Ü` alone, so a folder or title in any language but English quietly failed to match; the
   index now registers a `rz_lower` backed by JavaScript, which knows the whole of Unicode.

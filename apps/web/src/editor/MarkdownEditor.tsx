@@ -1,8 +1,9 @@
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import type { NoteSummary, TemplateSettings, TermMatcher } from '@rhizom/core';
-import { useEffect, useMemo, useRef, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type JSX } from 'react';
 
+import { useUiStore } from '../store/ui.js';
 import {
   buildNoteIndex,
   editorContext,
@@ -50,6 +51,7 @@ interface EditorSession {
   readonly context: Compartment;
   readonly contentAttributes: Compartment;
   readonly readOnly: Compartment;
+  readonly vim: Compartment;
 }
 
 /** Props the editor reads when it (re)builds, rather than reacting to. */
@@ -58,6 +60,7 @@ interface LatestProps {
   readonly readOnly: boolean;
   readonly ariaLabel: string;
   readonly context: EditorContextValue;
+  readonly vimMode: boolean;
 }
 
 function contentAttributes(ariaLabel: string) {
@@ -113,6 +116,10 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     ariaLabel,
   } = props;
 
+  // The one thing this editor reads for itself rather than being handed: the note page knows
+  // nothing about how a person likes to type, and the setting outlives every open note.
+  const vimMode = useUiStore((state) => state.vimMode);
+
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sessionRef = useRef<EditorSession | null>(null);
   const handlersRef = useRef<EditorHandlers>({
@@ -131,14 +138,41 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     [path, notes, index, terms, templates, commandLabels, locale],
   );
 
-  const latestRef = useRef<LatestProps>({ content, readOnly, ariaLabel, context });
+  const latestRef = useRef<LatestProps>({ content, readOnly, ariaLabel, context, vimMode });
 
   // Runs before the effect below on every commit, so a rebuilt editor starts from fresh props
   // while a re-rendered one keeps its view.
   useEffect(() => {
     handlersRef.current = { onChange, onSave, onOpenLink, onUpload, onReadNote };
-    latestRef.current = { content, readOnly, ariaLabel, context };
+    latestRef.current = { content, readOnly, ariaLabel, context, vimMode };
   });
+
+  /**
+   * Puts the Vim keymap into its compartment, or takes it out again. A compartment rather than
+   * a new editor: the mode is a way of typing, and switching it must leave the text, the undo
+   * history and the cursor exactly where they were.
+   *
+   * The keymap arrives by `import()`, so whoever never asks for it never downloads it.
+   */
+  const applyVimMode = useCallback((session: EditorSession, enabled: boolean) => {
+    if (!enabled) {
+      session.view.dispatch({ effects: session.vim.reconfigure([]) });
+      return;
+    }
+    void import('./vim.js')
+      .then(({ vimExtension }) => {
+        // The chunk can arrive after the note was closed, or after the mode was switched off
+        // again; either way this editor is no longer the one that asked.
+        if (sessionRef.current !== session || !latestRef.current.vimMode) {
+          return;
+        }
+        session.view.dispatch({ effects: session.vim.reconfigure(vimExtension) });
+      })
+      .catch(() => {
+        // Nothing to fall back to and nothing lost: without its chunk the editor keeps the
+        // keys it always had, and asking again will try the network again.
+      });
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -150,12 +184,16 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
       context: new Compartment(),
       contentAttributes: new Compartment(),
       readOnly: new Compartment(),
+      vim: new Compartment(),
     };
     const view = new EditorView({
       parent: host,
       state: EditorState.create({
         doc: initial.content,
         extensions: [
+          // Ahead of everything else, as the Vim package asks: whatever it is given, the
+          // editor's own keys have to be what is left over, not the other way round.
+          compartments.vim.of([]),
           baseExtensions(),
           compartments.context.of(editorContext.of(initial.context)),
           compartments.contentAttributes.of(contentAttributes(initial.ariaLabel)),
@@ -178,6 +216,11 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     const session: EditorSession = { view, ...compartments };
     sessionRef.current = session;
     reportedRef.current = initial.content;
+    // The mode belongs to the person, not to the note: a new document opens in it as well.
+    // Only when it is on — the compartment starts empty, which is what "off" means.
+    if (initial.vimMode) {
+      applyVimMode(session, true);
+    }
 
     return () => {
       // Hand over an edit that has not been reported yet before the document goes away.
@@ -189,7 +232,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
       session.view.destroy();
       sessionRef.current = null;
     };
-  }, [path]);
+  }, [applyVimMode, path]);
 
   useEffect(() => {
     const session = sessionRef.current;
@@ -209,6 +252,13 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
       effects: session.readOnly.reconfigure(readOnlyExtension(readOnly)),
     });
   }, [readOnly]);
+
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (session !== null) {
+      applyVimMode(session, vimMode);
+    }
+  }, [applyVimMode, vimMode]);
 
   useEffect(() => {
     const session = sessionRef.current;

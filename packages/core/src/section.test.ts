@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseNote } from './parse.js';
-import { sliceSection } from './section.js';
+import { sliceBlock, sliceSection } from './section.js';
 
 function slice(markdown: string, reference: string): string | undefined {
   return sliceSection(markdown, parseNote(markdown, { fallbackTitle: 'N' }).headings, reference);
@@ -138,5 +138,129 @@ describe('sliceSection', () => {
     expect(slice(NOTE, 'Treasure')).toBeUndefined();
     expect(slice(NOTE, '')).toBeUndefined();
     expect(slice(NOTE, '   ')).toBeUndefined();
+  });
+});
+
+const BLOCKS = [
+  '# Session 12',
+  '',
+  'The party went in. ^intro',
+  '',
+  '- a lantern ^lantern',
+  '- a ledger',
+  '',
+  '> [!warning] The tide',
+  '> It floods twice a day. ^tide',
+  '',
+  '## Loot ^loot',
+  '',
+  '| item | who |',
+  '| --- | --- |',
+  '| lantern | Mira ^row |',
+  '',
+  '```sh',
+  'grep "^fenced" ledger.txt',
+  '```',
+].join('\n');
+
+describe('sliceBlock', () => {
+  it('takes the paragraph an id ends, marker and all', () => {
+    expect(sliceBlock(BLOCKS, 'intro')).toBe('The party went in. ^intro');
+  });
+
+  it('takes the item an id ends, not the list around it', () => {
+    expect(sliceBlock(BLOCKS, 'lantern')).toBe('- a lantern ^lantern');
+  });
+
+  it('takes the whole quotation, so a callout keeps its title', () => {
+    expect(sliceBlock(BLOCKS, 'tide')).toBe(
+      ['> [!warning] The tide', '> It floods twice a day. ^tide'].join('\n'),
+    );
+  });
+
+  it('takes the heading line an id ends', () => {
+    expect(sliceBlock(BLOCKS, 'loot')).toBe('## Loot ^loot');
+  });
+
+  it('takes the whole table for an id in a row, because a row alone is not one', () => {
+    expect(sliceBlock(BLOCKS, 'row')).toBe(
+      ['| item | who |', '| --- | --- |', '| lantern | Mira ^row |'].join('\n'),
+    );
+  });
+
+  it('takes the paragraph an id ends halfway down a quotation, not the quotation', () => {
+    const quote = ['> One. ^first', '>', '> Two.'].join('\n');
+    expect(sliceBlock(quote, 'first')).toBe('> One. ^first');
+  });
+
+  it('lifts a nested item out of the indentation the list gave it', () => {
+    const nested = ['- outer', '    - inner ^deep', '    - other'].join('\n');
+    expect(sliceBlock(nested, 'deep')).toBe('- inner ^deep');
+  });
+
+  it('works on a note saved with Windows line endings', () => {
+    expect(sliceBlock(BLOCKS.replaceAll('\n', '\r\n'), 'tide')).toBe(
+      ['> [!warning] The tide', '> It floods twice a day. ^tide'].join('\n'),
+    );
+  });
+
+  it('has nothing for a caret inside a fenced block', () => {
+    expect(sliceBlock(BLOCKS, 'fenced')).toBeUndefined();
+  });
+
+  it('has nothing for a caret inside a code span', () => {
+    expect(sliceBlock('The flag is `grep ^start`.', 'start')).toBeUndefined();
+  });
+
+  it('has nothing for a caret in the middle of a sentence', () => {
+    expect(sliceBlock('Read ^intro before the rest.', 'intro')).toBeUndefined();
+  });
+
+  it('has nothing for a caret the line goes on after', () => {
+    expect(sliceBlock('A **bold ^inside** claim.', 'inside')).toBeUndefined();
+    expect(sliceBlock('A [link ^inside](Note.md) somewhere.', 'inside')).toBeUndefined();
+  });
+
+  it('has nothing for a caret alone on a line', () => {
+    expect(sliceBlock(['One line.', '^alone'].join('\n'), 'alone')).toBeUndefined();
+    expect(sliceBlock(['One line.', '', '^alone'].join('\n'), 'alone')).toBeUndefined();
+  });
+
+  it('has nothing for a caret with nothing after it', () => {
+    expect(sliceBlock('The party went in. ^', '')).toBeUndefined();
+    expect(sliceBlock('The party went in. ^', '^')).toBeUndefined();
+  });
+
+  it('has nothing for an id holding characters outside the set', () => {
+    // The whole id has to match, so `^café` is a word with a caret, not the id `caf`.
+    expect(sliceBlock('Ein Satz. ^café', 'café')).toBeUndefined();
+    expect(sliceBlock('Ein Satz. ^café', 'caf')).toBeUndefined();
+    expect(sliceBlock('A line. ^🙂', '🙂')).toBeUndefined();
+    expect(sliceBlock('A line. ^first.second', 'first.second')).toBeUndefined();
+  });
+
+  it('accepts digits and hyphens, which is what Obsidian generates', () => {
+    expect(sliceBlock('The party went in. ^a1b2-c3', 'a1b2-c3')).toBe('The party went in. ^a1b2-c3');
+  });
+
+  it('gives a repeated id to the first block that carries it', () => {
+    const twice = ['First. ^same', '', 'Second. ^same'].join('\n');
+    expect(sliceBlock(twice, 'same')).toBe('First. ^same');
+  });
+
+  it('tells two ids apart that differ only in case', () => {
+    const cased = ['First. ^Abc', '', 'Second. ^abc'].join('\n');
+    expect(sliceBlock(cased, 'Abc')).toBe('First. ^Abc');
+    expect(sliceBlock(cased, 'abc')).toBe('Second. ^abc');
+  });
+
+  it('has nothing for an id the note does not carry', () => {
+    expect(sliceBlock(BLOCKS, 'nowhere')).toBeUndefined();
+    expect(sliceBlock(BLOCKS, '')).toBeUndefined();
+    expect(sliceBlock(BLOCKS, '   ')).toBeUndefined();
+  });
+
+  it('reads a reference that was copied with spaces around it', () => {
+    expect(sliceBlock(BLOCKS, '  intro  ')).toBe('The party went in. ^intro');
   });
 });

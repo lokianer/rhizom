@@ -357,6 +357,48 @@ describe('renderNote: task lists', () => {
   });
 });
 
+describe('renderNote: Mermaid diagrams', () => {
+  it('wraps the fence in a container and leaves the source in it as a code block', () => {
+    expect(render('```mermaid\ngraph TD\n  A --> B\n```\n')).toBe(
+      '<div class="rz-mermaid">\n' +
+        '<pre><code class="language-mermaid">graph TD\n  A --> B\n</code></pre>\n' +
+        '</div>',
+    );
+  });
+
+  it('takes the fence however the author spelled the language', () => {
+    expect(render('```Mermaid\nflowchart LR\n```\n')).toContain(
+      '<div class="rz-mermaid">\n<pre><code class="language-mermaid">flowchart LR\n</code></pre>',
+    );
+  });
+
+  it('leaves every other fence the code block it looks like', () => {
+    const html = render('```js\ngraph TD\n```\n\n```\nplain\n```\n');
+    expect(html).not.toContain('rz-mermaid');
+    expect(html).toContain('<code class="language-js">');
+  });
+
+  it('leaves a mermaid fence inside another fence a code block', () => {
+    const html = render('````md\n```mermaid\ngraph TD\n```\n````\n');
+    expect(html).not.toContain('rz-mermaid');
+    expect(html).toContain('<code class="language-md">```mermaid\ngraph TD\n```\n</code>');
+  });
+
+  it('escapes the source, which is text out of somebody else’s vault', () => {
+    const html = render('```mermaid\ngraph TD\n  A["</code><script>alert(1)</script>"]\n```\n');
+    expect(html).not.toContain('<script');
+    expect(html).toContain('&#x3C;script>alert(1)&#x3C;/script>');
+    // One code element, opened and closed by the compiler, not by the note.
+    expect(html.match(/<code/g)).toHaveLength(1);
+  });
+
+  it('keeps a diagram that is only a fence marker, so an empty one is still a container', () => {
+    expect(render('```mermaid\n```\n')).toBe(
+      '<div class="rz-mermaid">\n<pre><code class="language-mermaid"></code></pre>\n</div>',
+    );
+  });
+});
+
 describe('renderNote: headings', () => {
   const NOTE = '# Mira\n\nText.\n\n## Loot\n\n### Rare Loot\n\n## Loot\n';
 
@@ -380,6 +422,75 @@ describe('renderNote: headings', () => {
     const markdown = '## See [[Silverstadt|the city]]\n\n## See [[Silverstadt|the city]]\n';
     expect(renderNote(markdown, options()).headings).toEqual(
       parseNote(markdown, { fallbackTitle: 'x' }).headings,
+    );
+  });
+});
+
+describe('renderNote: block ids', () => {
+  it('hides the marker and leaves the text around it exactly as it stands', () => {
+    expect(render('The party went in. ^intro')).toBe('<p id="^intro">The party went in.</p>');
+    expect(render('The party went in.  ^intro')).toBe('<p id="^intro">The party went in.</p>');
+  });
+
+  // The fragment reaches the HTML percent-encoded — mdast-util-to-hast normalises every URL it
+  // writes — exactly as a German heading's slug does. What has to agree is the decoded fragment
+  // and the anchor, because that is what the reader's browser compares.
+  it('makes the href of a block reference name the anchor the block carries', () => {
+    const html = render('[[Silverstadt#^intro]]\n\nThe party went in. ^intro');
+    const href = /href="[^"]*#([^"]*)"/.exec(html)?.[1];
+    const anchor = / id="([^"]*)"/.exec(html)?.[1];
+    expect(anchor).toBe('^intro');
+    expect(href).toBe('%5Eintro');
+    expect(decodeURIComponent(href ?? '')).toBe(anchor);
+  });
+
+  it('keeps a block anchor apart from a heading that slugs to the same word', () => {
+    const html = render('## Loot\n\nA lantern. ^loot');
+    expect(html).toContain('<h2 id="loot">Loot</h2>');
+    expect(html).toContain('<p id="^loot">A lantern.</p>');
+  });
+
+  it('anchors a list item, a quotation and a table on themselves', () => {
+    expect(render('- a lantern ^lantern\n- a ledger')).toContain(
+      '<li id="^lantern">a lantern</li>',
+    );
+    expect(render('> [!warning] The tide\n> It floods twice a day. ^tide')).toContain(
+      '<div class="rz-callout rz-callout-warning" id="^tide">',
+    );
+    expect(
+      render('| item | who |\n| --- | --- |\n| lantern | Mira ^row |'),
+    ).toContain('<table id="^row">');
+  });
+
+  it('lets a heading keep the slug the index gave it, and still hides the marker', () => {
+    const markdown = '## Loot ^loot\n';
+    const html = render(markdown);
+    expect(renderNote(markdown, options()).headings).toEqual(
+      parseNote(markdown, { fallbackTitle: 'x' }).headings,
+    );
+    expect(html).toContain('>Loot</h2>');
+    expect(html).not.toContain('^loot');
+  });
+
+  it('leaves a caret that is not an id where it stands', () => {
+    expect(render('Read ^intro before the rest.')).toBe('<p>Read ^intro before the rest.</p>');
+    expect(render('The flag is `grep ^start`.')).toBe(
+      '<p>The flag is <code>grep ^start</code>.</p>',
+    );
+  });
+
+  it('keeps a standalone embed standalone when a block id follows it', () => {
+    const html = render('![[Templates/NPC]] ^npc', { renderEmbed: () => ready('<p>body</p>') });
+    expect(html).toBe('<div class="rz-embed" data-state="ready" data-path="Templates/NPC.md" ' +
+      'id="^npc"><p>body</p></div>');
+  });
+
+  it('routes a Markdown link to a block through the same fragment, encoded or not', () => {
+    expect(render('[there](Silverstadt.md#^intro)')).toContain(
+      'href="/wiki/Silverstadt.md#%5Eintro"',
+    );
+    expect(render('[there](Silverstadt.md#%5Eintro)')).toContain(
+      'href="/wiki/Silverstadt.md#%5Eintro"',
     );
   });
 });

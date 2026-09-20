@@ -26,6 +26,15 @@ const VAULT: Record<string, string> = {
   'Deep/5.md': 'five',
   'Shared.md': '# Shared\n\n## Detail\n\nA detail.',
   'Home.md': 'The host note, which embeds itself.\n\n![[Home]]',
+  'Ledger.md': [
+    '# Ledger',
+    '',
+    'The party went in. ^intro',
+    '',
+    '- a lantern ^lantern',
+    '- a ledger ^ledger',
+  ].join('\n'),
+  'Quote.md': ['> ![[Quote#^quote]]', '>', '> and round again ^quote'].join('\n'),
 };
 
 function readNote(path: string): EmbedSource | undefined {
@@ -229,10 +238,36 @@ describe('renderNoteWithEmbeds', () => {
     expect(render('![[Templates/NPC#Nowhere]]')).toContain('no section Nowhere in Templates/NPC');
   });
 
-  it('leaves a block reference the link it was', () => {
-    const html = render('![[Templates/NPC#^somewhere]]');
-    expect(html).toContain('class="rz-wikilink"');
-    expect(html).not.toContain('rz-embed');
+  it('renders only the block an id names, and not the marker', () => {
+    const html = render('![[Ledger#^lantern]]');
+    expect(html).toContain('<li id="e1-^lantern">a lantern</li>');
+    expect(html).not.toContain('a ledger');
+    expect(html).not.toContain('The party went in.');
+    expect(html).not.toContain('^lantern');
+  });
+
+  it('says which block is missing when the note is there but the id is not', () => {
+    expect(render('![[Ledger#^nowhere]]')).toContain('no section ^nowhere in Ledger');
+  });
+
+  it('renders two blocks of one note side by side without calling it a cycle', () => {
+    const html = render('![[Ledger#^lantern]]\n\n![[Ledger#^ledger]]');
+    expect(html).not.toContain('circular');
+    expect(html.match(/data-state="ready"/g)).toHaveLength(2);
+    expect(html).toContain('a lantern');
+    expect(html).toContain('a ledger');
+  });
+
+  it('stops a block that embeds itself', () => {
+    const html = render('![[Quote#^quote]]');
+    expect(html).toContain('and round again');
+    expect(html).toContain('circular Quote');
+  });
+
+  it('counts a block embed against the page budget like any other', () => {
+    const html = render('![[Ledger#^intro]]\n\n![[Ledger#^lantern]]', { maxEmbeds: 1 });
+    expect(html).toContain('The party went in.');
+    expect(html).toContain('too many Ledger');
   });
 
   it('waits, visibly, for content the app has not fetched yet', () => {

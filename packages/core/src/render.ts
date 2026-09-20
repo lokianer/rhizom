@@ -4,7 +4,18 @@
 // note itself contributes is sanitised, so the result can be injected into the DOM as-is.
 import GithubSlugger from 'github-slugger';
 import type { Properties, Root as HastRoot } from 'hast';
-import type { Code, Image, Link, List, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
+import type {
+  Blockquote,
+  Code,
+  Image,
+  Link,
+  List,
+  Paragraph,
+  Parent,
+  Root,
+  RootContent,
+  Text,
+} from 'mdast';
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -20,6 +31,7 @@ import { displayText, headingSlug } from './parse.js';
 import { QUERY_LANGUAGE } from './query.js';
 import type { TermMatcher, VaultTerm } from './terms.js';
 import { remarkWikilink } from './remark-wikilink.js';
+import { blockAnchorId, findBlockMarkers, type BlockMarker } from './section.js';
 import { parseWikilink, type WikilinkTarget } from './wikilink.js';
 
 export interface RenderedLink {
@@ -101,6 +113,15 @@ export interface RenderedNote {
   headings: Heading[];
 }
 
+/**
+ * The info string of a fence that holds a diagram. Folded before comparing, because an info
+ * string is the author's spelling of a language name and `Mermaid` names the same one.
+ */
+export const MERMAID_LANGUAGE = 'mermaid';
+
+/** The class the app looks the diagram containers up by. Exported so it cannot drift apart. */
+export const MERMAID_CLASS = 'rz-mermaid';
+
 const MARKDOWN_TARGET = /\.(md|markdown)$/i;
 // A trailing `.ext` that really looks like a file extension, so note names such as `v1.2 draft`
 // are not mistaken for files. Obsidian requires non-Markdown targets to carry their extension.
@@ -155,7 +176,7 @@ const sanitizeSchema: SanitizeSchema = {
     a: allowFor('a', ['rz-wikilink', 'rz-wikilink-missing', 'rz-embed-file'], 'dataTarget'),
     div: allowFor(
       'div',
-      ['rz-embed', 'rz-query', ...CALLOUT_CLASSES],
+      ['rz-embed', 'rz-query', MERMAID_CLASS, ...CALLOUT_CLASSES],
       'dataPath',
       'dataEmbed',
       'dataState',
@@ -225,8 +246,13 @@ export function renderNote(markdown: string, options: RenderOptions): RenderedNo
 
   const idPrefix = options.idPrefix ?? '';
   const headings = collectHeadings(tree, idPrefix);
+  // Block ids are read off the tree as the note was written, before anything else has touched a
+  // text node — the term marker splits them, and a callout takes its first line apart.
+  const blocks = findBlockMarkers(tree, markdown);
+  hideBlockMarkers(blocks);
   const embeds: string[] = [];
   transform(tree, { options, embeds }, false);
+  anchorBlocks(blocks, idPrefix);
 
   const renderer = rendererFor(idPrefix);
   const hast = renderer.runSync(tree);
@@ -254,6 +280,50 @@ function collectHeadings(tree: Root, idPrefix: string): Heading[] {
   return headings;
 }
 
+/**
+ * Takes the `^id` off the text the reader sees. The marker is an address, written for a link to
+ * aim at and never meant to be read: Obsidian hides it, and a vault that has to open in both
+ * cannot show it in one of them.
+ *
+ * A text node holding nothing but the marker is dropped rather than left empty, so that
+ * `![[Note]] ^abc` is still the standalone embed it was written as.
+ */
+function hideBlockMarkers(markers: readonly BlockMarker[]): void {
+  for (const marker of markers) {
+    marker.text.value = marker.text.value.slice(0, marker.offset);
+    if (marker.text.value !== '') {
+      continue;
+    }
+    const children = marker.parent.children;
+    const at = children.indexOf(marker.text);
+    if (at !== -1) {
+      children.splice(at, 1);
+    }
+  }
+}
+
+/**
+ * Gives every block that carries an id the anchor a link to it lands on, prefixed like every
+ * other id this render emits so that a transcluded note's blocks cannot collide with the host's.
+ *
+ * After `transform` rather than before it: a callout writes its own properties over the
+ * blockquote's and would take the anchor with them.
+ *
+ * A heading is the one block that keeps the id it already has. An element has one id to give,
+ * and a heading's is its slug — what `parseNote` reports, what the outline links to, what every
+ * `#Heading` reference aims at. A block id written on a heading still addresses it for an embed;
+ * it just does not move the anchor.
+ */
+function anchorBlocks(markers: readonly BlockMarker[], idPrefix: string): void {
+  for (const marker of markers) {
+    if (marker.block.type === 'heading') {
+      continue;
+    }
+    const data = (marker.block.data ??= {});
+    data.hProperties = { ...data.hProperties, id: `${idPrefix}${blockAnchorId(marker.id)}` };
+  }
+}
+
 interface Context {
   options: RenderOptions;
   /**
@@ -275,7 +345,7 @@ function transform(parent: Parent, context: Context, insideLink: boolean): void 
       continue;
     }
     if (child.type === 'code') {
-      const block = queryBlock(child, context);
+      const block = queryBlock(child, context) ?? mermaidBlock(child);
       if (block !== undefined) {
         children[index] = block;
       }
@@ -470,6 +540,34 @@ function queryBlock(node: Code, context: Context): Paragraph | undefined {
 }
 
 /**
+ * Wraps a ` ```mermaid ` fence in the container the app draws the diagram into, with the fence
+ * itself left inside it as an ordinary code block.
+ *
+ * Nothing is rendered here, and nothing here is asynchronous. Mermaid is a browser library that
+ * answers with a promise, while this renderer is a pure function that also runs in tests and on
+ * the server — so core marks the place and the app fills it in, the same division the embeds and
+ * the query blocks already follow. What core emits is therefore the whole answer for anybody
+ * without JavaScript, and it is the diagram's source: exactly what a code block would have shown
+ * them. The source stays in the page after the diagram arrives, hidden by the stylesheet, so a
+ * theme change can be drawn again from it.
+ *
+ * Undefined for every other fence, which stays the code block it looks like.
+ */
+function mermaidBlock(node: Code): Blockquote | undefined {
+  if (node.lang?.trim().toLowerCase() !== MERMAID_LANGUAGE) {
+    return undefined;
+  }
+  return {
+    // Any block node remark-rehype knows will do as the carrier, and it has to be one that may
+    // hold a code block: a paragraph — what the query fence uses — may not. `hName` decides the
+    // tag, so nothing of the blockquote survives into the HTML.
+    type: 'blockquote',
+    children: [{ type: 'code', lang: MERMAID_LANGUAGE, value: node.value }],
+    data: { hName: 'div', hProperties: { className: [MERMAID_CLASS] } },
+  };
+}
+
+/**
  * Marks a list whose items are tasks — `- [ ]` and `- [x]` — so the stylesheet can drop the
  * bullets the checkboxes stand in for and strike a finished one through. The list is a task list
  * as soon as one item is a task, which is how Markdown writes a list of them.
@@ -515,9 +613,12 @@ function renderWikilink(value: string, embed: boolean, context: Context): Image 
 
 function noteLink(parts: WikilinkTarget, kind: LinkKind, value: string, context: Context): Link {
   const link = context.options.resolveLink(parts.target, kind, context.options.sourcePath);
+  // `parseWikilink` reads a fragment as one or the other, never both; put back together here as
+  // it was written, because that is the form `fragmentOf` tells the two apart by.
+  const fragment = parts.blockId === undefined ? parts.heading : `^${parts.blockId}`;
   return {
     type: 'link',
-    url: link.href + fragmentOf(parts.heading),
+    url: link.href + fragmentOf(fragment),
     children: [{ type: 'text', value: labelOf(parts, link, value) }],
     data: { hProperties: noteLinkProperties(link, parts.target) },
   };
@@ -626,9 +727,23 @@ function embedKind(target: string): 'image' | 'file' | 'note' {
   return IMAGE_EXTENSION.test(name) ? 'image' : 'file';
 }
 
-/** Heading references are slugged like the heading ids, so `#Heading` finds its anchor. */
-function fragmentOf(heading: string | undefined): string {
-  return heading === undefined ? '' : `#${headingSlug(heading)}`;
+/**
+ * Where a reference lands in the page, written the way the ids in it are.
+ *
+ * A heading reference is slugged like the heading ids, so `#Heading` finds its anchor. A block
+ * reference — anything starting with a caret, whether it came from a wikilink or from the
+ * `#…` of a Markdown link — keeps its caret, because that is what `blockAnchorId` put on the
+ * block. The two have to be made in one place or a link stops landing.
+ */
+function fragmentOf(written: string | undefined): string {
+  if (written === undefined || written === '') {
+    return '';
+  }
+  if (written.startsWith('^')) {
+    const blockId = written.slice(1).trim();
+    return blockId === '' ? '' : `#${blockAnchorId(blockId)}`;
+  }
+  return `#${headingSlug(written)}`;
 }
 
 /** The alias wins over the resolver's label: it is what the author wrote into the note. */

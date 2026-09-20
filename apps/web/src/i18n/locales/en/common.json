@@ -129,7 +129,31 @@
     "nodes_other": "{{count}} notes",
     "edges_one": "{{count}} link",
     "edges_other": "{{count}} links",
-    "resetView": "Reset the view"
+    "resetView": "Reset the view",
+    "layout": "Layout",
+    "bubbles": "Bubble field",
+    "milieu": "Milieu field"
+  },
+  "axes": {
+    "field": "Field",
+    "label": "Milieu field: {{title}}",
+    "noFields": "No field yet",
+    "empty": "No note in this vault declares a milieu field. A note with type: axes in its frontmatter, two axis keys and a query block becomes one.",
+    "noAxes": "This note names fewer than two axes. A field needs xKey and yKey, and the two must differ.",
+    "noBlock": "This note holds no query block, so there is nothing to place in its field.",
+    "hint": "Drag a note to move it; the position is written into its frontmatter. Click one to open it.",
+    "tray": "Notes without a position",
+    "trayTitle_one": "{{count}} note without a position",
+    "trayTitle_other": "{{count}} notes without a position",
+    "trayEmpty": "Every note the field finds has a position.",
+    "missingOne": "no {{key}}",
+    "missingBoth": "no {{x}}, no {{y}}",
+    "placed_one": "{{count}} note placed",
+    "placed_other": "{{count}} notes placed",
+    "unplaced_one": "{{count}} waiting",
+    "unplaced_other": "{{count}} waiting",
+    "changedOnDisk": "{{title}} changed on disk, so its position was not written.",
+    "writeFailed": "The position could not be written: {{message}}"
   },
   "embed": {
     "loading": "Loading {{target}} …",
@@ -153,6 +177,10 @@
       "modified": "Modified",
       "size": "Size"
     }
+  },
+  "mermaid": {
+    "failed": "Not a diagram yet: {{message}}",
+    "failedPlain": "Not a diagram yet."
   },
   "smartFolders": {
     "title": "Smart folders",
@@ -244,7 +272,8 @@
       "rebuild": "Rebuild the index",
       "toggleSidebar": "Toggle the sidebar",
       "togglePreview": "Toggle the preview",
-      "toggleZen": "Zen mode"
+      "toggleZen": "Zen mode",
+      "toggleVim": "Vim mode"
     }
   },
   "status": {

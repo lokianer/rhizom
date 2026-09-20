@@ -14,7 +14,7 @@ import {
   type QueryLinks,
   type QueryResult,
 } from '@rhizom/core';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
@@ -23,6 +23,7 @@ import { useNoteSources } from '../store/notes.js';
 import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
 import { createAssetResolver, createResolver } from './links.js';
+import { drawDiagrams, forgetDiagrams, watchTheme, type DiagramLabels } from './mermaid.js';
 import { noteHref } from './paths.js';
 
 /**
@@ -247,6 +248,39 @@ export function NotePreview({
       clearTimeout(timer);
     };
   }, [queryBodies, requestQuery]);
+
+  const diagramLabels = useMemo<DiagramLabels>(
+    () => ({
+      failed: (message) => t('mermaid.failed', { message }),
+      failedPlain: t('mermaid.failedPlain'),
+    }),
+    [t],
+  );
+
+  // A diagram is drawn in the colours the page is set in, and the reader can switch between
+  // Humus and Kalk without reloading. Nothing about the HTML changes when they do, so the change
+  // is watched for: every diagram drawn so far is now in the wrong colours, and the effect below
+  // is sent round again to draw them anew.
+  const [themeEpoch, setThemeEpoch] = useState(0);
+  useEffect(
+    () =>
+      watchTheme(() => {
+        forgetDiagrams();
+        setThemeEpoch((epoch) => epoch + 1);
+      }),
+    [],
+  );
+
+  // Mermaid renders asynchronously in a browser, which is why the renderer does not do it: it
+  // leaves a container with the diagram's source in it, and this fills them in. Before the paint
+  // rather than after, unlike the effects around it — React writes the whole HTML again on every
+  // keystroke, taking the diagrams off the page with it, and a pass that ran after the paint
+  // would show a frame of bare source between every character typed. A diagram whose source has
+  // not changed is put back from memory here and now, without asking mermaid anything.
+  useLayoutEffect(() => {
+    const host = container.current;
+    return host === null ? undefined : drawDiagrams(host, diagramLabels);
+  }, [diagramLabels, html, themeEpoch]);
 
   // The renderer writes every checkbox `disabled`, because in the wiki it is a picture of what
   // the file says rather than a control. Where somebody can write, it becomes one — done here

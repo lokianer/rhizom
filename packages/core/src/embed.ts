@@ -1,6 +1,7 @@
-// Transclusion: `![[Note]]` and `![[Note#Heading]]` rendered as the note itself rather than as
-// a link to it. This is the only code that fills `RenderOptions.renderEmbed`, and with it the
-// only code that decides how deep the recursion may go and when it has to stop.
+// Transclusion: `![[Note]]`, `![[Note#Heading]]` and `![[Note#^abc]]` rendered as the note
+// itself rather than as a link to it. This is the only code that fills
+// `RenderOptions.renderEmbed`, and with it the only code that decides how deep the recursion may
+// go and when it has to stop.
 //
 // The note bodies arrive through a synchronous `readNote`, so the guard lives here while the
 // fetching and caching stay with the app. Content the app has not got yet is not an error: the
@@ -17,7 +18,7 @@ import {
   type RenderOptions,
   type RenderedNote,
 } from './render.js';
-import { sliceSection } from './section.js';
+import { sliceBlock, sliceSection } from './section.js';
 
 /** A rendered note, plus what it still needs before it is complete. */
 export interface RenderedWithEmbeds extends RenderedNote {
@@ -49,7 +50,11 @@ export interface EmbedLabels {
   loading: (target: string) => string;
   /** The vault has no such note. */
   missing: (target: string) => string;
-  /** The note is there, but it has no such section. */
+  /**
+   * The note is there, but it has no such section: no heading of that name, and no block
+   * carrying that id. One label for both, because the reader's mistake is the same one — the
+   * address they wrote leads into a note that has nothing at that address.
+   */
   noSection: (target: string, heading: string) => string;
   circular: (target: string) => string;
   /** Embedded from within too many embeds. */
@@ -167,20 +172,19 @@ export function renderNoteWithEmbeds(
 
   // A note may be transcluded twice on one page, and two sections of one note side by side is
   // the ordinary map-of-content case; only a reference that is already an ancestor of itself is
-  // a cycle. Keying on path *and* heading is what tells those two apart.
+  // a cycle. Keying on path *and* the piece addressed is what tells those two apart. A block id
+  // keeps its caret here as well, so a heading slugging to `loot` and a block `^loot` are two
+  // keys rather than one.
   const keyOf = (reference: EmbedReference): string =>
-    `${reference.path ?? ''}#${headingSlug(reference.heading ?? '')}`;
+    reference.blockId === undefined
+      ? `${reference.path ?? ''}#${headingSlug(reference.heading ?? '')}`
+      : `${reference.path ?? ''}#^${reference.blockId}`;
 
   function embedder(
     ancestors: ReadonlySet<string>,
     depth: number,
   ): (reference: EmbedReference) => EmbedResult | undefined {
     return (reference) => {
-      // A block reference addresses a block, and nothing in Rhizom parses a `^id` anchor yet.
-      // Leaving it undefined renders it as the link it was before transclusion existed.
-      if (reference.blockId !== undefined) {
-        return undefined;
-      }
       const shown = reference.alias ?? reference.target;
       const path = reference.path;
       if (path === null) {
@@ -218,6 +222,18 @@ export function renderNoteWithEmbeds(
           return { state: 'missing', label: labels.noSection(shown, reference.heading) };
         }
         body = section;
+      } else if (reference.blockId !== undefined) {
+        // Nothing about block ids is written to SQLite, and nothing needs to be: the target
+        // note's own text is already in hand here, so the id is looked up in it. That is why
+        // `INDEX_SCHEMA_VERSION` stands where it stood — a block reference costs one parse of a
+        // note the page was about to render anyway, not a table and a migration.
+        const block = sliceBlock(source.markdown, reference.blockId);
+        if (block === undefined) {
+          // The same label a missing heading gets, with the reference as it was written: what
+          // the reader needs to hear is which address led nowhere, not which kind it was.
+          return { state: 'missing', label: labels.noSection(shown, `^${reference.blockId}`) };
+        }
+        body = block;
       }
 
       const html = cached(`${prefix}\u0000${path}\u0000${body}`, () => {

@@ -37,6 +37,8 @@ catalog:
   '@lezer/highlight': ^1.2.3
   '@lezer/markdown': ^1.7.2
   '@playwright/test': ^1.63.0
+  # Vim keybindings for CodeMirror 6, loaded only when the setting is on
+  '@replit/codemirror-vim': ^6.4.0
   '@sinclair/typebox': ^0.34.52
   '@types/better-sqlite3': ^9.6.0
   '@types/d3-force': ^3.0.10
@@ -59,6 +61,9 @@ catalog:
   i18next: ^26.4.2
   mdast-util-from-markdown: ^2.0.3
   mdast-util-to-string: ^4.0.0
+  # Diagrams from a ```mermaid fence. By far the largest dependency here, so it is behind a
+  # dynamic import and only fetched when a note on screen actually holds a diagram.
+  mermaid: ^12.0.0
   micromark-util-symbol: ^2.0.1
   micromark-util-types: ^2.0.2
   pino-pretty: ^13.1.3
