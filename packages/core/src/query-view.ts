@@ -201,7 +201,7 @@ function noteLink(row: QueryRow, links: QueryLinks, label: string): Element {
 
 /** A built-in column's heading is a word; any other is a frontmatter key, shown as the note wrote it. */
 function headingOf(column: string, labels: QueryLabels): string {
-  return BUILT_IN.has(column) ? (labels.columns[column as BuiltInColumn] ?? column) : column;
+  return BUILT_IN.has(column) ? labels.columns[column as BuiltInColumn] : column;
 }
 
 /** The index guarantees a title, but a row without one should still lead somewhere readable. */

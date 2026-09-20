@@ -7,6 +7,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SETTLE_MS } from '../api/client.js';
 import { noteHref } from '../app/paths.js';
 import { useNoteSources } from '../store/notes.js';
 import { useQueryResults } from '../store/queries.js';
@@ -21,14 +22,6 @@ import {
   type SmartFolder,
 } from './smart-folder-model.js';
 import './panels.css';
-
-/**
- * How long the panel waits before asking a second time. One rename writes several notes and the
- * watcher may report them in more than one batch, each of which drops what the stores hold; the
- * pause collapses those into one round of questions. The same wait, for the same reason, as the
- * rescan in MentionsPanel.
- */
-const SETTLE_MS = 400;
 
 export interface SmartFoldersProps {
   activePath: string | null;

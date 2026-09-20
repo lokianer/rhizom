@@ -96,7 +96,7 @@ export function GraphCanvas({
     ref,
     () => ({
       toSvg: () => sceneToSvg(mounted(controllerRef).scene()),
-      toPng: (scale = 2) => sceneToPng(mounted(controllerRef).scene(), scale),
+      toPng: (scale?: number) => sceneToPng(mounted(controllerRef).scene(), scale),
       resetView: () => {
         mounted(controllerRef).resetView();
       },

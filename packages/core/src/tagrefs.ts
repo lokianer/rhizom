@@ -94,7 +94,7 @@ function collect(
   for (const match of node.value.matchAll(INLINE_TAG)) {
     const written = match[1] ?? '';
     const normalised = normaliseTag(written);
-    if (normalised === undefined || match.index === undefined) {
+    if (normalised === undefined) {
       continue;
     }
     const start = base + match.index + 1;

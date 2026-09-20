@@ -2,6 +2,8 @@
 // loaded with, and reloaded when the file changes on disk while nothing is unsaved.
 import {
   createTermMatcher,
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
   setTask,
   type NoteDocument,
   type RenamePreview,
@@ -40,8 +42,8 @@ import { revisionElsewhere, revisionOf } from './useIndexEvents.js';
 /** A vault that has not said where its templates are; frozen, so the editor sees one identity. */
 const NO_TEMPLATES: TemplateSettings = Object.freeze({
   folder: null,
-  dateFormat: 'YYYY-MM-DD',
-  timeFormat: 'HH:mm',
+  dateFormat: DEFAULT_DATE_FORMAT,
+  timeFormat: DEFAULT_TIME_FORMAT,
 });
 
 // The preview brings the whole Markdown renderer, which someone who only writes never needs.

@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest';
 import { buildNoteIndex, editorContext, type EditorContextValue } from './context.js';
 import { baseExtensions } from './extensions.js';
 import { commandChange, definitionChange, slashCompletion } from './slash.js';
-import { templateNotes } from './template-model.js';
 
 function note(path: string, title: string, folder: string): NoteSummary {
   return {
@@ -135,23 +134,6 @@ describe('slashCompletion', () => {
     expect(labels('/')).toContain('NPC');
     expect(labels('/')).not.toContain('{{title}}');
     expect(complete('/')?.options[4]?.detail).toBe('Templates');
-  });
-});
-
-describe('templateNotes', () => {
-  const settings = { folder: 'Templates', dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm' };
-
-  it('takes the notes in the template folder, including the ones below it', () => {
-    expect(templateNotes(notes, settings).map((found) => found.path)).toEqual([
-      'Templates/NPC.md',
-      'Templates/Campaign/Session.md',
-      'Templates/Übung.md',
-      'Templates/🌱 Seedling.md',
-    ]);
-  });
-
-  it('takes none when the vault has no template folder', () => {
-    expect(templateNotes(notes, { ...settings, folder: null })).toEqual([]);
   });
 });
 

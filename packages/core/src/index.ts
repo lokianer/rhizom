@@ -76,6 +76,7 @@ export { fuzzyMatch, fuzzyRank, type FuzzyMatch, type FuzzyRanked } from './fuzz
 export {
   buildGraph,
   clusterColorIndex,
+  CLUSTER_COUNT,
   localGraph,
   type GraphData,
   type GraphEdge,
@@ -150,6 +151,8 @@ export {
   type VaultTerm,
 } from './terms.js';
 export {
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
   expandTemplate,
   formatDate,
   roll,

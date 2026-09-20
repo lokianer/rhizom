@@ -14,20 +14,18 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { ensureMarkdownExtension, toVaultPath } from '@rhizom/core';
+import {
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
+  ensureMarkdownExtension,
+  toVaultPath,
+  type DailySettings,
+  type TemplateSettings,
+} from '@rhizom/core';
 
-/** What `GET /api/vault` reports about templates. */
-export interface TemplateSettings {
-  /** Vault path of the folder holding them, or null when this vault has none. */
-  folder: string | null;
-  /** What `{{date}}` means without a format of its own. */
-  dateFormat: string;
-  /** What `{{time}}` means without a format of its own. */
-  timeFormat: string;
-}
-
-const DEFAULT_DATE = 'YYYY-MM-DD';
-const DEFAULT_TIME = 'HH:mm';
+// `TemplateSettings` and `DailySettings` are the core's: they are what `GET /api/vault` answers
+// with, so the shape belongs where both ends of that answer can see it rather than being spelled
+// once here and once there, with nothing to keep the two in step.
 /** Folder names to look for when nothing has been configured, compared case-folded. */
 const CONVENTIONAL = 'templates';
 const CONVENTIONAL_DAILY = 'daily';
@@ -43,19 +41,9 @@ export function readTemplateSettings(root: string, configured?: string): Templat
     vaultFolder(configured) ?? vaultFolder(obsidian.folder) ?? conventional(root, CONVENTIONAL);
   return {
     folder,
-    dateFormat: nonEmpty(obsidian.dateFormat) ?? DEFAULT_DATE,
-    timeFormat: nonEmpty(obsidian.timeFormat) ?? DEFAULT_TIME,
+    dateFormat: nonEmpty(obsidian.dateFormat) ?? DEFAULT_DATE_FORMAT,
+    timeFormat: nonEmpty(obsidian.timeFormat) ?? DEFAULT_TIME_FORMAT,
   };
-}
-
-/** What a vault declares about its daily notes. */
-export interface DailySettings {
-  /** Vault path of the folder they go in, or null when this vault keeps none. */
-  folder: string | null;
-  /** The file name, in the same format tokens a template uses. */
-  format: string;
-  /** Vault path of the note a new day starts from, or null when there is none. */
-  template: string | null;
 }
 
 /**
@@ -74,7 +62,7 @@ export function readDailySettings(root: string, configured?: string): DailySetti
   const template = vaultFolder(obsidian.template);
   return {
     folder,
-    format: nonEmpty(obsidian.format) ?? DEFAULT_DATE,
+    format: nonEmpty(obsidian.format) ?? DEFAULT_DATE_FORMAT,
     template: template === null ? null : ensureMarkdownExtension(template),
   };
 }

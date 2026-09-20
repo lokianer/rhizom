@@ -10,6 +10,7 @@
 // What is in this file is the part that can be reasoned about without a browser: which class to
 // look for, what a theme made of `--rz-*` tokens says to mermaid, what is left of an error after
 // it has been cut down to one line, and the memory of what has already been drawn.
+import { CLUSTER_COUNT } from '@rhizom/core';
 
 /**
  * Core's `MERMAID_CLASS`, written out the way every other `rz-` class the app selects on is.
@@ -96,9 +97,6 @@ export interface ThemeTokens {
 
 /** What mermaid is handed as `themeVariables`; it takes booleans as well as colours. */
 export type DiagramTheme = Record<string, string | boolean>;
-
-/** The cluster palette, `--rz-cluster-1` … `--rz-cluster-8`; the graph draws its bubbles in it. */
-const CLUSTER_COUNT = 8;
 
 /**
  * Whether a resolved colour reads as dark.

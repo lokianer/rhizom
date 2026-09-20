@@ -330,22 +330,6 @@
   gap: var(--rz-space-2);
 }
 
-.rz-tag-group-name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--rz-space-2);
-  margin-bottom: var(--rz-space-2);
-  font-size: var(--rz-text-md);
-  font-weight: 600;
-}
-
-.rz-tag-total {
-  color: var(--rz-text-muted);
-  font-size: var(--rz-text-sm);
-  font-weight: 400;
-}
-
 .rz-tag-chips {
   list-style: none;
   display: flex;

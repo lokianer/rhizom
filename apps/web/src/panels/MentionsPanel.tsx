@@ -8,7 +8,7 @@ import type { MentionsResponse } from '@rhizom/core';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { api, isAbortError } from '../api/client.js';
+import { api, isAbortError, SETTLE_MS } from '../api/client.js';
 import { noteHref } from '../app/paths.js';
 import {
   countMentions,
@@ -36,13 +36,6 @@ interface Loaded {
   path: string;
   response: MentionsResponse;
 }
-
-/**
- * How long a change elsewhere has to settle before the panel scans again. One "Link all" writes
- * several notes and the watcher may report them in more than one event; waiting collapses those
- * into a single scan.
- */
-const RESCAN_DELAY_MS = 400;
 
 export function MentionsPanel({ path, elsewhere, onOpen }: MentionsPanelProps) {
   const { t } = useTranslation();
@@ -89,7 +82,7 @@ export function MentionsPanel({ path, elsewhere, onOpen }: MentionsPanelProps) {
             }
           });
       },
-      first ? 0 : RESCAN_DELAY_MS,
+      first ? 0 : SETTLE_MS,
     );
     return () => {
       clearTimeout(timer);

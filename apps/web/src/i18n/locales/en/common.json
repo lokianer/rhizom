@@ -1,8 +1,7 @@
 {
   "app": {
     "name": "Rhizom",
-    "skipToContent": "Skip to content",
-    "zenHint": "Leave zen mode with Escape."
+    "skipToContent": "Skip to content"
   },
   "language": {
     "switch": "Language",
@@ -236,8 +235,7 @@
       "tooMany": "Too many notes carry this tag for one rename to carry."
     },
     "conflicts_one": "{{count}} note changed meanwhile and kept the old tag.",
-    "conflicts_other": "{{count}} notes changed meanwhile and kept the old tag.",
-    "done": "Renamed to {{tag}}."
+    "conflicts_other": "{{count}} notes changed meanwhile and kept the old tag."
   },
   "rename": {
     "action": "Rename or move…",
@@ -269,8 +267,7 @@
       "notFound": "This note is no longer there."
     },
     "conflicts_one": "{{count}} note changed meanwhile and kept its links.",
-    "conflicts_other": "{{count}} notes changed meanwhile and kept their links.",
-    "done": "Renamed to {{path}}."
+    "conflicts_other": "{{count}} notes changed meanwhile and kept their links."
   },
   "glossary": {
     "title": "Glossary",

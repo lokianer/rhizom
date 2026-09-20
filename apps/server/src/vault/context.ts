@@ -4,17 +4,12 @@ import { EventEmitter } from 'node:events';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { IndexEvent } from '@rhizom/core';
+import type { DailySettings, IndexEvent, TemplateSettings } from '@rhizom/core';
 
 import { indexPaths, syncVault, type SyncResult } from '../store/sync.js';
 import { VaultIndex } from '../store/vault-index.js';
 import { openVault, type Vault } from './files.js';
-import {
-  readDailySettings,
-  readTemplateSettings,
-  type DailySettings,
-  type TemplateSettings,
-} from './templates.js';
+import { readDailySettings, readTemplateSettings } from './templates.js';
 import { watchVault, type VaultWatcher } from './watcher.js';
 
 export interface VaultContextOptions {

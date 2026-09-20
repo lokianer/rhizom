@@ -38,6 +38,11 @@ pnpm --filter @rhizom/web exec playwright install chromium
 | `pnpm build`                        | Compile core and server, bundle the web app                            |
 | `docker compose up`                 | Build and run the container on port 3737                               |
 
+There is one command CI never runs, for measuring rather than checking:
+`node scripts/generate-vault.mjs <target-dir> --notes 5000` writes a synthetic vault of
+interlinked notes, deterministic for a given seed, to try the performance budget against — a
+5,000-note vault should search in under 100 ms and draw 2,000 nodes smoothly.
+
 CI runs format check, lint, typecheck, unit tests with coverage, build, landing-page assembly
 and Playwright on Ubuntu, macOS and Windows with Node 22 and 24, plus a Docker build with a
 container smoke test on Ubuntu. Run the same commands locally before pushing.

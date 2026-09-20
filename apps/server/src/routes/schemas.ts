@@ -533,5 +533,3 @@ export const LocalGraphQuerySchema = Type.Object({
 });
 
 export type ErrorBody = Static<typeof ErrorSchema>;
-export type CreateNoteBody = Static<typeof CreateNoteBodySchema>;
-export type SaveNoteBody = Static<typeof SaveNoteBodySchema>;

@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import {
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_TIME_FORMAT,
   ensureMarkdownExtension,
   expandTemplate,
   noteNameOf,
@@ -64,8 +66,8 @@ async function templateText(
       title: noteNameOf(path),
       path,
       now: new Date(),
-      dateFormat: templates?.dateFormat ?? 'YYYY-MM-DD',
-      timeFormat: templates?.timeFormat ?? 'HH:mm',
+      dateFormat: templates?.dateFormat ?? DEFAULT_DATE_FORMAT,
+      timeFormat: templates?.timeFormat ?? DEFAULT_TIME_FORMAT,
       locale,
     }).text;
   } catch {

@@ -26,6 +26,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { noteHref } from '../app/paths.js';
+import { PNG_SCALE } from '../graph/export.js';
 import { resolvePalette, watchPalette, type Palette } from '../graph/palette.js';
 import {
   fieldPoint,
@@ -437,7 +438,7 @@ function useFieldExport(
 ): void {
   useImperativeHandle(ref, () => {
     const serialise = (): string => serialiseField(svgRef.current);
-    return { toSvg: serialise, toPng: (scale = 2) => rasterise(serialise(), scale) };
+    return { toSvg: serialise, toPng: (scale = PNG_SCALE) => rasterise(serialise(), scale) };
   }, [svgRef]);
 }
 

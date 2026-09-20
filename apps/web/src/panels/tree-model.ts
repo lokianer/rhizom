@@ -8,7 +8,7 @@ export const ROW_HEIGHT = 30;
 /** Up to this many visible rows every row is rendered; above it only a window is. */
 export const WINDOW_THRESHOLD = 500;
 /** Rows kept above and below the viewport so scrolling never shows a gap. */
-export const OVERSCAN = 6;
+const OVERSCAN = 6;
 
 export interface TreeRow {
   path: string;
@@ -137,20 +137,18 @@ export function rowWindow(
   scrollTop: number,
   viewportHeight: number,
   focusIndex = -1,
-  rowHeight: number = ROW_HEIGHT,
-  overscan: number = OVERSCAN,
 ): RowWindow {
   if (total <= WINDOW_THRESHOLD) {
     return { start: 0, end: total, padTop: 0, padBottom: 0 };
   }
-  const span = Math.max(1, Math.ceil(viewportHeight / rowHeight)) + overscan * 2;
+  const span = Math.max(1, Math.ceil(viewportHeight / ROW_HEIGHT)) + OVERSCAN * 2;
   const last = Math.max(0, total - span);
-  let start = clamp(Math.floor(scrollTop / rowHeight) - overscan, 0, last);
+  let start = clamp(Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN, 0, last);
   if (focusIndex >= 0 && (focusIndex < start || focusIndex >= start + span)) {
-    start = clamp(focusIndex - overscan, 0, last);
+    start = clamp(focusIndex - OVERSCAN, 0, last);
   }
   const end = Math.min(total, start + span);
-  return { start, end, padTop: start * rowHeight, padBottom: (total - end) * rowHeight };
+  return { start, end, padTop: start * ROW_HEIGHT, padBottom: (total - end) * ROW_HEIGHT };
 }
 
 function clamp(value: number, low: number, high: number): number {

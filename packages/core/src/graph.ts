@@ -151,6 +151,14 @@ export function localGraph(graph: GraphData, centerPath: string, depth: number):
   return { nodes, edges, clusters: clustersOf(nodes) };
 }
 
+/**
+ * How many colours the cluster palette has: `--rz-cluster-1` … `--rz-cluster-8`. It lives beside
+ * the function that picks one because three parts of the app paint from the same eight — the
+ * bubble field, the milieu field and the Mermaid theme — and three copies of an 8 is three
+ * chances for one of them to drift.
+ */
+export const CLUSTER_COUNT = 8;
+
 /** Deterministic palette slot for a cluster key (FNV-1a hash modulo the palette size). */
 export function clusterColorIndex(cluster: string, paletteSize: number): number {
   let hash = 0x811c9dc5;

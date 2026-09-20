@@ -39,6 +39,16 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * How long a change has to stand still before the server is asked about it again.
+ *
+ * Four places wait: the backlinks and the outline after a save, the unlinked mentions after a
+ * "link all" that writes several notes, and a query block while it is being typed. The reason is
+ * the same in all four — one keystroke or one watcher event is not a question — so the number is
+ * one number, and changing it changes all of them together.
+ */
+export const SETTLE_MS = 400;
+
 export interface RequestOptions {
   signal?: AbortSignal | undefined;
 }

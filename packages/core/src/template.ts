@@ -49,8 +49,13 @@ export interface ExpandedTemplate {
   cursor?: number;
 }
 
-const DEFAULT_DATE = 'YYYY-MM-DD';
-const DEFAULT_TIME = 'HH:mm';
+/**
+ * What `{{date}}` and `{{time}}` mean where nothing names a format. Exported because the server
+ * fills them in when a vault says nothing and the web app needs the same answer before the vault
+ * has replied: one spelling, so the three cannot disagree about what a bare date looks like.
+ */
+export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
+export const DEFAULT_TIME_FORMAT = 'HH:mm';
 
 /**
  * `{{name}}` or `{{name:argument}}`. The argument runs to the closing braces but never past the
@@ -120,9 +125,9 @@ function fill(
     case 'path':
       return argument === undefined ? context.path : undefined;
     case 'date':
-      return formatted(context, argument, context.dateFormat ?? DEFAULT_DATE);
+      return formatted(context, argument, context.dateFormat ?? DEFAULT_DATE_FORMAT);
     case 'time':
-      return formatted(context, argument, context.timeFormat ?? DEFAULT_TIME);
+      return formatted(context, argument, context.timeFormat ?? DEFAULT_TIME_FORMAT);
     case 'roll':
       return argument === undefined ? undefined : roll(argument, context.random);
     default:

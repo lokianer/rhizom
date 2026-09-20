@@ -1,8 +1,5 @@
 // Design tokens turned into colour strings a canvas can actually use.
-import { clusterColorIndex } from '@rhizom/core';
-
-/** --rz-cluster-1 … --rz-cluster-8. */
-export const CLUSTER_COUNT = 8;
+import { clusterColorIndex, CLUSTER_COUNT } from '@rhizom/core';
 
 const FALLBACK_FONT = 'system-ui, sans-serif';
 

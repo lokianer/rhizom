@@ -215,6 +215,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A `> [!quote]` callout is drawn like its twelve siblings. It was the one kind of the thirteen
+  the stylesheet had no colour for, so it rendered without an accent while every other kind had
+  one.
 - A template no longer appears under the name `{{title}}`. Its heading is a placeholder for the
   title of the note somebody makes from it, not a title this file has, so a vault with three
   templates showed three notes all called `{{title}}` — in the file tree, in the palette and in

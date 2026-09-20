@@ -10,7 +10,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Backlink, NoteLink } from '@rhizom/core';
 
-import { api, isAbortError } from '../api/client.js';
+import { api, isAbortError, SETTLE_MS } from '../api/client.js';
 import { noteHref } from '../app/paths.js';
 import { groupBacklinks, outgoingLinks } from './backlink-model.js';
 import './panels.css';
@@ -21,9 +21,6 @@ export interface BacklinksPanelProps {
   elsewhere: number;
   onOpen: (path: string) => void;
 }
-
-/** How long a change elsewhere has to settle before the lists are fetched again. */
-const REFETCH_DELAY_MS = 400;
 
 interface Loaded {
   path: string;
@@ -60,7 +57,7 @@ export function BacklinksPanel({ path, elsewhere, onOpen }: BacklinksPanelProps)
             }
           });
       },
-      first ? 0 : REFETCH_DELAY_MS,
+      first ? 0 : SETTLE_MS,
     );
     return () => {
       clearTimeout(timer);

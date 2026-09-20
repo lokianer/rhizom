@@ -48,7 +48,6 @@
   --rz-focus-ring: var(--rz-ochre-strong);
 
   /* Semantic */
-  --rz-success: var(--rz-moss);
   --rz-warning: var(--rz-ochre);
   --rz-danger: var(--rz-rust);
 
@@ -82,7 +81,6 @@
   --rz-text-lg: 1.125rem;
   --rz-text-xl: 1.375rem;
   --rz-text-2xl: 1.75rem;
-  --rz-text-3xl: 2.25rem;
 
   --rz-leading-tight: 1.25;
   --rz-leading-normal: 1.5;

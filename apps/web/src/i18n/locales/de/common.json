@@ -1,8 +1,7 @@
 {
   "app": {
     "name": "Rhizom",
-    "skipToContent": "Zum Inhalt springen",
-    "zenHint": "Zen-Modus mit Escape verlassen."
+    "skipToContent": "Zum Inhalt springen"
   },
   "language": {
     "switch": "Sprache",
@@ -236,8 +235,7 @@
       "tooMany": "Zu viele Notizen tragen dieses Schlagwort für eine einzelne Umbenennung."
     },
     "conflicts_one": "{{count}} Notiz wurde zwischenzeitlich geändert und behielt das alte Schlagwort.",
-    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten das alte Schlagwort.",
-    "done": "Umbenannt in {{tag}}."
+    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten das alte Schlagwort."
   },
   "rename": {
     "action": "Umbenennen oder verschieben…",
@@ -269,8 +267,7 @@
       "notFound": "Diese Notiz gibt es nicht mehr."
     },
     "conflicts_one": "{{count}} Notiz wurde zwischenzeitlich geändert und behielt ihre Verweise.",
-    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten ihre Verweise.",
-    "done": "Umbenannt in {{path}}."
+    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten ihre Verweise."
   },
   "glossary": {
     "title": "Glossar",

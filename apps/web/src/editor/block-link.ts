@@ -297,7 +297,7 @@ export function planBlockLink(
 
   const line = state.doc.lineAt(found.block.to);
   // The reader's own rule, so the side that writes an id and the side that looks one up cannot
-  // drift apart. `sliceBlock` would answer it too, and brings the whole remark pipeline with it.
+  // drift apart.
   const existing = blockIdOnLine(line.text);
   if (existing !== undefined) {
     // An address that something may already point at. It is reused rather than replaced, and

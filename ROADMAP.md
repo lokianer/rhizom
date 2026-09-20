@@ -4,7 +4,7 @@ Rhizom is built in strict phases. Every phase ends in a runnable state with gree
 Windows, macOS and Linux, updated documentation and clean, atomic commits — and then stops
 for review before the next phase begins. Features from later phases are never pulled forward.
 
-Status: **Phase 2 in progress** (Phases 0 and 1 complete).
+Status: **Phases 0 to 2 complete**; Phase 3 is next, and not begun.
 
 Versions: everything up to the end of Phase 5 is `0.x`. The format a vault is written in may
 still move in that stretch, and every move comes with a note in the changelog. The end of

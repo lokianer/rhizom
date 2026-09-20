@@ -11,17 +11,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
-import { api, isAbortError } from '../api/client.js';
+import { api, isAbortError, SETTLE_MS } from '../api/client.js';
 import { headingHref } from '../app/paths.js';
 import { outlineRows, slugFromHash } from './outline-model.js';
 import './panels.css';
-
-/**
- * How long a change to this note has to settle before the headings are fetched again. Every
- * autosave is such a change and typing a heading is several of them; the same wait, for the
- * same reason, as the rescan in MentionsPanel.
- */
-const REFETCH_DELAY_MS = 400;
 
 export interface OutlinePanelProps {
   /** The note on screen, whose headings this lists; null when no note is open. */
@@ -74,7 +67,7 @@ export function OutlinePanel({ activePath, revision, onOpen }: OutlinePanelProps
             }
           });
       },
-      first ? 0 : REFETCH_DELAY_MS,
+      first ? 0 : SETTLE_MS,
     );
     return () => {
       clearTimeout(timer);

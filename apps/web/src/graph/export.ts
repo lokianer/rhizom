@@ -94,8 +94,15 @@ export function sceneToSvg(scene: Scene): string {
   );
 }
 
-/** The view as a PNG at `scale`× the on-screen size, painted by the very same drawScene. */
-export function sceneToPng(scene: Scene, scale = 2): Promise<Blob> {
+/**
+ * How much larger than the screen an exported PNG is drawn. Two, because the export is made to
+ * be looked at away from the app — printed, or put in a document — and a field of labelled
+ * bubbles at screen resolution is a field of unreadable labels.
+ */
+export const PNG_SCALE = 2;
+
+/** The view as a PNG at `PNG_SCALE`× the on-screen size, painted by the very same drawScene. */
+export function sceneToPng(scene: Scene, scale: number = PNG_SCALE): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(scene.width * scale));
   canvas.height = Math.max(1, Math.round(scene.height * scale));

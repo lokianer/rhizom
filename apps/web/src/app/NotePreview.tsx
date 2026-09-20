@@ -18,7 +18,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 
-import { api } from '../api/client.js';
+import { api, SETTLE_MS } from '../api/client.js';
 import { useNoteSources } from '../store/notes.js';
 import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
@@ -41,13 +41,6 @@ function decodeSlug(raw: string): string {
 
 // A stable identity, so a keystroke does not look like a different vault to the renderer.
 const assetUrlOf = (vaultPath: string): string => api.assetUrl(vaultPath);
-
-/**
- * How long a query block has to stand still before it is sent. The preview renders on every
- * keystroke, so without this a block being typed would be a new question per character; with it,
- * the question is the one the writer stopped on.
- */
-const QUERY_SETTLE_MS = 400;
 
 /** A failure shown where the answer would be: the reader reads the reason, not an empty list. */
 function failedQuery(message: string): QueryResult {
@@ -243,7 +236,7 @@ export function NotePreview({
       for (const body of queryBodies) {
         requestQuery(body);
       }
-    }, QUERY_SETTLE_MS);
+    }, SETTLE_MS);
     return () => {
       clearTimeout(timer);
     };

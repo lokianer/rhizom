@@ -502,6 +502,12 @@ mark {
   --rz-callout: var(--rz-cluster-8);
 }
 
+/* A quotation is the quietest of the thirteen: it marks who is speaking rather than how urgent
+   the words are, so it takes the muted line the blockquote it is built from would have had. */
+.rz-callout-quote {
+  --rz-callout: var(--rz-border-strong);
+}
+
 .rz-callout-title {
   color: var(--rz-callout);
   font-weight: 600;

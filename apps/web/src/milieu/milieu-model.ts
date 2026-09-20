@@ -12,6 +12,7 @@
 import {
   axisValueOf,
   clusterColorIndex,
+  CLUSTER_COUNT,
   placementOf,
   type AxesMissing,
   type AxesPoint,
@@ -282,11 +283,8 @@ export function chosenField(
 }
 
 function slotOf(row: QueryRow, clusterBy: ClusterBy): number {
-  return clusterColorIndex(clusterOf(row, clusterBy), CLUSTER_SLOTS);
+  return clusterColorIndex(clusterOf(row, clusterBy), CLUSTER_COUNT);
 }
-
-/** --rz-cluster-1 … --rz-cluster-8, the same eight the bubble field paints from. */
-const CLUSTER_SLOTS = 8;
 
 /** The cluster key the server would give this note: the top folder, or its first tag. */
 function clusterOf(row: QueryRow, clusterBy: ClusterBy): string {
