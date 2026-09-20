@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- build: install the workspace, compile core and server, bundle the web app ----
-FROM node:22-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 RUN npm install -g pnpm@12.4.2
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN rm -rf node_modules apps/*/node_modules packages/*/node_modules \
   && pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # ---- runtime: only the compiled output and production dependencies ----
-FROM node:22-bookworm-slim AS runtime
+FROM node:25-bookworm-slim AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3737
