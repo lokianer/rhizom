@@ -263,10 +263,12 @@ in may still move._
       shell around the very same Fastify server. Electron comes first because it is the safe one
       — one rendering engine on all three systems, so the editor behaves the same everywhere, and
       auto-update, file associations and a tray are well-trodden ground. It costs the largest
-      download and a native module rebuilt against Electron's own ABI. Tauri 2 follows as the
-      lean build for anyone who does not want a second copy of Chromium on the machine: a Rust
-      shell around the system WebView, at the price of a Rust toolchain in CI and the Node server
-      shipped beside it as a sidecar
+      download and a native module rebuilt against Electron's own ABI. Tauri 2 may follow as a lean
+      build for anyone who does not want a second copy of Chromium on the machine — a Rust shell
+      around the system WebView, at the price of a Rust toolchain in CI and the Node server
+      shipped beside it as a sidecar. Whether it does is a decision for later, taken on what the
+      WebKitGTK measurement says and on whether anybody asks for it; the Electron build is not
+      an interim step and is not built to be thrown away
 - [ ] Two measurements come before either of them, because each one changes what has to be built:
       whether Node's own `node:sqlite` can replace `better-sqlite3`, **FTS5 included** — if it
       can, the native module is gone, no machine needs a compiler and both shells get simpler;

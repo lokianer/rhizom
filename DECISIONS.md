@@ -920,9 +920,11 @@ already gives a window with an icon for nothing.
 **Decided, the same day: Electron first, Tauri second.** The maintainer's reason is the one
 argument that outweighs size — Electron carries its own rendering engine, so the editor behaves
 identically on all three systems, and auto-update, file associations and a tray are well-trodden
-there. Tauri follows as the lean build for people who would rather not have a second Chromium on
-the machine. The order is deliberate: the safe one first, so there is something to compare the
-lean one against.
+there. Tauri may follow as a lean build for people who would rather not have a second Chromium on
+the machine, and may equally not: it depends on what the WebKitGTK measurement says and on
+whether anybody asks. The order is deliberate either way — the safe one first, so there is
+something to compare a lean one against, and so the Electron build is a finished thing rather
+than a stepping stone.
 
 One number belongs in the record, because the usual comparison overstates it. Tauri's "ten
 megabytes instead of a hundred and fifty" is for an app that ships only a web interface. Rhizom
