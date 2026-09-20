@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
-import { api } from '../api/client.js';
+import { expandTemplate, noteNameOf, type TemplateSettings } from '@rhizom/core';
+
+import { api, ApiRequestError } from '../api/client.js';
 import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
@@ -12,6 +14,7 @@ import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
+import { dailyNotePath } from './daily.js';
 import { noteHref, notePathFromLocation } from './paths.js';
 import { applyTheme } from './theme.js';
 import { useIndexEvents } from './useIndexEvents.js';
@@ -21,8 +24,38 @@ function modifierLabel(): string {
   return navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone' ? '⌘' : 'Ctrl';
 }
 
+/**
+ * The text a new day starts from: the vault's own daily template, expanded the way the slash
+ * menu expands one, so `{{date}}` and `{{title}}` mean here what they mean there. A template
+ * the setting names and the vault no longer holds is not an error — the day starts empty, which
+ * is what it would have done without a template at all.
+ */
+async function dailyTemplateText(
+  template: string | null,
+  path: string,
+  templates: TemplateSettings | undefined,
+  locale: string,
+): Promise<string> {
+  if (template === null) {
+    return '';
+  }
+  try {
+    const source = await api.note(template);
+    return expandTemplate(source.content, {
+      title: noteNameOf(path),
+      path,
+      now: new Date(),
+      dateFormat: templates?.dateFormat ?? 'YYYY-MM-DD',
+      timeFormat: templates?.timeFormat ?? 'HH:mm',
+      locale,
+    }).text;
+  } catch {
+    return '';
+  }
+}
+
 export function Layout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const openNotePath = notePathFromLocation(location.pathname);
@@ -49,6 +82,8 @@ export function Layout() {
   const paletteOpen = useUiStore((state) => state.paletteOpen);
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen);
   const requestRename = useUiStore((state) => state.requestRename);
+  const daily = useVaultStore((state) => state.info?.daily);
+  const templates = useVaultStore((state) => state.info?.templates);
 
   const revisions = useIndexEvents();
   const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
@@ -77,6 +112,29 @@ export function Layout() {
     },
     [navigate, refresh],
   );
+
+  // Today's note: the vault says where it goes and what a day is called, and the note is made
+  // from the vault's own template when it does not exist yet. The command is not offered at all
+  // when the vault keeps no daily notes.
+  const openToday = useCallback(async () => {
+    const path = daily === undefined ? null : dailyNotePath(daily, new Date(), i18n.language);
+    if (path === null) {
+      return;
+    }
+    try {
+      await api.note(path);
+    } catch (error) {
+      if (!(error instanceof ApiRequestError) || error.status !== 404) {
+        throw error;
+      }
+      await api.createNote({
+        path,
+        content: await dailyTemplateText(daily?.template ?? null, path, templates, i18n.language),
+      });
+      await refresh();
+    }
+    void navigate(noteHref(path));
+  }, [daily, i18n.language, navigate, refresh, templates]);
 
   const commands = useMemo<PaletteCommand[]>(
     () => [
@@ -119,6 +177,17 @@ export function Layout() {
           }
         },
       },
+      ...(daily?.folder === undefined || daily.folder === null
+        ? []
+        : [
+            {
+              id: 'openToday',
+              label: t('palette.commandNames.openToday'),
+              run: () => {
+                void openToday();
+              },
+            },
+          ]),
       {
         id: 'renameNote',
         label: t('palette.commandNames.renameNote'),
@@ -156,8 +225,10 @@ export function Layout() {
       },
     ],
     [
+      daily,
       navigate,
       openNotePath,
+      openToday,
       refresh,
       requestRename,
       setSidebarTab,

@@ -80,6 +80,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kind stays a blockquote.
 - Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
   is disabled for now — ticking one has to write the file, and that is a slice of its own.
+- Daily notes: a command that opens today's, making it from the vault's own template when it is
+  not there yet. Where it goes and what a day is called come from the vault — the operator's
+  `RHIZOM_DAILY_DIR`, Obsidian's `daily-notes.json`, or simply a folder called Daily — so a
+  vault brought from Obsidian keeps its arrangement and one that was never opened there works
+  anyway. A format holding slashes makes folders, as it does in Obsidian. The command is not
+  offered at all in a vault that keeps no daily notes.
 - Frontmatter as a form: a fold above the editor showing every key of the open note as a field —
   text, number, yes-or-no, date or list — with keys that can be added and removed. It edits the
   note's own text and saves it the way typing does, so there is one writer and one undo history.
