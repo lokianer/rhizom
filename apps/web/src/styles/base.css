@@ -437,6 +437,112 @@ mark {
   font-style: italic;
 }
 
+/* A query block: the list, table or cards a ```rhizom-query fence describes. It is the vault
+   answering, not the note speaking, so it is set as plainly as the prose around it — no box, no
+   heading, nothing the reader has to learn to read. */
+.rz-query {
+  margin: var(--rz-space-4) 0;
+}
+
+/* Waiting for an answer. Italic and muted the way an embed's placeholder is, at reading size:
+   this is a sentence the reader is meant to read, not a caption. */
+.rz-query[data-state='loading'] {
+  color: var(--rz-text-muted);
+  font-style: italic;
+}
+
+.rz-query-list,
+.rz-query-cards,
+.rz-query-problems {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.rz-query-list li {
+  margin: var(--rz-space-1) 0;
+  /* The bullet is drawn rather than listed, so the rows line up with the prose they stand in. */
+  padding-left: var(--rz-space-4);
+  text-indent: calc(-1 * var(--rz-space-4));
+}
+
+.rz-query-list li::before {
+  content: '·';
+  margin-right: var(--rz-space-2);
+  color: var(--rz-text-faint);
+}
+
+.rz-query-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rz-query-table th,
+.rz-query-table td {
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-bottom: 1px solid var(--rz-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Weight and letter-spacing carry the heading, not a smaller size: muted plus small is the
+   combination that stops being readable. */
+.rz-query-table th {
+  border-bottom-color: var(--rz-border-strong);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rz-query-cards {
+  display: grid;
+  gap: var(--rz-space-3);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+
+.rz-query-card {
+  padding: var(--rz-space-3);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface-raised);
+}
+
+.rz-query-card-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.rz-query-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-2);
+  margin: var(--rz-space-2) 0 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-query-tag {
+  color: var(--rz-accent-strong);
+}
+
+/* What the block asked that could not be read, and how much of the answer is on screen. One line
+   of muted prose each, at reading size, never an error: nothing the reader wrote is broken. */
+.rz-query-empty,
+.rz-query-more {
+  margin: var(--rz-space-2) 0 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-query-problems {
+  margin-top: var(--rz-space-3);
+  border-left: 3px solid var(--rz-border-strong);
+  padding-left: var(--rz-space-3);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
 .rz-prose code {
   font-family: var(--rz-font-mono);
   font-size: 0.9em;

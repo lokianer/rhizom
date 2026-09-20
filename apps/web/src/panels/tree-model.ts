@@ -78,11 +78,17 @@ function collect(
   }
 }
 
+/**
+ * One collator, built once. `String.prototype.localeCompare` builds a fresh one on every call,
+ * and this runs over every entry of the tree each time the vault is refreshed.
+ */
+const BY_NAME = new Intl.Collator();
+
 function compareEntries(a: TreeEntry, b: TreeEntry): number {
   if (a.type !== b.type) {
     return a.type === 'folder' ? -1 : 1;
   }
-  return a.name.localeCompare(b.name);
+  return BY_NAME.compare(a.name, b.name);
 }
 
 function countNotes(entries: readonly TreeEntry[]): number {

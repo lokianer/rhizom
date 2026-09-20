@@ -17,6 +17,9 @@ export type {
   NoteDocument,
   NoteLink,
   NoteSummary,
+  QueryRequest,
+  QueryResult,
+  QueryRow,
   RenameFile,
   RenameNoteRequest,
   RenameNoteResult,
@@ -68,6 +71,25 @@ export {
   type ProseSpan,
 } from './mentions.js';
 export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from './parse.js';
+export {
+  parseQuery,
+  BUILT_IN_COLUMNS,
+  QUERY_KEYS,
+  QUERY_LANGUAGE,
+  QUERY_SORTS,
+  QUERY_VIEWS,
+  type ParsedQuery,
+  type Query,
+  type QueryProblem,
+  type QuerySort,
+  type QueryView,
+} from './query.js';
+export {
+  renderQueryResult,
+  type BuiltInColumn,
+  type QueryLabels,
+  type QueryLinks,
+} from './query-view.js';
 export {
   ensureMarkdownExtension,
   folderOf,

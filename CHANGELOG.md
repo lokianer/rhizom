@@ -62,8 +62,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   moved only after the links have been rewritten — so the identical request run again finishes a
   rename that failed halfway.
 - `GET /api/rename` and `POST /api/rename`, in the OpenAPI document with the rest.
+- Query blocks: a fenced ` ```rhizom-query ` block is answered from the index. A closed set of
+  ten keys — `from`, `type`, `tag`, `title`, `linksTo`, `where`, `sort`, `limit`, `as`,
+  `columns` — with literal values and no expression language, because a vault can come from
+  anywhere and opening one must never run anything. A block that is partly wrong still answers:
+  the rows are what could be read, and each line that could not is named underneath.
+- `POST /api/query`, in the OpenAPI document with the rest.
+- Query blocks are drawn where they stand, in the wiki and in the editor's preview alike: a list
+  of note links, a table of the columns the block named, or cards. The links are ordinary note
+  links, so a click inside a result navigates like any other. Everything a row carries — a title,
+  a folder, a tag, a frontmatter field — is written as text and can never become markup.
 
 ### Changed
+
+- Case-insensitive comparisons in the index no longer fold only ASCII. SQLite's own `lower()`
+  leaves `Ü` alone, so a folder or title in any language but English quietly failed to match; the
+  index now registers a `rz_lower` backed by JavaScript, which knows the whole of Unicode.
+- Sorting a large vault got a collator instead of `localeCompare`, which builds a fresh one on
+  every call. An unfiltered query over 5,000 notes went from 132 ms to 21 ms; the note tree and
+  the glossary take the same route.
 
 - `NoteSummary` and `NoteDocument` carry the note's `aliases`, which the web app now uses:
   clicking `[[An Alias]]` in the preview or the wiki resolves the same way the server does.

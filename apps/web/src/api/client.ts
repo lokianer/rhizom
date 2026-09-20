@@ -12,6 +12,7 @@ import type {
   NoteDocument,
   NoteLink,
   NoteSummary,
+  QueryResult,
   RenameNoteRequest,
   RenameNoteResult,
   RenamePreview,
@@ -118,6 +119,10 @@ export const api = {
 
   search: (query: string, options?: RequestOptions) =>
     request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`, options),
+
+  /** Answers one `rhizom-query` block against the index; the body is the text between the fences. */
+  runQuery: (body: string, options?: RequestOptions) =>
+    request<QueryResult>('/api/query', { method: 'POST', ...json({ body }), ...options }),
 
   assets: (options?: RequestOptions) => request<AssetSummary[]>('/api/assets', options),
 

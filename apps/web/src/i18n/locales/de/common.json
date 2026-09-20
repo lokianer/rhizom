@@ -110,6 +110,21 @@
     "tooDeep": "{{target}} ist zu tief verschachtelt, um hier zu erscheinen",
     "tooMany": "{{target}} wird nicht gezeigt: zu viele Einbettungen auf dieser Seite"
   },
+  "query": {
+    "loading": "Der Vault wird gefragt …",
+    "empty": "Keine Notiz passt zu dieser Abfrage.",
+    "problem": "Zeile {{line}}: {{message}}",
+    "blockProblem": "{{message}}",
+    "more": "{{shown}} von {{total}} Notizen werden gezeigt.",
+    "columns": {
+      "title": "Titel",
+      "path": "Pfad",
+      "folder": "Ordner",
+      "tags": "Schlagwörter",
+      "modified": "Geändert",
+      "size": "Größe"
+    }
+  },
   "mentions": {
     "title": "Unverlinkte Erwähnungen",
     "empty": "Keine Notiz nennt diese, ohne auf sie zu verweisen.",

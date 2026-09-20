@@ -31,7 +31,7 @@ export function groupTags(tags: readonly TagCount[]): TagGroup[] {
 
   return [...groups.entries()]
     .map(([name, entries]) => {
-      const sorted = [...entries].sort((a, b) => a.tag.localeCompare(b.tag));
+      const sorted = [...entries].sort((a, b) => BY_NAME.compare(a.tag, b.tag));
       return {
         name,
         total: sorted.reduce((sum, entry) => sum + entry.count, 0),
@@ -39,8 +39,11 @@ export function groupTags(tags: readonly TagCount[]): TagGroup[] {
         flat: sorted.length === 1 && sorted[0]?.tag === name,
       };
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => BY_NAME.compare(a.name, b.name));
 }
+
+/** One collator, built once; `localeCompare` would build a fresh one for every comparison. */
+const BY_NAME = new Intl.Collator();
 
 /** What a chip inside a group shows: the tag without the group prefix it sits under. */
 export function tagChipLabel(tag: string, group: string): string {

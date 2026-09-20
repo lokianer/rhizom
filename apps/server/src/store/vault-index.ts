@@ -16,6 +16,8 @@ import {
   type NoteLink,
   type NoteSummary,
   type ParsedNote,
+  type Query,
+  type QueryRow,
   type SearchHit,
   type SearchResponse,
   type TagCount,
@@ -27,6 +29,14 @@ import { asc, eq, isNull, or } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 import { INDEX_SCHEMA_VERSION, openDatabase } from './database.js';
+import {
+  matchesFrontmatter,
+  queryToSql,
+  sortNotes,
+  toQueryNote,
+  toRow,
+  type QueryCandidate,
+} from './query-sql.js';
 import { links, meta, notes, noteTags, terms } from './schema.js';
 
 export { INDEX_SCHEMA_VERSION };
@@ -510,6 +520,33 @@ export class VaultIndex {
     return linkTextFor(target, source, this.resolver);
   }
 
+  /**
+   * Runs a query block. The parser decided what the block means; this decides which notes
+   * answer to it, and hands back the total before the limit so a table can say what it cut.
+   */
+  runQuery(query: Query): { rows: QueryRow[]; total: number } {
+    // A query may name a note the way a link does, by path or by name, so the same resolver
+    // answers both. One that leads nowhere cannot match, which `queryToSql` reports.
+    const targets = query.linksTo
+      .map((target) => resolveLinkTarget(target, '', this.resolver))
+      .filter((resolution) => resolution.resolved)
+      .map((resolution) => resolution.path);
+    const { sql, parameters, empty } = queryToSql(query, targets);
+    if (empty) {
+      return { rows: [], total: 0 };
+    }
+    const candidates = this.sqlite.prepare(sql).all(...parameters) as QueryCandidate[];
+    const matched = candidates
+      .map((row) => toQueryNote(row))
+      .filter((note) => matchesFrontmatter(note, query));
+    return {
+      rows: sortNotes(matched, query)
+        .slice(0, query.limit)
+        .map((note) => toRow(note, query.columns)),
+      total: matched.length,
+    };
+  }
+
   tags(): TagCount[] {
     return this.sqlite
       .prepare('select tag, count(*) as count from note_tags group by tag order by tag')
@@ -533,15 +570,14 @@ export class VaultIndex {
         .map((row) => ({
           path: row.path,
           title: row.title,
-          aliases: parseAliases(row.aliases).sort((a, b) => a.localeCompare(b)),
+          aliases: parseAliases(row.aliases).sort((a, b) => BY_NAME.compare(a, b)),
           summary: summaryOf(row.body, row.title),
         }))
         // Path breaks a tie in code-unit order, because two notes may well carry the same title
         // and SQLite hands rows back in whatever order it scanned them.
         .sort(
           (a, b) =>
-            a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }) ||
-            (a.path < b.path ? -1 : a.path > b.path ? 1 : 0),
+            BY_TITLE.compare(a.title, b.title) || (a.path < b.path ? -1 : a.path > b.path ? 1 : 0),
         )
     );
   }
@@ -604,11 +640,20 @@ export class VaultIndex {
   }
 }
 
+/**
+ * Collators, built once each. `String.prototype.localeCompare` builds a fresh one on every
+ * call, which is the whole cost of sorting a large vault: the tree of five thousand notes and
+ * the glossary both go through these on paths the browser reloads after every save.
+ */
+const BY_NAME = new Intl.Collator();
+const BY_TITLE = new Intl.Collator(undefined, { sensitivity: 'base' });
+const BY_TREE_NAME = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+
 function compareTreeEntries(a: TreeEntry, b: TreeEntry): number {
   if (a.type !== b.type) {
     return a.type === 'folder' ? -1 : 1;
   }
-  return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+  return BY_TREE_NAME.compare(a.name, b.name);
 }
 
 function escapeHtml(text: string): string {

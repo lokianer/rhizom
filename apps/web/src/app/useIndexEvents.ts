@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { subscribeToIndexEvents } from '../api/events.js';
 import { useNoteSources } from '../store/notes.js';
+import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
 import type { IndexRevisions } from './outlet.js';
 
@@ -35,6 +36,9 @@ export function useIndexEvents(): IndexRevisions {
       void useVaultStore.getState().refresh();
       // A transcluded body has to follow the file it came from, not the note it is shown in.
       useNoteSources.getState().invalidate(event.type === 'rebuilt' ? null : event.paths);
+      // A query is a question about the whole vault, so any note changing can change any answer;
+      // there is no per-note version of this to keep.
+      useQueryResults.getState().invalidate();
     });
   }, []);
 

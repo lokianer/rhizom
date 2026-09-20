@@ -27,6 +27,12 @@ export interface RenderedWithEmbeds extends RenderedNote {
    * which embeds were reached at all — the budget stops before the rest.
    */
   pending: string[];
+  /**
+   * The bodies of the query blocks `renderQuery` had no answer for, in the order they stand in
+   * the page — the host note's and every embedded note's alike. Same idea as `pending`: the
+   * caller fetches them and renders again, and the placeholders fill in.
+   */
+  pendingQueries: string[];
 }
 
 /** One note as the renderer needs it: its Markdown and the headings `parseNote` found in it. */
@@ -112,8 +118,16 @@ export function renderNoteWithEmbeds(
   const depthLimit = maxDepth ?? DEFAULT_MAX_DEPTH;
   const embedLimit = maxEmbeds ?? DEFAULT_MAX_EMBEDS;
   // Everything a cached body's HTML depends on. `terms` belongs here too: a body rendered
-  // before the term list arrived carries no marks, and reusing it would keep it that way.
-  const identity = [base.resolveLink, base.assetUrl, base.terms, labels, readNote] as const;
+  // before the term list arrived carries no marks, and reusing it would keep it that way, and
+  // `renderQuery` for the same reason — an embedded note may hold a query block of its own.
+  const identity = [
+    base.resolveLink,
+    base.assetUrl,
+    base.terms,
+    labels,
+    readNote,
+    base.renderQuery,
+  ] as const;
   if (!sameOwner(identity)) {
     bodies.clear();
     owner = identity;
@@ -126,6 +140,27 @@ export function renderNoteWithEmbeds(
   // Placeholders a later render may resolve. A body containing one must not be cached.
   let unsettled = 0;
   const pending: string[] = [];
+  const pendingQueries: string[] = [];
+
+  // The app's own hook, watched rather than replaced: an unanswered block is a placeholder for
+  // exactly as long as an embed waiting for its note is, so it is collected the same way and
+  // keeps the body it stands in out of the cache.
+  //
+  // Installed even when the caller offered no hook at all. A query block is a question either
+  // way, and a caller that has not fetched a single answer yet is in the same position as one
+  // whose answers have not arrived: it needs to be told what to ask for. `renderNote` on its own
+  // still leaves the fence the code block it looks like.
+  const askQuery = base.renderQuery;
+  const renderQuery = (body: string): string | undefined => {
+    const html = askQuery?.(body);
+    if (html === undefined) {
+      unsettled += 1;
+      if (!pendingQueries.includes(body)) {
+        pendingQueries.push(body);
+      }
+    }
+    return html;
+  };
 
   // A note may be transcluded twice on one page, and two sections of one note side by side is
   // the ordinary map-of-content case; only a reference that is already an ancestor of itself is
@@ -189,6 +224,7 @@ export function renderNoteWithEmbeds(
           sourcePath: path,
           idPrefix: prefix,
           renderEmbed: embedder(new Set([...ancestors, key]), depth + 1),
+          renderQuery,
         }).html;
         return { html: rendered, settled: unsettled === before };
       });
@@ -199,6 +235,7 @@ export function renderNoteWithEmbeds(
   const rendered = renderNote(markdown, {
     ...base,
     renderEmbed: embedder(new Set([`${base.sourcePath}#`]), 0),
+    renderQuery,
   });
-  return { ...rendered, pending };
+  return { ...rendered, pending, pendingQueries };
 }

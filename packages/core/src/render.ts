@@ -4,7 +4,7 @@
 // note itself contributes is sanitised, so the result can be injected into the DOM as-is.
 import GithubSlugger from 'github-slugger';
 import type { Properties, Root as HastRoot } from 'hast';
-import type { Image, Link, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
+import type { Code, Image, Link, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -16,6 +16,7 @@ import { visit } from 'unist-util-visit';
 
 import type { Heading, LinkKind } from './api.js';
 import { displayText, headingSlug } from './parse.js';
+import { QUERY_LANGUAGE } from './query.js';
 import type { TermMatcher, VaultTerm } from './terms.js';
 import { remarkWikilink } from './remark-wikilink.js';
 import { parseWikilink, type WikilinkTarget } from './wikilink.js';
@@ -69,6 +70,19 @@ export interface RenderOptions {
    */
   renderEmbed?: ((reference: EmbedReference) => EmbedResult | undefined) | undefined;
   /**
+   * Fills a ` ```rhizom-query ` fence with the answer to it, as the HTML `renderQueryResult`
+   * builds. Returning undefined means the answer is not here yet: the block renders a
+   * placeholder, and `renderNoteWithEmbeds` reports the body so the app can go and fetch it.
+   * Nothing supplying this hook at all leaves the fence the code block it looks like.
+   */
+  renderQuery?: ((body: string) => string | undefined) | undefined;
+  /**
+   * What an unanswered query block says while it waits. It cannot travel through `renderQuery` —
+   * undefined is that hook's way of saying "not yet" — so it comes in beside it, the way
+   * `EmbedLabels` supplies the words a placeholder needs.
+   */
+  queryLoading?: string | undefined;
+  /**
    * Marks the terms the vault defines where they appear in prose. Built once by the caller and
    * reused: this runs over every text node of every render.
    */
@@ -121,7 +135,7 @@ const sanitizeSchema: SanitizeSchema = {
   attributes: {
     ...defaultSchema.attributes,
     a: allowFor('a', ['rz-wikilink', 'rz-wikilink-missing', 'rz-embed-file'], 'dataTarget'),
-    div: allowFor('div', ['rz-embed'], 'dataPath', 'dataEmbed', 'dataState'),
+    div: allowFor('div', ['rz-embed', 'rz-query'], 'dataPath', 'dataEmbed', 'dataState'),
     // `span` is an allowed tag in the default schema but has no attribute rules of its own, so
     // without this the element would survive and its class would be filtered away in silence.
     span: allowFor('span', ['rz-term'], 'dataTerm'),
@@ -211,7 +225,10 @@ function collectHeadings(tree: Root, idPrefix: string): Heading[] {
 
 interface Context {
   options: RenderOptions;
-  /** Bodies of embedded notes, addressed by their index in `data-embed`. */
+  /**
+   * HTML this renderer produced itself — an embedded note's body, an answered query block —
+   * addressed by its index in `data-embed` and put back after sanitising. See `fillEmbeds`.
+   */
   embeds: string[];
 }
 
@@ -224,6 +241,13 @@ function transform(parent: Parent, context: Context, insideLink: boolean): void 
       continue;
     }
     if (child.type === 'paragraph' && embedParagraph(child, context)) {
+      continue;
+    }
+    if (child.type === 'code') {
+      const block = queryBlock(child, context);
+      if (block !== undefined) {
+        children[index] = block;
+      }
       continue;
     }
     if (child.type === 'wikilink') {
@@ -366,6 +390,43 @@ function embedParagraph(paragraph: Paragraph, context: Context): boolean {
   return true;
 }
 
+/**
+ * Turns a ` ```rhizom-query ` fence into the list or table it describes. It looks like a code
+ * block and is written like one, but it is a question about the vault, so it is answered rather
+ * than printed — and only when something offers to answer it; without the hook the fence stays
+ * the code block every other Markdown tool will show.
+ *
+ * Undefined leaves the node as it stands. Otherwise the fence becomes a block of its own, which
+ * is why the node is replaced instead of relabelled: `code` renders as `<pre><code>`, and the
+ * text between the fences is a query, never something to print.
+ */
+function queryBlock(node: Code, context: Context): Paragraph | undefined {
+  const render = context.options.renderQuery;
+  // Folded, because an info string is the author's spelling of a language name and `Rhizom-Query`
+  // asks the same question.
+  if (render === undefined || node.lang?.trim().toLowerCase() !== QUERY_LANGUAGE) {
+    return undefined;
+  }
+  const html = render(node.value);
+  const properties: Properties = {
+    className: ['rz-query'],
+    dataState: html === undefined ? 'loading' : 'ready',
+  };
+  if (html !== undefined) {
+    // Replaced by the answer after sanitising, the same way an embedded body is.
+    properties.dataEmbed = String(context.embeds.push(html) - 1);
+  }
+  return {
+    // Any block node remark-rehype knows will do as the carrier; `hName` decides the tag, and a
+    // paragraph is the one with nothing of its own to contribute.
+    type: 'paragraph',
+    children: [
+      { type: 'text', value: html === undefined ? (context.options.queryLoading ?? '') : '' },
+    ],
+    data: { hName: 'div', hProperties: properties },
+  };
+}
+
 function renderWikilink(value: string, embed: boolean, context: Context): Image | Link {
   const parts = parseWikilink(value);
   const kind = embed ? embedKind(parts.target) : 'note';
@@ -387,7 +448,12 @@ function noteLink(parts: WikilinkTarget, kind: LinkKind, value: string, context:
   };
 }
 
-function noteLinkProperties(link: RenderedLink, target: string): Properties {
+/**
+ * The classes a link to a note carries. Exported for `query-view.ts`, so a note link inside a
+ * query result is the same link it would be in prose rather than a second thing that looks like
+ * one; not part of the package's public surface.
+ */
+export function noteLinkProperties(link: RenderedLink, target: string): Properties {
   if (link.path !== null) {
     return { className: ['rz-wikilink'] };
   }
@@ -447,14 +513,17 @@ function rewriteImage(node: Image, context: Context): void {
 }
 
 /**
- * Puts the embedded bodies in place; they are already HTML and must not be escaped again.
+ * Puts the embedded bodies and the answered query blocks in place; they are already HTML and
+ * must not be escaped again.
  *
  * This runs *after* `rehypeSanitize` and the result is stringified with `allowDangerousHtml`,
- * so whatever reaches here is written into the page untouched. The only acceptable producer of
- * such a string is `renderNote` itself, which is why `EmbedResult.ready` is the one state that
- * carries HTML and why nothing outside this module ever fills `context.embeds`. Widening that —
- * a query result assembled as a string, `rehype-raw`, anything — turns a tool whose whole point
- * is opening somebody else's vault into stored cross-site scripting.
+ * so whatever reaches here is written into the page untouched. Exactly two producers of such a
+ * string are acceptable: `renderNote` itself, which is why `EmbedResult.ready` is the one state
+ * that carries HTML, and `renderQueryResult`, which assembles a tree of nodes and stringifies it
+ * with the same compiler rather than pasting text into a template — nothing out of a note or an
+ * index can become markup on the way through it. Widening that further — `rehype-raw`, a string
+ * built by hand, anything — turns a tool whose whole point is opening somebody else's vault into
+ * stored cross-site scripting.
  */
 function fillEmbeds(tree: HastRoot, embeds: readonly string[]): void {
   if (embeds.length === 0) {

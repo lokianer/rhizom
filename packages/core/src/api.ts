@@ -3,6 +3,7 @@
 
 import type { GraphData } from './graph.js';
 import type { Mention } from './mentions.js';
+import type { QueryProblem, QueryView } from './query.js';
 
 /** Response body of `GET /api/health`. */
 export interface HealthResponse {
@@ -270,6 +271,42 @@ export interface RenameNoteResult {
   to: string;
   rewritten: { source: string; count: number }[];
   skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
+}
+
+/** `POST /api/query` — the text of a `rhizom-query` block, run against the index. */
+export interface QueryRequest {
+  /** The text between the fences, exactly as the note writes it. */
+  body: string;
+}
+
+/** One note a query matched. */
+export interface QueryRow {
+  path: string;
+  title: string;
+  folder: string;
+  tags: string[];
+  modifiedAt: string;
+  size: number;
+  /**
+   * The frontmatter values the query named as columns, already rendered as text. Rendered on
+   * the server so that one place decides what a date, a list or a nested mapping looks like,
+   * and so that a table never has to guess at an `unknown`.
+   */
+  fields: Record<string, string>;
+}
+
+/**
+ * `POST /api/query`. The rows are what the block could be read as; `problems` is what it said
+ * that could not be read. Both are answered together on purpose: a query with one bad line
+ * still shows the notes the rest of it found, with the line that was ignored named underneath.
+ */
+export interface QueryResult {
+  rows: QueryRow[];
+  /** How many notes matched before the query's own limit cut the list. */
+  total: number;
+  view: QueryView;
+  columns: string[];
+  problems: QueryProblem[];
 }
 
 /** `POST /api/notes` */

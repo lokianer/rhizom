@@ -707,3 +707,44 @@ One more thing a rename cannot see: a move can change what _other_ links mean wi
 them, because an ambiguous name is broken by folder proximity. The cheap version of that warning
 ships — the notes sharing a name with either end of the move are listed — and the expensive
 version, resolving the whole link table twice, does not.
+
+## 2026-09-20 — A query block is read, never run
+
+A vault is a folder that can come from anywhere: a shared repository, a colleague's archive, a
+template somebody published. Opening one must never be the moment it starts executing something.
+So a `rhizom-query` block is a closed set of ten keys with literal values — no expressions, no
+function calls, no regular expression supplied by the note, no dotted field path that walks into
+an object. A key nobody knows is reported with its line, not guessed at.
+
+That is also why the parser is generous everywhere the meaning is unambiguous and strict
+everywhere it is not. `LinksTo` and `linksTo` are the same word. `limit: "50"` is fifty. But a
+`where` key holding a dot is refused, an out-of-range limit keeps the default rather than being
+clamped to something nobody asked for, and a folder above the vault root is refused rather than
+quietly matching nothing.
+
+A block that is partly wrong still answers. The rows are what could be read and the problems are
+what could not, each with its line; showing both is more useful than an empty box, and a reader
+who mistyped one key can see which one.
+
+Two implementation decisions worth knowing:
+
+- **The filters split between SQL and JavaScript.** Folder, tag, title and `linksTo` go into the
+  query, because they cut the row set down before anything is read. Type and `where` need the
+  note's frontmatter, which is a JSON column, so they are decided over what is left — from the
+  same parsed values the columns then render.
+- **`created` is the note's own `created:` field**, not a file system timestamp. A birth time is
+  a lie after any copy, checkout or sync, and keeping one in the index would cost every
+  installation a rebuild for a sort key. A note that declares none sorts last, either way round.
+
+## 2026-09-20 — SQLite lowercases ASCII and stops there
+
+`lower()` in SQLite folds `A`–`Z` and leaves everything else alone, so `Über` stays `Über` and
+any case-insensitive comparison quietly fails in a vault that is not written in English. Rhizom
+is English in the repository and German second in the interface; a German vault failing to find
+its own folders would be the kind of bug that never gets reported, only lived with.
+
+So the index registers `rz_lower`, backed by JavaScript's `toLowerCase`, which knows the whole of
+Unicode, and every case-insensitive comparison in SQL goes through it. It is declared
+deterministic, so SQLite may use it wherever it would use its own. Full-text search is not
+affected: FTS5's `unicode61` tokeniser already folds properly, which is why search has always
+found `Über` and a query block would not have.

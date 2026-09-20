@@ -129,5 +129,20 @@ export function openDatabase(file: string): Database.Database {
   sqlite.pragma('temp_store = MEMORY');
   sqlite.exec(DDL);
   sqlite.pragma(`user_version = ${String(INDEX_SCHEMA_VERSION)}`);
+  registerFunctions(sqlite);
   return sqlite;
+}
+
+/**
+ * SQLite's own `lower()` folds ASCII and nothing else: `Ü` stays `Ü`, and a vault written in
+ * German or Greek would quietly fail every case-insensitive comparison. JavaScript knows the
+ * whole of Unicode, so the comparison is done there and handed to SQLite as a function.
+ *
+ * It is deterministic — the same string always folds to the same string — so SQLite may use it
+ * in an index or a WHERE clause without surprises.
+ */
+function registerFunctions(sqlite: Database.Database): void {
+  sqlite.function('rz_lower', { deterministic: true }, (value: unknown) =>
+    typeof value === 'string' ? value.toLowerCase() : value,
+  );
 }

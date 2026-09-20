@@ -5,8 +5,12 @@
 import {
   createTermMatcher,
   renderNoteWithEmbeds,
+  renderQueryResult,
   type EmbedLabels,
   type LinkKind,
+  type QueryLabels,
+  type QueryLinks,
+  type QueryResult,
 } from '@rhizom/core';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,12 +18,25 @@ import { useNavigate } from 'react-router';
 
 import { api } from '../api/client.js';
 import { useNoteSources } from '../store/notes.js';
+import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
 import { createAssetResolver, createResolver } from './links.js';
 import { noteHref } from './paths.js';
 
 // A stable identity, so a keystroke does not look like a different vault to the renderer.
 const assetUrlOf = (vaultPath: string): string => api.assetUrl(vaultPath);
+
+/**
+ * How long a query block has to stand still before it is sent. The preview renders on every
+ * keystroke, so without this a block being typed would be a new question per character; with it,
+ * the question is the one the writer stopped on.
+ */
+const QUERY_SETTLE_MS = 400;
+
+/** A failure shown where the answer would be: the reader reads the reason, not an empty list. */
+function failedQuery(message: string): QueryResult {
+  return { rows: [], total: 0, view: 'list', columns: [], problems: [{ line: 0, message }] };
+}
 
 export interface NotePreviewProps {
   /** The note the text belongs to; links resolve relative to it. */
@@ -37,6 +54,8 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
   const assets = useVaultStore((state) => state.assets);
   const sources = useNoteSources((state) => state.sources);
   const request = useNoteSources((state) => state.request);
+  const answers = useQueryResults((state) => state.results);
+  const requestQuery = useQueryResults((state) => state.request);
   const terms = useVaultStore((state) => state.terms);
   const resolver = useMemo(() => createResolver(notes), [notes]);
   const assetResolver = useMemo(() => createAssetResolver(assets), [assets]);
@@ -52,6 +71,27 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
       circular: (target) => t('embed.circular', { target }),
       tooDeep: (target) => t('embed.tooDeep', { target }),
       tooMany: (target) => t('embed.tooMany', { target }),
+    }),
+    [t],
+  );
+
+  const queryLabels = useMemo<QueryLabels>(
+    () => ({
+      empty: t('query.empty'),
+      loading: t('query.loading'),
+      // A line of 0 is the parser saying the complaint is about the block as a whole; naming a
+      // line that does not exist would send the reader looking for it.
+      problem: (line, message) =>
+        line === 0 ? t('query.blockProblem', { message }) : t('query.problem', { line, message }),
+      more: (shown, total) => t('query.more', { shown, total }),
+      columns: {
+        title: t('query.columns.title'),
+        path: t('query.columns.path'),
+        folder: t('query.columns.folder'),
+        tags: t('query.columns.tags'),
+        modified: t('query.columns.modified'),
+        size: t('query.columns.size'),
+      },
     }),
     [t],
   );
@@ -94,7 +134,26 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
     [sources],
   );
 
-  const { html, wanted } = useMemo(() => {
+  const queryLinks = useMemo<QueryLinks>(
+    () => ({ sourcePath: path, resolveLink }),
+    [path, resolveLink],
+  );
+
+  // Answers only; a body nobody has asked about yet stays undefined, and the renderer reports it
+  // as something to fetch. A block whose answer is already here keeps it while a neighbour waits.
+  const renderQuery = useMemo(
+    () => (body: string) => {
+      const answer = answers[body];
+      if (answer === undefined) {
+        return undefined;
+      }
+      const result = answer.state === 'ready' ? answer.result : failedQuery(answer.message);
+      return renderQueryResult(result, queryLabels, queryLinks);
+    },
+    [answers, queryLabels, queryLinks],
+  );
+
+  const { html, wanted, queryKey } = useMemo(() => {
     const rendered = renderNoteWithEmbeds(content, {
       sourcePath: path,
       resolveLink,
@@ -102,17 +161,43 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
       terms: matcher,
       readNote,
       labels,
+      renderQuery,
+      queryLoading: queryLabels.loading,
     });
-    // The renderer reports what it asked for and did not get; the effect below fetches it and
-    // the next render fills the placeholders in.
-    return { html: rendered.html, wanted: rendered.pending };
-  }, [content, labels, matcher, path, readNote, resolveLink]);
+    // The renderer reports what it asked for and did not get; the effects below fetch it and
+    // the next render fills the placeholders in. The query bodies travel as one string so that
+    // an effect can depend on what they say rather than on the array they arrived in.
+    return {
+      html: rendered.html,
+      wanted: rendered.pending,
+      queryKey: JSON.stringify(rendered.pendingQueries),
+    };
+  }, [content, labels, matcher, path, queryLabels, readNote, renderQuery, resolveLink]);
 
   useEffect(() => {
     for (const embedded of wanted) {
       request(embedded);
     }
   }, [request, wanted]);
+
+  const queryBodies = useMemo(() => JSON.parse(queryKey) as string[], [queryKey]);
+
+  // Every keystroke inside a block cancels the timer and starts a new one, so the server hears
+  // the question once rather than once per character. A body already answered is not asked about
+  // again at all — that is the store's own rule — so the wait costs nothing once the text stands.
+  useEffect(() => {
+    if (queryBodies.length === 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      for (const body of queryBodies) {
+        requestQuery(body);
+      }
+    }, QUERY_SETTLE_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [queryBodies, requestQuery]);
 
   return (
     // renderNoteWithEmbeds sanitises its output; the click handler keeps navigation inside the

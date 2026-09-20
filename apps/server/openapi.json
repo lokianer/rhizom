@@ -1674,6 +1674,180 @@
         }
       }
     },
+    "/api/query": {
+      "post": {
+        "summary": "Runs a rhizom-query block against the index",
+        "tags": ["search"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["body"],
+                "properties": {
+                  "body": {
+                    "maxLength": 8000,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["rows", "total", "view", "columns", "problems"],
+                  "properties": {
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "path",
+                          "title",
+                          "folder",
+                          "tags",
+                          "modifiedAt",
+                          "size",
+                          "fields"
+                        ],
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "folder": {
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "modifiedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "size": {
+                            "type": "integer"
+                          },
+                          "fields": {
+                            "description": "Frontmatter values the query named as columns, rendered as text",
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "minimum": 0,
+                      "description": "Matches before the query own limit cut them",
+                      "type": "integer"
+                    },
+                    "view": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["list"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["table"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["cards"]
+                        }
+                      ]
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "problems": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["line", "message"],
+                        "properties": {
+                          "line": {
+                            "minimum": 0,
+                            "description": "0 when the problem is the whole block",
+                            "type": "integer"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/glossary": {
       "get": {
         "summary": "One entry per definition note, sorted by title",

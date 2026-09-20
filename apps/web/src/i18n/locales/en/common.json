@@ -110,6 +110,21 @@
     "tooDeep": "{{target}} is nested too deep to be shown here",
     "tooMany": "{{target}} is not shown: too many embeds on this page"
   },
+  "query": {
+    "loading": "Asking the vault…",
+    "empty": "No note matches this query.",
+    "problem": "Line {{line}}: {{message}}",
+    "blockProblem": "{{message}}",
+    "more": "Showing {{shown}} of {{total}} notes.",
+    "columns": {
+      "title": "Title",
+      "path": "Path",
+      "folder": "Folder",
+      "tags": "Tags",
+      "modified": "Modified",
+      "size": "Size"
+    }
+  },
   "mentions": {
     "title": "Unlinked mentions",
     "empty": "No note names this one without linking to it.",
