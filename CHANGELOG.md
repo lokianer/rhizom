@@ -50,6 +50,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A glossary page listing every definition alphabetically, grouped by first letter, with the
   aliases each also answers to. It is a view of the index, not a file written into the vault, so
   it cannot go stale. Reachable from the navigation and from the command palette.
+- Rename and move a note, with the links following. A dry run first: which files would change,
+  which line each link stands on, and what it would read afterwards. A link that reached the note
+  through an alias is left as it is, and so is a short `[[Mira]]` that still finds the note where
+  it has moved to — so moving a note into a folder often changes no other file at all. What the
+  parser cannot see — reference definitions, raw HTML, links inside HTML comments — is named in
+  the dialog rather than silently skipped, and notes sharing a name with either end of the move
+  are listed, because those are the links a move can quietly retarget.
+- The rename is a batch write under the same rules as "link all": every file carries the hash it
+  was read at, a file that changed meanwhile is reported rather than overwritten, and the note is
+  moved only after the links have been rewritten — so the identical request run again finishes a
+  rename that failed halfway.
+- `GET /api/rename` and `POST /api/rename`, in the OpenAPI document with the rest.
 
 ### Changed
 

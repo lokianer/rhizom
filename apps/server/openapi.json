@@ -1116,6 +1116,394 @@
         }
       }
     },
+    "/api/rename": {
+      "get": {
+        "summary": "What renaming or moving a note would change, before anything is written",
+        "tags": ["notes"],
+        "parameters": [
+          {
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "from",
+            "required": true
+          },
+          {
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "to",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "to",
+                    "fromHash",
+                    "files",
+                    "nameClash",
+                    "leftAlone",
+                    "title",
+                    "titleFollowsFileName"
+                  ],
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "fromHash": {
+                      "type": "string"
+                    },
+                    "refusal": {
+                      "description": "Why the rename cannot happen at all; files is then empty",
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": ["notFound"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["exists"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["unsafePath"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["unwritableName"]
+                        },
+                        {
+                          "type": "string",
+                          "enum": ["tooMany"]
+                        }
+                      ]
+                    },
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "sourceTitle", "hash", "refs", "more"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "sourceTitle": {
+                            "type": "string"
+                          },
+                          "hash": {
+                            "description": "Send back when renaming, so a changed file is refused",
+                            "type": "string"
+                          },
+                          "refs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "line",
+                                "start",
+                                "end",
+                                "before",
+                                "after",
+                                "rewrite",
+                                "inHeading"
+                              ],
+                              "properties": {
+                                "line": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                },
+                                "start": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "end": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "before": {
+                                  "type": "string"
+                                },
+                                "after": {
+                                  "type": "string"
+                                },
+                                "rewrite": {
+                                  "description": "False when the link is left as it stands",
+                                  "type": "boolean"
+                                },
+                                "skipReason": {
+                                  "description": "On what grounds the link is left alone",
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": ["alias"]
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": ["stillResolves"]
+                                    }
+                                  ]
+                                },
+                                "inHeading": {
+                                  "description": "Rewriting here would move a heading anchor",
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          },
+                          "more": {
+                            "minimum": 0,
+                            "description": "References beyond the 50 listed per file",
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "nameClash": {
+                      "description": "Notes sharing a name with either end, where links may retarget silently",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "leftAlone": {
+                      "minimum": 0,
+                      "description": "Links left as written, counting the files left out of the list entirely",
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "titleFollowsFileName": {
+                      "description": "The title is the file name",
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Rewrites the links, then moves the note",
+        "tags": ["notes"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["from", "to", "hash", "files"],
+                "properties": {
+                  "from": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "to": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "hash": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "files": {
+                    "minItems": 0,
+                    "maxItems": 1000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["source", "hash"],
+                      "properties": {
+                        "source": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "hash": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["from", "to", "rewritten", "skipped"],
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "rewritten": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "count"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "count": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "skipped": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["source", "reason"],
+                        "properties": {
+                          "source": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": ["conflict"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["notFound"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["nothing"]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/search": {
       "get": {
         "summary": "Full-text search over titles and bodies",

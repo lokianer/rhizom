@@ -529,6 +529,101 @@ mark {
   margin-top: var(--rz-space-5);
 }
 
+/*
+ * The rename dialog carries a whole preview, so it is wider than a dialog that only asks for a
+ * name, and its list scrolls rather than growing past the window. Every line in it is read
+ * carefully before a rename is confirmed, so none of it drops below the body size — a muted tone
+ * is enough to set the asides apart.
+ */
+.rz-rename {
+  width: min(44rem, 92vw);
+}
+
+.rz-rename-body {
+  display: grid;
+  gap: var(--rz-space-3);
+  margin-top: var(--rz-space-4);
+  max-height: min(24rem, 50vh);
+  overflow-y: auto;
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.rz-rename-body:empty {
+  margin-top: 0;
+}
+
+.rz-rename-summary {
+  font-weight: 600;
+}
+
+.rz-rename-note {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-rename-warning {
+  color: var(--rz-warning);
+  font-size: var(--rz-text-md);
+}
+
+.rz-rename-file {
+  border-top: 1px solid var(--rz-border);
+  padding-top: var(--rz-space-3);
+}
+
+.rz-rename-file-title {
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-rename-refs {
+  list-style: none;
+  margin: var(--rz-space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-2);
+}
+
+.rz-rename-ref {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  overflow-wrap: anywhere;
+}
+
+.rz-rename-line {
+  color: var(--rz-text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5ch;
+  text-align: right;
+}
+
+.rz-rename-before,
+.rz-rename-after {
+  font-family: var(--rz-font-mono);
+  font-size: var(--rz-text-md);
+}
+
+.rz-rename-before {
+  color: var(--rz-text-muted);
+}
+
+.rz-rename-arrow {
+  color: var(--rz-text-muted);
+}
+
+.rz-rename-left-alone .rz-rename-after,
+.rz-rename-reason {
+  color: var(--rz-text-muted);
+}
+
+/* The shared badge is a sidebar size; in here it is part of a sentence being read closely. */
+.rz-rename .rz-badge {
+  font-size: var(--rz-text-md);
+}
+
 @media (max-width: 60rem) {
   /* Two columns stop helping once neither is wide enough to read. */
   .rz-note-split {

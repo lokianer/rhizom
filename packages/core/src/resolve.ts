@@ -1,3 +1,4 @@
+import { encodeLinkUrl, type LinkRef } from './linkrefs.js';
 import {
   ensureMarkdownExtension,
   folderOf,
@@ -125,6 +126,52 @@ export function resolveLinkTarget(
   }
 
   return { resolved: false, createPath: withExtension };
+}
+
+/**
+ * How a link to `target` should be written inside `source`: the bare note name where that leads
+ * back to the same note, the path from the vault root where it would not — two notes of the same
+ * name are exactly the case a written link must not guess at.
+ *
+ * An ambiguous name counts as "would not", even when the tie happens to break towards this note
+ * today: the rule that breaks it depends on where the link stands and on what else the vault
+ * holds, so the bare name would start pointing elsewhere the day a namesake is added.
+ */
+export function linkTextFor(target: string, source: string, index: NoteIndex): string {
+  const name = noteNameOf(target);
+  const resolution = resolveLinkTarget(name, source, index);
+  const unambiguous =
+    resolution.resolved && resolution.path === target && resolution.ambiguous !== true;
+  return unambiguous ? name : target.replace(MARKDOWN_EXTENSION, '');
+}
+
+const MARKDOWN_EXTENSION = /\.(md|markdown)$/i;
+
+/**
+ * What to put in a link's target span so that it leads to `to` after a rename.
+ *
+ * The form the reader chose is kept. A target written as a path stays a path — a path can never
+ * be captured by a namesake, and shortening what somebody wrote out in full is not this
+ * operation's business. A bare name stays a bare name only while that still reaches the note;
+ * `linkTextFor` decides, and hands back the path when it does not.
+ *
+ * The extension follows the same rule: written once, written again. A Markdown link always keeps
+ * it, because a URL without one is not recorded as a link to a note in the first place.
+ */
+export function writtenTargetFor(
+  ref: Pick<LinkRef, 'kind' | 'written' | 'angled'>,
+  to: string,
+  source: string,
+  index: NoteIndex,
+): string {
+  const asPath = ref.written.includes('/');
+  const chosen = asPath ? to.replace(MARKDOWN_EXTENSION, '') : linkTextFor(to, source, index);
+  const withExtension =
+    ref.kind === 'markdown' || MARKDOWN_EXTENSION.test(ref.written)
+      ? ensureMarkdownExtension(chosen)
+      : chosen;
+  // Inside `<…>` a space is a space; everywhere else in a Markdown destination it ends the URL.
+  return ref.kind === 'markdown' && !ref.angled ? encodeLinkUrl(withExtension) : withExtension;
 }
 
 function pick(

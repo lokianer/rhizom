@@ -4,7 +4,7 @@ import {
   createNoteIndex,
   definedTerms,
   foldTerm,
-  noteNameOf,
+  linkTextFor,
   summaryOf,
   resolveLinkTarget,
   type Backlink,
@@ -407,6 +407,32 @@ export class VaultIndex {
       .all(path) as Backlink[];
   }
 
+  /**
+   * The notes that link here, once each. A rename starts from this list: the `links` table can
+   * only say which notes mention the target, never how — that is decided by resolving each link
+   * again — so this is a candidate list, not an answer.
+   */
+  linkSources(target: string): string[] {
+    return (
+      this.sqlite
+        .prepare('select distinct source from links where target = ? order by source')
+        .all(target) as { source: string }[]
+    ).map((row) => row.source);
+  }
+
+  /**
+   * Every note and the names it answers to, which is all a `NoteIndex` is built from. A rename
+   * needs one of a vault that does not exist yet — the same notes with one of them moved — to
+   * ask what each link would resolve to afterwards.
+   */
+  noteAliases(): { path: string; aliases: string[] }[] {
+    return this.db
+      .select({ path: notes.path, aliases: notes.aliases })
+      .from(notes)
+      .all()
+      .map((row) => ({ path: row.path, aliases: row.aliases }));
+  }
+
   /** Link targets that do not resolve to a note, with the number of notes mentioning them. */
   unresolved(): { target: string; count: number }[] {
     return this.sqlite
@@ -479,21 +505,9 @@ export class VaultIndex {
     ).map((row) => row.path);
   }
 
-  /**
-   * How a link to `target` should be written inside `source`: the bare note name where that
-   * leads back to the same note, the path from the vault root where it would not — two notes of
-   * the same name are exactly the case a written link must not guess at.
-   *
-   * An ambiguous name counts as "would not", even when the tie happens to break towards this
-   * note today: the rule that breaks it depends on where the link stands and on what else the
-   * vault holds, so the bare name would start pointing elsewhere the day a namesake is added.
-   */
+  /** How a link to `target` should be written inside `source`; the rule lives in the core. */
   linkTextFor(target: string, source: string): string {
-    const name = noteNameOf(target);
-    const resolution = resolveLinkTarget(name, source, this.resolver);
-    const unambiguous =
-      resolution.resolved && resolution.path === target && resolution.ambiguous !== true;
-    return unambiguous ? name : target.replace(/\.(md|markdown)$/i, '');
+    return linkTextFor(target, source, this.resolver);
   }
 
   tags(): TagCount[] {

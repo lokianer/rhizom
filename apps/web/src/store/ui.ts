@@ -21,6 +21,11 @@ export interface UiState {
   /** Tags the graph is filtered by; empty means every note. */
   graphTags: string[];
   paletteOpen: boolean;
+  /**
+   * Bumped whenever something asks for the open note to be renamed. A counter rather than a
+   * flag: the note page owns the dialog, and two requests in a row have to reach it as two.
+   */
+  renameRequest: number;
   setTheme: (theme: ThemeChoice) => void;
   setSidebarTab: (tab: SidebarTab) => void;
   toggleSidebar: () => void;
@@ -32,6 +37,7 @@ export interface UiState {
   toggleGraphTag: (tag: string) => void;
   clearGraphTags: () => void;
   setPaletteOpen: (open: boolean) => void;
+  requestRename: () => void;
 }
 
 export const useUiStore = create<UiState>()(
@@ -46,6 +52,7 @@ export const useUiStore = create<UiState>()(
       graphDepth: 0,
       graphTags: [],
       paletteOpen: false,
+      renameRequest: 0,
       setTheme: (theme) => {
         set({ theme });
       },
@@ -91,6 +98,9 @@ export const useUiStore = create<UiState>()(
       },
       setPaletteOpen: (paletteOpen) => {
         set({ paletteOpen });
+      },
+      requestRename: () => {
+        set((state) => ({ renameRequest: state.renameRequest + 1 }));
       },
     }),
     {

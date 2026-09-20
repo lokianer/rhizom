@@ -1,6 +1,11 @@
 // One open note: loaded from the server, edited in CodeMirror, saved with the hash it was
 // loaded with, and reloaded when the file changes on disk while nothing is unsaved.
-import { createTermMatcher, type NoteDocument, type TemplateSettings } from '@rhizom/core';
+import {
+  createTermMatcher,
+  type NoteDocument,
+  type RenamePreview,
+  type TemplateSettings,
+} from '@rhizom/core';
 import {
   lazy,
   Suspense,
@@ -15,8 +20,10 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
+import { RenameDialog } from '../components/RenameDialog.js';
 import { MarkdownEditor, SLASH_COMMANDS } from '../editor/index.js';
 import { BacklinksPanel, MentionsPanel } from '../panels/index.js';
+import { filesFor } from '../panels/rename-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { createResolver } from './links.js';
@@ -66,6 +73,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const refreshVault = useVaultStore((state) => state.refresh);
   const splitView = useUiStore((state) => state.splitView);
   const toggleSplitView = useUiStore((state) => state.toggleSplitView);
+  const renameRequest = useUiStore((state) => state.renameRequest);
 
   const [doc, setDoc] = useState<NoteDocument | null>(null);
   const [state, setState] = useState<LoadState>('loading');
@@ -74,6 +82,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const [externalContent, setExternalContent] = useState<string | undefined>(undefined);
   const [draft, setDraft] = useState('');
   const [askDelete, setAskDelete] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   // Rendering the preview yields to typing: the editor never waits for it.
   const previewContent = useDeferredValue(draft);
 
@@ -211,6 +220,55 @@ function NoteView({ path, revisions }: NoteViewProps) {
     };
   }, [revision, path]);
 
+  // The palette can ask for a rename from anywhere; only this page knows whether the note has
+  // unsaved text, so the request arrives as a counter and is answered here.
+  const askedRename = useRef(renameRequest);
+  useEffect(() => {
+    if (askedRename.current === renameRequest) {
+      return;
+    }
+    askedRename.current = renameRequest;
+    setRenaming(true);
+  }, [renameRequest]);
+
+  const confirmRename = useCallback(
+    async (preview: RenamePreview) => {
+      // What is in the editor goes to disk first: the rename reads every file from disk, and a
+      // draft saved afterwards would be written back to a path that is no longer there.
+      const unsaved = pending.current;
+      if (unsaved !== null) {
+        await save(unsaved);
+        if (pending.current !== null) {
+          // The save was refused — a conflict, and the banner says so. Renaming on top of that
+          // would move a file whose text is not the one on screen.
+          return;
+        }
+      }
+      // The three lines `remove` has, for the same reason: a pending autosave would write the
+      // note straight back to the path it was just moved away from.
+      if (timer.current !== null) {
+        clearTimeout(timer.current);
+        timer.current = null;
+      }
+      pending.current = null;
+
+      const result = await api.renameNote({
+        from: preview.from,
+        to: preview.to,
+        // The hash of the file as it stands now, which is not the preview's once a draft was
+        // just flushed to disk.
+        hash: hashRef.current ?? preview.fromHash,
+        files: filesFor(preview),
+      });
+      setRenaming(false);
+      await refreshVault();
+      // Replace, not push: without it the Back button lands on the old path, which now offers
+      // to create the note that was just moved away.
+      void navigate(noteHref(result.to), { replace: true });
+    },
+    [navigate, refreshVault, save],
+  );
+
   const remove = useCallback(() => {
     setAskDelete(false);
     // A pending autosave would recreate the file right after it was moved away.
@@ -276,6 +334,14 @@ function NoteView({ path, revisions }: NoteViewProps) {
         <nav className="rz-note-actions">
           <button type="button" aria-pressed={splitView} onClick={toggleSplitView}>
             {t('editor.preview')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRenaming(true);
+            }}
+          >
+            {t('rename.action')}
           </button>
           {askDelete ? (
             <>
@@ -380,6 +446,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
 
       <BacklinksPanel
         path={doc.path}
+        elsewhere={revisionElsewhere(revisions, doc.path)}
         onOpen={(target) => {
           void navigate(noteHref(target));
         }}
@@ -391,6 +458,14 @@ function NoteView({ path, revisions }: NoteViewProps) {
         onOpen={(target) => {
           void navigate(noteHref(target));
         }}
+      />
+
+      <RenameDialog
+        note={renaming ? { path: doc.path, title: doc.title } : null}
+        onCancel={() => {
+          setRenaming(false);
+        }}
+        onConfirm={confirmRename}
       />
     </div>
   );

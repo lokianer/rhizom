@@ -179,6 +179,99 @@ export interface LinkMentionsResult {
   skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
 }
 
+/** One link the rename found, and what it intends to do about it. */
+export interface RenameRef {
+  /** 1-based line in the source note, so the preview can point at it. */
+  line: number;
+  /** UTF-16 offsets of the whole link in the source, as `Mention` reports them. */
+  start: number;
+  end: number;
+  /** The link as it reads now and as it would read afterwards — the diff shown to the user. */
+  before: string;
+  after: string;
+  /** False when the link is deliberately left alone; `skipReason` says on what grounds. */
+  rewrite: boolean;
+  /**
+   * Why this link stays as written: `alias` because it names the note by an alias the rename
+   * does not touch, `stillResolves` because a short link finds the note at its new path anyway.
+   * Both are worth showing — a user who expected every link to change should see why one did not.
+   */
+  skipReason?: 'alias' | 'stillResolves';
+  /** Rewriting here changes a heading, and with it the anchor other notes may link to. */
+  inHeading: boolean;
+}
+
+/** One file holding links to the note, with the hash it was read at. */
+export interface RenameFile {
+  source: string;
+  sourceTitle: string;
+  /** Content hash of the source when the preview read it; sent back so a file someone else
+   * changed in the meantime is refused rather than overwritten. */
+  hash: string;
+  refs: RenameRef[];
+  /**
+   * References past the ones listed. The preview carries at most 50 per file so that renaming a
+   * much-linked note does not send a megabyte over the wire; the write still covers all of them.
+   */
+  more: number;
+}
+
+/** `GET /api/rename?from=&to=` — what the rename would do, before anything is written. */
+export interface RenamePreview {
+  from: string;
+  to: string;
+  /** Hash of the note being moved, to be sent back with the write. */
+  fromHash: string;
+  /**
+   * Set when the rename cannot happen at all: the note is gone, the target name is taken, the
+   * path would leave the vault, the file system would not take the name, or more files link here
+   * than one write may carry. `files` is then empty and there is nothing to confirm.
+   */
+  refusal?: 'notFound' | 'exists' | 'unsafePath' | 'unwritableName' | 'tooMany';
+  files: RenameFile[];
+  /**
+   * Notes that share a name with either end of the rename. Short links resolve by name, so a
+   * duplicate means some link may quietly start leading elsewhere; the preview warns about it
+   * instead of refusing, because the vault is the user's to arrange.
+   */
+  nameClash: string[];
+  /**
+   * How many links to this note are deliberately left as they stand, across the whole vault —
+   * including the files that are therefore not in `files` at all. A short `[[Mira]]` finds the
+   * note wherever it moves, so most of a move's links need no file touched; without this number
+   * the preview would look as if those links had been forgotten.
+   */
+  leftAlone: number;
+  /** The note's title as the index knows it, which need not be the file name. */
+  title: string;
+  /** True when the title comes from the file name, so renaming the file renames what the user
+   * reads on screen — worth saying out loud before the rename happens. */
+  titleFollowsFileName: boolean;
+}
+
+/** `POST /api/rename` — the write the preview described. */
+export interface RenameNoteRequest {
+  from: string;
+  to: string;
+  /** Hash of the note being moved, as the preview reported it. */
+  hash: string;
+  /** The files to rewrite, each with the hash the preview read it at. What the caller leaves out
+   * keeps its links as they are: the user may have unticked it. */
+  files: { source: string; hash: string }[];
+}
+
+/**
+ * What the rename did. The note has moved by the time this is sent, so a file whose links could
+ * not be rewritten is reported here rather than failing the call: one stale source must not undo
+ * a rename that already succeeded everywhere else.
+ */
+export interface RenameNoteResult {
+  from: string;
+  to: string;
+  rewritten: { source: string; count: number }[];
+  skipped: { source: string; reason: 'conflict' | 'notFound' | 'nothing' }[];
+}
+
 /** `POST /api/notes` */
 export interface CreateNoteRequest {
   path: string;

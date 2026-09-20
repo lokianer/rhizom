@@ -22,6 +22,11 @@ import type {
   NoteDocument,
   NoteLink,
   NoteSummary,
+  RenameFile,
+  RenameNoteRequest,
+  RenameNoteResult,
+  RenamePreview,
+  RenameRef,
   SaveNoteRequest,
   SearchHit,
   SearchResponse,
@@ -53,6 +58,11 @@ import type {
   NoteDocumentSchema,
   NoteLinkSchema,
   NoteSummarySchema,
+  RenameFileSchema,
+  RenameNoteBodySchema,
+  RenameNoteResultSchema,
+  RenamePreviewSchema,
+  RenameRefSchema,
   SaveNoteBodySchema,
   SearchHitSchema,
   SearchResponseSchema,
@@ -116,6 +126,11 @@ type Checked = [
   Pair<MentionWrite, Static<typeof MentionWriteSchema>>,
   Pair<LinkMentionsRequest, Static<typeof LinkMentionsBodySchema>>,
   Pair<LinkMentionsResult, Static<typeof LinkMentionsResultSchema>>,
+  Pair<RenameRef, Static<typeof RenameRefSchema>>,
+  Pair<RenameFile, Static<typeof RenameFileSchema>>,
+  Pair<RenamePreview, Static<typeof RenamePreviewSchema>>,
+  Pair<RenameNoteRequest, Static<typeof RenameNoteBodySchema>>,
+  Pair<RenameNoteResult, Static<typeof RenameNoteResultSchema>>,
 ];
 
 describe('API contracts', () => {
@@ -148,8 +163,13 @@ describe('API contracts', () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
+      true,
+      true,
     ];
-    expect(checked).toHaveLength(26);
+    expect(checked).toHaveLength(31);
   });
 
   it('has teeth: the comparison rejects a shape that only looks the same', () => {

@@ -15,6 +15,7 @@ import { HttpError, registerErrorHandler } from './routes/errors.js';
 import { registerGraphRoutes } from './routes/graph.js';
 import { registerMaintenanceRoutes } from './routes/maintenance.js';
 import { registerNoteRoutes } from './routes/notes.js';
+import { registerRenameRoutes } from './routes/rename.js';
 import { HealthSchema, TreeEntrySchema } from './routes/schemas.js';
 import { registerMentionRoutes } from './routes/mentions.js';
 import { registerSearchRoutes } from './routes/search.js';
@@ -123,6 +124,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   app.addSchema(TreeEntrySchema);
 
   registerNoteRoutes(app, requireContext);
+  registerRenameRoutes(app, requireContext);
   registerSearchRoutes(app, requireContext);
   registerTermRoutes(app, requireContext);
   registerMentionRoutes(app, requireContext);

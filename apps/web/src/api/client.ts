@@ -12,6 +12,9 @@ import type {
   NoteDocument,
   NoteLink,
   NoteSummary,
+  RenameNoteRequest,
+  RenameNoteResult,
+  RenamePreview,
   SaveNoteRequest,
   SearchResponse,
   TagCount,
@@ -131,6 +134,16 @@ export const api = {
       ...json(body),
       ...options,
     }),
+
+  /** What renaming `from` to `to` would do, before anything is written. */
+  renamePreview: (from: string, to: string, options?: RequestOptions) =>
+    request<RenamePreview>(
+      `/api/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      options,
+    ),
+
+  renameNote: (body: RenameNoteRequest, options?: RequestOptions) =>
+    request<RenameNoteResult>('/api/rename', { method: 'POST', ...json(body), ...options }),
 
   graph: (clusterBy: 'folder' | 'tag', options?: RequestOptions) =>
     request<GraphResponse>(`/api/graph?clusterBy=${clusterBy}`, options),

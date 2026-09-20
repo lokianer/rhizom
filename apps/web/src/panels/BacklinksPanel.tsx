@@ -1,7 +1,12 @@
 // What points here and where this note points. Both lists are fetched together and the
 // request is aborted when the open note changes, so a slow answer never lands on a note it
 // does not belong to.
-import { useEffect, useId, useState } from 'react';
+//
+// The lists also go stale without this note being touched: a rename elsewhere rewrites the
+// links in other files, and nothing in this panel would hear about it. So it refetches when a
+// note other than this one is reindexed, after the same settle the mentions panel waits: one
+// rename writes several files and the watcher may report them in more than one batch.
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Backlink, NoteLink } from '@rhizom/core';
 
@@ -12,8 +17,13 @@ import './panels.css';
 
 export interface BacklinksPanelProps {
   path: string | null;
+  /** How often a note other than this one has been reindexed; a change means refetch. */
+  elsewhere: number;
   onOpen: (path: string) => void;
 }
+
+/** How long a change elsewhere has to settle before the lists are fetched again. */
+const REFETCH_DELAY_MS = 400;
 
 interface Loaded {
   path: string;
@@ -21,31 +31,42 @@ interface Loaded {
   links: NoteLink[];
 }
 
-export function BacklinksPanel({ path, onOpen }: BacklinksPanelProps) {
+export function BacklinksPanel({ path, elsewhere, onOpen }: BacklinksPanelProps) {
   const { t } = useTranslation();
   const titleId = useId();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [failure, setFailure] = useState<{ path: string; message: string } | null>(null);
 
+  const opened = useRef<string | null>(null);
+
   useEffect(() => {
     if (path === null) {
       return undefined;
     }
+    const first = opened.current !== path;
+    opened.current = path;
     const controller = new AbortController();
     const options = { signal: controller.signal };
-    void Promise.all([api.backlinks(path, options), api.links(path, options)])
-      .then(([backlinks, links]) => {
-        setLoaded({ path, backlinks, links });
-      })
-      .catch((error: unknown) => {
-        if (!isAbortError(error)) {
-          setFailure({ path, message: error instanceof Error ? error.message : String(error) });
-        }
-      });
+    const timer = setTimeout(
+      () => {
+        void Promise.all([api.backlinks(path, options), api.links(path, options)])
+          .then(([backlinks, links]) => {
+            setLoaded({ path, backlinks, links });
+            setFailure(null);
+          })
+          .catch((error: unknown) => {
+            if (!isAbortError(error)) {
+              setFailure({ path, message: error instanceof Error ? error.message : String(error) });
+            }
+          });
+      },
+      first ? 0 : REFETCH_DELAY_MS,
+    );
     return () => {
+      clearTimeout(timer);
       controller.abort();
     };
-  }, [path]);
+  }, [path, elsewhere]);
 
   if (path === null) {
     return null;

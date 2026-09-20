@@ -125,6 +125,39 @@
     "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und blieben unberührt.",
     "mentionLabel": "In {{note}}: {{line}}"
   },
+  "rename": {
+    "action": "Umbenennen oder verschieben…",
+    "title": "Notiz umbenennen",
+    "nameLabel": "Neuer Name",
+    "button": "Umbenennen",
+    "files_one": "{{count}} Notiz wird umgeschrieben",
+    "files_other": "{{count}} Notizen werden umgeschrieben",
+    "refs_one": "{{count}} Verweis ändert sich",
+    "refs_other": "{{count}} Verweise ändern sich",
+    "leftAlone_one": "{{count}} Verweis bleibt, wie er ist",
+    "leftAlone_other": "{{count}} Verweise bleiben, wie sie sind",
+    "more_one": "und {{count}} weiterer Verweis in dieser Notiz",
+    "more_other": "und {{count}} weitere Verweise in dieser Notiz",
+    "inHeading": "in einer Überschrift",
+    "skipped": {
+      "alias": "nennt diese Notiz bei einem Alias",
+      "stillResolves": "findet die Notiz auch am neuen Ort"
+    },
+    "nameClash": "So heißt noch eine andere Notiz: {{notes}}. Kurze Verweise lösen über den Namen auf, einer davon kann also künftig woandershin führen.",
+    "titleStays": "Der Text der Notiz bleibt unberührt, der Titel also {{title}}.",
+    "titleFollowsFileName": "Der Text der Notiz bleibt unberührt; der Titel {{title}} stammt vom Dateinamen, der neue Name wird damit zum Titel.",
+    "unseenForms": "Verweise, die der Parser nicht sieht, bleiben unverändert: Referenzdefinitionen, rohes HTML und Verweise in HTML-Kommentaren.",
+    "refusal": {
+      "exists": "Eine Notiz dieses Namens gibt es schon.",
+      "unsafePath": "An diesen Pfad schreibt Rhizom keine Notizen.",
+      "unwritableName": "Dieser Name lässt sich nicht als Link schreiben: #, |, [ und ] bedeuten in einem Wikilink etwas anderes.",
+      "tooMany": "Zu viele Notizen verweisen hierher für eine einzelne Umbenennung.",
+      "notFound": "Diese Notiz gibt es nicht mehr."
+    },
+    "conflicts_one": "{{count}} Notiz wurde zwischenzeitlich geändert und behielt ihre Verweise.",
+    "conflicts_other": "{{count}} Notizen wurden zwischenzeitlich geändert und behielten ihre Verweise.",
+    "done": "Umbenannt in {{path}}."
+  },
   "glossary": {
     "title": "Glossar",
     "count_one": "{{count}} Definition",
@@ -152,6 +185,7 @@
       "openGraph": "Graph öffnen",
       "openGlossary": "Glossar öffnen",
       "openWiki": "Als Wiki lesen",
+      "renameNote": "Diese Notiz umbenennen",
       "search": "Alle Notizen durchsuchen",
       "rebuild": "Index neu aufbauen",
       "toggleSidebar": "Seitenleiste umschalten",

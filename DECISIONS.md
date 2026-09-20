@@ -658,3 +658,52 @@ code units in UTF-16 and up to four bytes in UTF-8, a flag is two of those, and 
 several joined with a zero-width joiner — which is why the slash menu matches on code points
 rather than on letters, and why the tests carry `🌱`, `🇩🇪` and `👨‍👩‍👧` rather than a polite
 `é`.
+
+## 2026-09-20 — A rename decides by resolving, not by the link table
+
+The index records every link a note makes and, where it leads, the path it resolves to. What it
+does not record is _how_ it got there — whether the link named a path, a note's name or one of
+its aliases. That missing word is the whole difficulty of renaming: `[[Mira]]`, `[[People/Mira]]`
+and `[[The Ledger-Keeper]]` all lead to the same file and none of them means the same thing when
+the file moves.
+
+So the `links` table only hands out candidates: the notes that mention this one. The decision is
+taken by resolving every reference again, twice — once against the vault as it is, to see whether
+the link really leads here and by what route, and once against the vault as it would be, to see
+whether it would still. Two rules fall out of the second pass:
+
+- **A link that arrived through an alias is left alone.** An alias is a word the reader chose; it
+  has nothing to do with the file's name, and replacing it with a path would replace their
+  sentence with a file system.
+- **A short `[[Mira]]` that still finds the note afterwards is left alone.** Name resolution is
+  folder-blind, so moving a note into an archive usually touches no other file at all. This is
+  what keeps the dry run short enough to actually read.
+
+The preview promises exact text at exact hashes and goes stale the moment anyone else writes, so
+the write re-reads, re-parses and decides again from scratch; the hashes are a gate, never a cut
+point. And the order is fixed: rewrite every file, then move the note, then index once. Only that
+order survives a failure halfway, because the note is still at its old path and the identical
+request finishes the job.
+
+What is deliberately not done: folders and assets are not renamed, the note's own `title:` and
+`# H1` are not touched (the file name and the note's name are two different things, and the
+preview says which one the title follows), nothing is left behind at the old path — no stub, no
+alias, no copy in `.trash` — and there is no per-file opt-out, because leaving a file out means
+leaving a dangling link on purpose.
+
+## 2026-09-20 — What a rename cannot see, it says so about
+
+Reference definitions (`[ref]: People/Mira.md`), raw HTML, links inside HTML comments and
+`..`-relative Markdown links never become link nodes in the parser, so they are not in the index,
+not in the preview and not rewritten. They cannot even be counted: counting them would mean a
+second parser with its own idea of what a link is.
+
+A rename therefore states in one sentence that those forms are left as they are, rather than
+implying a completeness it does not have. Finding them belongs to a "links this vault has lost"
+report, which is a Phase 6 vault-health problem and wants to be solved once for the whole index
+rather than once for this dialog.
+
+One more thing a rename cannot see: a move can change what _other_ links mean without touching
+them, because an ambiguous name is broken by folder proximity. The cheap version of that warning
+ships — the notes sharing a name with either end of the move are listed — and the expensive
+version, resolving the whole link table twice, does not.

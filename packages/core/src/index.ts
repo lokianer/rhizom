@@ -17,6 +17,11 @@ export type {
   NoteDocument,
   NoteLink,
   NoteSummary,
+  RenameFile,
+  RenameNoteRequest,
+  RenameNoteResult,
+  RenamePreview,
+  RenameRef,
   SaveNoteRequest,
   SearchHit,
   SearchResponse,
@@ -48,6 +53,13 @@ export {
 } from './graph.js';
 export { isMarkdownFile, MARKDOWN_EXTENSIONS } from './markdown.js';
 export {
+  encodeLinkUrl,
+  findLinkRefs,
+  rewriteLinkTargets,
+  type LinkRef,
+  type LinkTargetEdit,
+} from './linkrefs.js';
+export {
   canLinkTo,
   findMentions,
   linkMentions,
@@ -66,7 +78,9 @@ export {
 } from './paths.js';
 export {
   createNoteIndex,
+  linkTextFor,
   resolveLinkTarget,
+  writtenTargetFor,
   type LinkResolution,
   type NoteIndex,
 } from './resolve.js';

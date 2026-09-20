@@ -233,6 +233,105 @@ describe('createNote', () => {
   });
 });
 
+describe('moveNote', () => {
+  it('moves a note and creates the target folder on the way', async () => {
+    const before = await vault.readNote('Home.md');
+    const result = await vault.moveNote('Home.md', 'Archive/2026/Home.md');
+    expect(result).toEqual({ from: 'Home.md', to: 'Archive/2026/Home.md', hash: before.hash });
+    expect(readFileSync(join(root, 'Archive', '2026', 'Home.md'), 'utf8')).toBe(
+      '# Home\n\nWelcome.\n',
+    );
+  });
+
+  it('leaves nothing behind at the old path and lists the new one', async () => {
+    await vault.moveNote('Campaign/NPCs/Mira.md', 'People/Mira.md');
+    expect(existsSync(join(root, 'Campaign', 'NPCs', 'Mira.md'))).toBe(false);
+    const paths = (await vault.listNotes()).map((n) => n.path);
+    expect(paths).toContain('People/Mira.md');
+    expect(paths).not.toContain('Campaign/NPCs/Mira.md');
+  });
+
+  it('normalises both paths in the result', async () => {
+    const result = await vault.moveNote('Campaign\\NPCs\\Mira.md', 'Campaign\\Mira.md');
+    expect(result.from).toBe('Campaign/NPCs/Mira.md');
+    expect(result.to).toBe('Campaign/Mira.md');
+  });
+
+  it('appends the Markdown extension when the target has none', async () => {
+    const result = await vault.moveNote('Home.md', 'Campaign/Home');
+    expect(result.to).toBe('Campaign/Home.md');
+    expect(existsSync(join(root, 'Campaign', 'Home.md'))).toBe(true);
+  });
+
+  it('refuses a target that is taken and leaves both notes where they are', async () => {
+    await expect(vault.moveNote('Campaign/NPCs/Mira.md', 'Home.md')).rejects.toMatchObject({
+      code: 'EXISTS',
+    });
+    expect(readFileSync(join(root, 'Campaign', 'NPCs', 'Mira.md'), 'utf8')).toContain('# Mira');
+    expect(readFileSync(join(root, 'Home.md'), 'utf8')).toBe('# Home\n\nWelcome.\n');
+  });
+
+  it('refuses a target taken by a note whose name only differs in case', async () => {
+    await expect(vault.moveNote('Campaign/NPCs/Mira.md', 'home.md')).rejects.toMatchObject({
+      code: 'EXISTS',
+    });
+    expect(existsSync(join(root, 'Campaign', 'NPCs', 'Mira.md'))).toBe(true);
+  });
+
+  it('refuses a move when the note changed since it was read', async () => {
+    const before = await vault.readNote('Home.md');
+    write('Home.md', '# Home\n\nEdited outside.\n');
+    await expect(vault.moveNote('Home.md', 'Moved.md', before.hash)).rejects.toMatchObject({
+      code: 'HASH_MISMATCH',
+    });
+    expect(existsSync(join(root, 'Moved.md'))).toBe(false);
+    expect(existsSync(join(root, 'Home.md'))).toBe(true);
+  });
+
+  it('fails with NOT_FOUND when the source is not there', async () => {
+    await expect(vault.moveNote('Nope.md', 'Elsewhere.md')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('refuses the trash and traversal on either side', async () => {
+    const pairs = [
+      ['.trash/Old.md', 'Restored.md'],
+      ['Home.md', '.trash/Home.md'],
+      ['../outside.md', 'Inside.md'],
+      ['Home.md', '../outside.md'],
+    ] as const;
+    for (const [from, to] of pairs) {
+      await expect(vault.moveNote(from, to)).rejects.toMatchObject({ code: 'UNSAFE_PATH' });
+    }
+    expect(existsSync(join(root, 'Home.md'))).toBe(true);
+  });
+
+  it('moves the bytes, so a UTF-16 note arrives as the file it was', async () => {
+    // Routing a move through a read and a write would silently convert the note; moving is not
+    // editing, and a note nobody touched must come out of it byte for byte.
+    const bytes = Buffer.from(`${BOM}# Über die Wurzeln\n\nSchön 🌱.\n`, 'utf16le');
+    write('Utf16.md', bytes);
+    await vault.moveNote('Utf16.md', 'Research/Utf16.md');
+    expect(readFileSync(join(root, 'Research', 'Utf16.md'))).toEqual(bytes);
+    expect((await vault.readNote('Research/Utf16.md')).encoding).toBe('utf16le');
+  });
+
+  it('renames a note when only the capitalisation changes', async () => {
+    // The one case that behaves differently on each runner: Linux has two names here, Windows
+    // and macOS have one. Both ways the vault has to end up spelling the note the new way.
+    write('archive.md', '# Archive\n');
+    const result = await vault.moveNote('archive.md', 'Archive.md');
+    expect(result.to).toBe('Archive.md');
+
+    const paths = (await vault.listNotes()).map((n) => n.path);
+    expect(paths).toContain('Archive.md');
+    expect(paths.filter((p) => p.toLowerCase() === 'archive.md')).toHaveLength(1);
+    expect(paths.some((p) => p.includes('.rename-'))).toBe(false);
+    expect((await vault.readNote('Archive.md')).content).toBe('# Archive\n');
+  });
+});
+
 describe('deleteNote', () => {
   it('moves the note into .trash keeping its folder structure', async () => {
     await vault.deleteNote('Campaign/NPCs/Mira.md');

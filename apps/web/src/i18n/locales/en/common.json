@@ -125,6 +125,39 @@
     "conflicts_other": "{{count}} notes changed meanwhile and were left alone.",
     "mentionLabel": "In {{note}}: {{line}}"
   },
+  "rename": {
+    "action": "Rename or move…",
+    "title": "Rename note",
+    "nameLabel": "New name",
+    "button": "Rename",
+    "files_one": "{{count}} note is rewritten",
+    "files_other": "{{count}} notes are rewritten",
+    "refs_one": "{{count}} link changes",
+    "refs_other": "{{count}} links change",
+    "leftAlone_one": "{{count}} link stays as it is",
+    "leftAlone_other": "{{count}} links stay as they are",
+    "more_one": "and {{count}} more link in this note",
+    "more_other": "and {{count}} more links in this note",
+    "inHeading": "in a heading",
+    "skipped": {
+      "alias": "names this note by an alias",
+      "stillResolves": "finds the note at its new path anyway"
+    },
+    "nameClash": "Another note is called this too: {{notes}}. Short links resolve by name, so one of them may start leading elsewhere.",
+    "titleStays": "The text of the note is not touched, so its title stays {{title}}.",
+    "titleFollowsFileName": "The text of the note is not touched; its title {{title}} comes from the file name, so the new name becomes the title.",
+    "unseenForms": "References the parser cannot see stay as they are: reference definitions, raw HTML, and links inside HTML comments.",
+    "refusal": {
+      "exists": "A note of that name is already there.",
+      "unsafePath": "Rhizom does not write notes to that path.",
+      "unwritableName": "That name cannot be written as a link: #, |, [ and ] mean something else inside a wikilink.",
+      "tooMany": "Too many notes link here for one rename to carry.",
+      "notFound": "This note is no longer there."
+    },
+    "conflicts_one": "{{count}} note changed meanwhile and kept its links.",
+    "conflicts_other": "{{count}} notes changed meanwhile and kept their links.",
+    "done": "Renamed to {{path}}."
+  },
   "glossary": {
     "title": "Glossary",
     "count_one": "{{count}} definition",
@@ -152,6 +185,7 @@
       "openGraph": "Open the graph",
       "openGlossary": "Open the glossary",
       "openWiki": "Read as wiki",
+      "renameNote": "Rename this note",
       "search": "Search all notes",
       "rebuild": "Rebuild the index",
       "toggleSidebar": "Toggle the sidebar",

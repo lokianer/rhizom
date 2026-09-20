@@ -71,6 +71,15 @@ export interface Vault {
     expectedHash?: string,
   ): Promise<{ path: string; hash: string; modifiedAt: Date }>;
   createNote(path: string, content?: string): Promise<{ path: string; hash: string }>;
+  /**
+   * Renames or moves a note, bytes untouched; with `expectedHash` the move is refused when the
+   * file changed. A name that is already taken is refused, never made unique.
+   */
+  moveNote(
+    from: string,
+    to: string,
+    expectedHash?: string,
+  ): Promise<{ from: string; to: string; hash: string }>;
   /** Moves a note into `.trash/`, keeping its folder structure. */
   deleteNote(path: string): Promise<{ trashedTo: string }>;
   /** Absolute path of an asset for serving; validates but does not check existence. */
@@ -103,6 +112,7 @@ export function openVault(rootDir: string): Vault {
     readNote: (path) => readNote(root, path),
     writeNote: (path, content, expectedHash) => writeNote(root, path, content, expectedHash),
     createNote: (path, content = '') => createNote(root, path, content),
+    moveNote: (from, to, expectedHash) => moveNote(root, from, to, expectedHash),
     deleteNote: (path) => deleteNote(root, path),
     assetPath: (path) => join(root, ...validateVaultPath(path).split('/')),
     storeAsset: (fileName, data) => storeAsset(root, fileName, data),
@@ -253,6 +263,91 @@ async function createNote(
   }
   await atomicWrite(absolute, serialize(content, '\n', false));
   return { path, hash: hashOf(content) };
+}
+
+/**
+ * Renames or moves a note. The bytes are moved, not rewritten: a note saved as UTF-16 arrives at
+ * its new path as the same file it was, byte order mark and all. A name that is already taken is
+ * refused rather than quietly made unique — the caller is a rename dialog, and it has to be able
+ * to tell the user "that name is taken" instead of inventing another one behind their back.
+ */
+async function moveNote(
+  root: string,
+  fromInput: string,
+  toInput: string,
+  expectedHash: string | undefined,
+): Promise<{ from: string; to: string; hash: string }> {
+  const from = validateNotePath(fromInput);
+  const to = validateNotePath(ensureMarkdownExtension(toVaultPath(toInput)));
+
+  // Reading the source does two jobs: it proves the note is there — readNote throws NOT_FOUND
+  // when it is not — and it produces the hash the caller may be holding from its last read.
+  const note = await readNote(root, from);
+  if (expectedHash !== undefined && note.hash !== expectedHash) {
+    throw new VaultError('HASH_MISMATCH', `Note changed on disk since it was loaded: ${from}`);
+  }
+
+  const absoluteFrom = absoluteOf(root, from);
+  const absoluteTo = absoluteOf(root, to);
+  const targetDirectory = dirname(absoluteTo);
+  // Moving a note into a folder that does not exist yet is half of what moving is for, and
+  // rename() only fails with ENOENT when asked to do it.
+  await mkdir(targetDirectory, { recursive: true });
+
+  const occupant = await existingNameLike(targetDirectory, basename(absoluteTo));
+  if (occupant !== undefined) {
+    if (!sameEntry(join(targetDirectory, occupant), absoluteFrom)) {
+      throw new VaultError('EXISTS', `Note already exists: ${to}`);
+    }
+    // What matched is the note itself: `archive.md` → `Archive.md`, or a name respelt from NFD
+    // to NFC, on a file system that folds the two spellings into one. A rename dialog that
+    // refuses to fix a capitalisation is one nobody trusts, so this goes through in two steps.
+    await renameBeside(absoluteFrom, absoluteTo, to);
+    return { from, to, hash: note.hash };
+  }
+
+  await rename(absoluteFrom, absoluteTo);
+  return { from, to, hash: note.hash };
+}
+
+/**
+ * The two steps a case-only rename needs where the file system considers both names the same.
+ * The temporary name is deliberately visible: `listNotes` and the watcher skip dot segments, so
+ * a crash between the two renames would make a dot-named note vanish from the vault instead of
+ * merely sitting there oddly named until someone renames it again.
+ */
+async function renameBeside(absoluteFrom: string, absoluteTo: string, to: string): Promise<void> {
+  const name = basename(absoluteTo);
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const extension = dot > 0 ? name.slice(dot) : '';
+  const temporary = join(
+    dirname(absoluteTo),
+    `${stem}.rename-${randomBytes(3).toString('hex')}${extension}`,
+  );
+  await rename(absoluteFrom, temporary);
+  // With the source out of the way, anything still sitting at the target is a different file:
+  // a case-sensitive file system where `archive.md` and `Archive.md` both exist and the entry
+  // that matched happened to be the source. Nothing may be overwritten here.
+  const taken = await stat(absoluteTo).then(
+    () => true,
+    () => false,
+  );
+  try {
+    if (taken) {
+      throw new VaultError('EXISTS', `Note already exists: ${to}`);
+    }
+    await rename(temporary, absoluteTo);
+  } catch (error: unknown) {
+    // Never leave the note under the temporary name: back to where it came from, then complain.
+    await rename(temporary, absoluteFrom).catch(() => undefined);
+    throw error;
+  }
+}
+
+/** Whether two absolute paths name the same entry as far as a folding file system is concerned. */
+function sameEntry(a: string, b: string): boolean {
+  return a.normalize('NFC').toLowerCase() === b.normalize('NFC').toLowerCase();
 }
 
 async function deleteNote(root: string, input: string): Promise<{ trashedTo: string }> {

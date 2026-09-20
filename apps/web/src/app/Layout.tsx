@@ -48,6 +48,7 @@ export function Layout() {
   const toggleGraphTag = useUiStore((state) => state.toggleGraphTag);
   const paletteOpen = useUiStore((state) => state.paletteOpen);
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen);
+  const requestRename = useUiStore((state) => state.requestRename);
 
   const revisions = useIndexEvents();
   const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
@@ -119,6 +120,17 @@ export function Layout() {
         },
       },
       {
+        id: 'renameNote',
+        label: t('palette.commandNames.renameNote'),
+        // The dialog belongs to the note page, which is the only place that can see whether
+        // anything is still unsaved; all this does is ask for it.
+        run: () => {
+          if (openNotePath !== null) {
+            requestRename();
+          }
+        },
+      },
+      {
         id: 'search',
         label: t('palette.commandNames.search'),
         run: () => {
@@ -147,6 +159,7 @@ export function Layout() {
       navigate,
       openNotePath,
       refresh,
+      requestRename,
       setSidebarTab,
       setTheme,
       t,

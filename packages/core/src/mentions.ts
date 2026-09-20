@@ -13,6 +13,7 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
+import { lineOf, lineStarts, sourceLines } from './lines.js';
 import { remarkWikilink } from './remark-wikilink.js';
 import type { TermMatcher } from './terms.js';
 
@@ -119,20 +120,20 @@ export function findMentions(markdown: string, matcher: TermMatcher): Mention[] 
   if (matcher.size === 0) {
     return [];
   }
-  const lines = lineStarts(markdown);
-  const sourceLines = markdown.split(LINE_END);
+  const starts = lineStarts(markdown);
+  const lines = sourceLines(markdown);
   const mentions: Mention[] = [];
   for (const span of proseSpans(markdown)) {
     for (const match of matcher.find(markdown.slice(span.start, span.end))) {
       const start = span.start + match.start;
-      const line = lineOf(lines, start);
+      const line = lineOf(starts, start);
       mentions.push({
         target: match.term.path,
         line,
         start,
         end: span.start + match.end,
         text: match.text,
-        context: (sourceLines[line - 1] ?? '').trim(),
+        context: (lines[line - 1] ?? '').trim(),
         inHeading: span.inHeading,
         inTableCell: span.inTableCell,
         linkable: isLinkable(
@@ -196,30 +197,4 @@ export function linkMentions(
     previousStart = mention.start;
   }
   return result;
-}
-
-/** Offsets at which each line begins, for turning an offset into a 1-based line number. */
-function lineStarts(markdown: string): number[] {
-  const starts = [0];
-  const pattern = /\r\n|\r|\n/g;
-  let match = pattern.exec(markdown);
-  while (match !== null) {
-    starts.push(match.index + match[0].length);
-    match = pattern.exec(markdown);
-  }
-  return starts;
-}
-
-function lineOf(starts: readonly number[], offset: number): number {
-  let low = 0;
-  let high = starts.length - 1;
-  while (low < high) {
-    const middle = Math.ceil((low + high) / 2);
-    if ((starts[middle] ?? 0) <= offset) {
-      low = middle;
-    } else {
-      high = middle - 1;
-    }
-  }
-  return low + 1;
 }
