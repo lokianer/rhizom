@@ -146,6 +146,14 @@
       "size": "Size"
     }
   },
+  "smartFolders": {
+    "title": "Saved searches",
+    "notes_one": "{{count}} note",
+    "notes_other": "{{count}} notes",
+    "noBlock": "This note holds no query block.",
+    "firstBlock": "The first of {{total}} query blocks in this note.",
+    "error": "This search could not be run: {{message}}"
+  },
   "mentions": {
     "title": "Unlinked mentions",
     "empty": "No note names this one without linking to it.",
@@ -233,5 +241,20 @@
     "error": "Could not reach the server: {{message}}",
     "retry": "Try again",
     "noVault": "No vault is configured. Set RHIZOM_VAULT_DIR and restart the server."
+  },
+  "callout": {
+    "note": "Note",
+    "abstract": "Summary",
+    "info": "Info",
+    "todo": "To do",
+    "tip": "Tip",
+    "success": "Done",
+    "question": "Question",
+    "warning": "Warning",
+    "failure": "Failure",
+    "danger": "Danger",
+    "bug": "Bug",
+    "example": "Example",
+    "quote": "Quote"
   }
 }

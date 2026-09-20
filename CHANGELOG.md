@@ -68,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anywhere and opening one must never run anything. A block that is partly wrong still answers:
   the rows are what could be read, and each line that could not is named underneath.
 - `POST /api/query`, in the OpenAPI document with the rest.
+- Callouts in Obsidian's syntax: `> [!warning] Title` and the twenty-nine spellings that fold
+  onto thirteen kinds, with `+` and `-` for a fold that starts open or closed. A folded callout is
+  a `<details>`, so it works with JavaScript switched off, and the colours come out of the vault's
+  own palette rather than the blue-red-green every other tool uses. A blockquote that names no
+  kind stays a blockquote.
+- Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
+  is disabled for now — ticking one has to write the file, and that is a slice of its own.
 - Frontmatter as a form: a fold above the editor showing every key of the open note as a field —
   text, number, yes-or-no, date or list — with keys that can be added and removed. It edits the
   note's own text and saves it the way typing does, so there is one writer and one undo history.

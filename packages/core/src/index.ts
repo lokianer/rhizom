@@ -34,6 +34,7 @@ export type {
   UploadResponse,
   VaultInfo,
 } from './api.js';
+export { calloutKindOf, CALLOUT_KINDS, type CalloutKind, type CalloutLabels } from './callout.js';
 export {
   findFrontmatter,
   frontmatterFields,

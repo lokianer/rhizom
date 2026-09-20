@@ -437,6 +437,117 @@ mark {
   font-style: italic;
 }
 
+/* Callouts. The kind picks a colour out of the vault's own palette rather than importing the
+   blue-red-green every other tool uses: a warning in Humus should look like it belongs to Humus.
+   Each kind sets one variable and the rules below spend it on the border and the title. */
+.rz-callout {
+  --rz-callout: var(--rz-text-muted);
+
+  margin: var(--rz-space-4) 0;
+  border-left: 3px solid var(--rz-callout);
+  border-radius: 0 var(--rz-radius-sm) var(--rz-radius-sm) 0;
+  padding: var(--rz-space-3) var(--rz-space-4);
+  background: var(--rz-surface);
+}
+
+.rz-callout-note,
+.rz-callout-info {
+  --rz-callout: var(--rz-cluster-4);
+}
+
+.rz-callout-abstract {
+  --rz-callout: var(--rz-cluster-7);
+}
+
+.rz-callout-todo {
+  --rz-callout: var(--rz-accent);
+}
+
+.rz-callout-tip,
+.rz-callout-success {
+  --rz-callout: var(--rz-moss-strong);
+}
+
+.rz-callout-question {
+  --rz-callout: var(--rz-cluster-6);
+}
+
+.rz-callout-warning {
+  --rz-callout: var(--rz-cluster-5);
+}
+
+.rz-callout-failure,
+.rz-callout-bug {
+  --rz-callout: var(--rz-rust);
+}
+
+.rz-callout-danger {
+  --rz-callout: var(--rz-rust-strong);
+}
+
+.rz-callout-example {
+  --rz-callout: var(--rz-cluster-8);
+}
+
+.rz-callout-title {
+  color: var(--rz-callout);
+  font-weight: 600;
+}
+
+/* Foldable: the summary is the title, and the marker says it opens. Same two characters the
+   file tree and the frontmatter fold use, because they mean the same thing. */
+details.rz-callout > summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+details.rz-callout > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.rz-callout > summary::before {
+  content: '▸';
+  font-weight: 400;
+}
+
+details.rz-callout[open] > summary::before {
+  content: '▾';
+}
+
+.rz-callout-body > :first-child {
+  margin-top: var(--rz-space-2);
+}
+
+.rz-callout-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Task lists. The box is disabled until ticking one writes the file, which is a later slice;
+   it is shown all the same, because a task list that reads as a bullet list reads wrong. */
+.rz-tasks {
+  padding-left: 0;
+  list-style: none;
+}
+
+.rz-task {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+}
+
+.rz-task > input[type='checkbox'] {
+  flex: none;
+  accent-color: var(--rz-accent-strong);
+}
+
+.rz-task-done {
+  color: var(--rz-text-muted);
+  text-decoration: line-through;
+}
+
 /* A query block: the list, table or cards a ```rhizom-query fence describes. It is the vault
    answering, not the note speaking, so it is set as plainly as the prose around it — no box, no
    heading, nothing the reader has to learn to read. */

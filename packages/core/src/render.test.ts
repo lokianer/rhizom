@@ -301,6 +301,50 @@ describe('renderNote: Markdown dialect', () => {
   });
 });
 
+describe('renderNote: task lists', () => {
+  it('renders a task as a disabled checkbox in front of what the item says', () => {
+    expect(render('- [ ] print the map\n- [x] pack the dice')).toBe(
+      '<ul class="rz-tasks">\n' +
+        '<li class="rz-task"><input type="checkbox" disabled> print the map</li>\n' +
+        '<li class="rz-task rz-task-done"><input type="checkbox" checked disabled> ' +
+        'pack the dice</li>\n' +
+        '</ul>',
+    );
+  });
+
+  it('reads a capital X as ticked', () => {
+    expect(render('- [X] done')).toContain(
+      '<li class="rz-task rz-task-done"><input type="checkbox" checked disabled>',
+    );
+  });
+
+  it('keeps the content of a task, links and all', () => {
+    const html = render('- [ ] visit [[Silverstadt]] and [the guild](Factions/Harbour%20Guild.md)');
+    expect(html).toContain('<li class="rz-task"><input type="checkbox" disabled> visit ');
+    expect(html).toContain('<a href="/wiki/Silverstadt.md" class="rz-wikilink">Silverstadt</a>');
+    expect(html).toContain('<a href="/wiki/Factions/Harbour%20Guild.md" class="rz-wikilink">');
+  });
+
+  it('leaves a list that only starts with a bracket alone', () => {
+    const html = render('- [a link](Silverstadt.md)\n- [not a task] either');
+    expect(html).not.toContain('rz-task');
+    expect(html).not.toContain('<input');
+    expect(html).toContain('<ul>\n<li><a href="/wiki/Silverstadt.md"');
+  });
+
+  it('marks the whole list when one item is a task, ordered lists included', () => {
+    expect(render('- [ ] a task\n- an ordinary item')).toContain('<ul class="rz-tasks">');
+    expect(render('- [ ] a task\n- an ordinary item')).toContain('<li>an ordinary item</li>');
+    expect(render('1. [ ] a task\n2. [x] another')).toContain('<ol class="rz-tasks">');
+  });
+
+  it('marks a nested task list on its own', () => {
+    const html = render('- a heading item\n  - [ ] a nested task');
+    expect(html).toContain('<ul>\n<li>a heading item');
+    expect(html).toContain('<ul class="rz-tasks">\n<li class="rz-task">');
+  });
+});
+
 describe('renderNote: headings', () => {
   const NOTE = '# Mira\n\nText.\n\n## Loot\n\n### Rare Loot\n\n## Loot\n';
 

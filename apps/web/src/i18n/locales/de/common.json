@@ -146,6 +146,14 @@
       "size": "Größe"
     }
   },
+  "smartFolders": {
+    "title": "Gespeicherte Suchen",
+    "notes_one": "{{count}} Notiz",
+    "notes_other": "{{count}} Notizen",
+    "noBlock": "Diese Notiz enthält keinen Abfrageblock.",
+    "firstBlock": "Der erste von {{total}} Abfrageblöcken dieser Notiz.",
+    "error": "Diese Suche ließ sich nicht ausführen: {{message}}"
+  },
   "mentions": {
     "title": "Unverlinkte Erwähnungen",
     "empty": "Keine Notiz nennt diese, ohne auf sie zu verweisen.",
@@ -233,5 +241,20 @@
     "error": "Server nicht erreichbar: {{message}}",
     "retry": "Erneut versuchen",
     "noVault": "Kein Tresor konfiguriert. RHIZOM_VAULT_DIR setzen und den Server neu starten."
+  },
+  "callout": {
+    "note": "Notiz",
+    "abstract": "Zusammenfassung",
+    "info": "Info",
+    "todo": "Zu tun",
+    "tip": "Tipp",
+    "success": "Erledigt",
+    "question": "Frage",
+    "warning": "Achtung",
+    "failure": "Fehlgeschlagen",
+    "danger": "Gefahr",
+    "bug": "Fehler",
+    "example": "Beispiel",
+    "quote": "Zitat"
   }
 }

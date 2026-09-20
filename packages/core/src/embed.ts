@@ -120,10 +120,13 @@ export function renderNoteWithEmbeds(
   // Everything a cached body's HTML depends on. `terms` belongs here too: a body rendered
   // before the term list arrived carries no marks, and reusing it would keep it that way, and
   // `renderQuery` for the same reason — an embedded note may hold a query block of its own.
+  // `calloutLabels` likewise: a reader who switches the interface to German would otherwise keep
+  // every callout title an embedded note had when it was last rendered.
   const identity = [
     base.resolveLink,
     base.assetUrl,
     base.terms,
+    base.calloutLabels,
     labels,
     readNote,
     base.renderQuery,

@@ -3,9 +3,11 @@
 // fetched here rather than in core, which stays a pure function of what is already known — the
 // editor renders an unsaved draft on every keystroke, and no server has ever seen that text.
 import {
+  CALLOUT_KINDS,
   createTermMatcher,
   renderNoteWithEmbeds,
   renderQueryResult,
+  type CalloutLabels,
   type EmbedLabels,
   type LinkKind,
   type QueryLabels,
@@ -153,6 +155,16 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
     [answers, queryLabels, queryLinks],
   );
 
+  // One word per kind of callout, because core carries no language. The full record is what the
+  // type asks for, so a kind added to the renderer cannot ship without a word for it.
+  const calloutLabels = useMemo<CalloutLabels>(
+    () =>
+      Object.fromEntries(
+        CALLOUT_KINDS.map((kind) => [kind, t(`callout.${kind}`)]),
+      ) as CalloutLabels,
+    [t],
+  );
+
   const { html, wanted, queryKey } = useMemo(() => {
     const rendered = renderNoteWithEmbeds(content, {
       sourcePath: path,
@@ -163,6 +175,7 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
       labels,
       renderQuery,
       queryLoading: queryLabels.loading,
+      calloutLabels,
     });
     // The renderer reports what it asked for and did not get; the effects below fetch it and
     // the next render fills the placeholders in. The query bodies travel as one string so that
@@ -172,7 +185,17 @@ export function NotePreview({ path, content, mode = 'notes', label }: NotePrevie
       wanted: rendered.pending,
       queryKey: JSON.stringify(rendered.pendingQueries),
     };
-  }, [content, labels, matcher, path, queryLabels, readNote, renderQuery, resolveLink]);
+  }, [
+    calloutLabels,
+    content,
+    labels,
+    matcher,
+    path,
+    queryLabels,
+    readNote,
+    renderQuery,
+    resolveLink,
+  ]);
 
   useEffect(() => {
     for (const embedded of wanted) {

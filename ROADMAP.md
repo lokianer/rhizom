@@ -66,7 +66,9 @@ changes only with a documented migration.
       by the index, never evaluated as code out of somebody else's vault
 - [ ] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
 - [ ] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
-      optional Vim mode (split view already shipped with Phase 1)
+      optional Vim mode (split view already shipped with Phase 1). Callouts and task checkboxes
+      are in; a ticked box is read, not yet written, which wants a slice of its own. Mermaid
+      needs a rendering library and therefore a decision before it is built
 - [ ] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes

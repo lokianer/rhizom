@@ -4,7 +4,7 @@
 // note itself contributes is sanitised, so the result can be injected into the DOM as-is.
 import GithubSlugger from 'github-slugger';
 import type { Properties, Root as HastRoot } from 'hast';
-import type { Code, Image, Link, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
+import type { Code, Image, Link, List, Paragraph, Parent, Root, RootContent, Text } from 'mdast';
 import rehypeSanitize, { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize';
 import rehypeStringify from 'rehype-stringify';
 import remarkFrontmatter from 'remark-frontmatter';
@@ -15,6 +15,7 @@ import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
 
 import type { Heading, LinkKind } from './api.js';
+import { applyCallout, CALLOUT_KINDS, type CalloutLabels } from './callout.js';
 import { displayText, headingSlug } from './parse.js';
 import { QUERY_LANGUAGE } from './query.js';
 import type { TermMatcher, VaultTerm } from './terms.js';
@@ -83,6 +84,12 @@ export interface RenderOptions {
    */
   queryLoading?: string | undefined;
   /**
+   * The word each kind of callout goes by, shown as the title of one that was written without a
+   * title of its own. Core carries no language, so the app supplies them; without them a callout
+   * falls back to the word the note itself wrote, `[!tldr]` and all.
+   */
+  calloutLabels?: CalloutLabels | undefined;
+  /**
    * Marks the terms the vault defines where they appear in prose. Built once by the caller and
    * reused: this runs over every text node of every render.
    */
@@ -102,6 +109,17 @@ const IMAGE_EXTENSION = /\.(apng|avif|bmp|gif|ico|jpe?g|png|svg|webp)$/i;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 // Obsidian's embed sizes: `![[picture.png|320]]` and `![[picture.png|320x200]]`.
 const EMBED_SIZE = /^(\d{1,4})(?:x(\d{1,4}))?$/;
+
+/**
+ * Every class a callout can carry. Derived from `CALLOUT_KINDS` rather than written out again, so
+ * that a kind added there cannot become the one whose colour the sanitiser quietly strips.
+ */
+const CALLOUT_CLASSES: string[] = [
+  'rz-callout',
+  'rz-callout-title',
+  'rz-callout-body',
+  ...CALLOUT_KINDS.map((kind) => `rz-callout-${kind}`),
+];
 
 type SanitizeAttributes = NonNullable<SanitizeSchema['attributes']>;
 type PropertyDefinition = SanitizeAttributes[string][number];
@@ -135,7 +153,20 @@ const sanitizeSchema: SanitizeSchema = {
   attributes: {
     ...defaultSchema.attributes,
     a: allowFor('a', ['rz-wikilink', 'rz-wikilink-missing', 'rz-embed-file'], 'dataTarget'),
-    div: allowFor('div', ['rz-embed', 'rz-query'], 'dataPath', 'dataEmbed', 'dataState'),
+    div: allowFor(
+      'div',
+      ['rz-embed', 'rz-query', ...CALLOUT_CLASSES],
+      'dataPath',
+      'dataEmbed',
+      'dataState',
+    ),
+    // A foldable callout and its title. `open` is allowed on every element by the default schema.
+    details: allowFor('details', CALLOUT_CLASSES),
+    summary: allowFor('summary', ['rz-callout-title']),
+    // Task lists: the class the stylesheet drops the bullets by, and the one that says "ticked".
+    ul: allowFor('ul', ['rz-tasks']),
+    ol: allowFor('ol', ['rz-tasks']),
+    li: allowFor('li', ['rz-task', 'rz-task-done']),
     // `span` is an allowed tag in the default schema but has no attribute rules of its own, so
     // without this the element would survive and its class would be filtered away in silence.
     span: allowFor('span', ['rz-term'], 'dataTerm'),
@@ -274,6 +305,12 @@ function transform(parent: Parent, context: Context, insideLink: boolean): void 
       rewriteLink(child, context);
     } else if (child.type === 'image') {
       rewriteImage(child, context);
+    } else if (child.type === 'blockquote') {
+      // A callout is a blockquote that named a kind; everything else stays a quotation. Either
+      // way the walk goes on into it below, so a callout's body is rendered like any other prose.
+      applyCallout(child, context.options.calloutLabels);
+    } else if (child.type === 'list') {
+      markTasks(child);
     }
     if ('children' in child) {
       transform(
@@ -344,6 +381,11 @@ function embedParagraph(paragraph: Paragraph, context: Context): boolean {
   const render = context.options.renderEmbed;
   const only = paragraph.children[0];
   if (render === undefined || paragraph.children.length !== 1 || only?.type !== 'wikilink') {
+    return false;
+  }
+  // A paragraph that already names its tag is one this renderer built — a callout's title — and
+  // a title is a line of text, not a place to hang a block of transcluded note on.
+  if (paragraph.data?.hName !== undefined) {
     return false;
   }
   const parts = parseWikilink(only.value);
@@ -425,6 +467,34 @@ function queryBlock(node: Code, context: Context): Paragraph | undefined {
     ],
     data: { hName: 'div', hProperties: properties },
   };
+}
+
+/**
+ * Marks a list whose items are tasks — `- [ ]` and `- [x]` — so the stylesheet can drop the
+ * bullets the checkboxes stand in for and strike a finished one through. The list is a task list
+ * as soon as one item is a task, which is how Markdown writes a list of them.
+ *
+ * remark-rehype puts a real checkbox in front of the item's content; it renders it disabled, and
+ * this leaves it that way. Ticking a box has to write the box back into the Markdown file it came
+ * from, and that is a later slice — a box that took the click and then forgot it would be worse
+ * than one that plainly cannot be clicked.
+ */
+function markTasks(list: List): void {
+  const tasks = list.children.filter((item) => typeof item.checked === 'boolean');
+  if (tasks.length === 0) {
+    return;
+  }
+  // The classes replace the GitHub ones remark-rehype writes: one vocabulary in the page, and
+  // `rz-` is the one the stylesheet knows.
+  const data = (list.data ??= {});
+  data.hProperties = { ...data.hProperties, className: ['rz-tasks'] };
+  for (const item of tasks) {
+    const itemData = (item.data ??= {});
+    itemData.hProperties = {
+      ...itemData.hProperties,
+      className: item.checked === true ? ['rz-task', 'rz-task-done'] : ['rz-task'],
+    };
+  }
 }
 
 function renderWikilink(value: string, embed: boolean, context: Context): Image | Link {
