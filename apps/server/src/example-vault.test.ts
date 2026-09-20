@@ -222,6 +222,24 @@ describe('the example vault', () => {
     }
   });
 
+  it('searches the names a note answers to, not only its title', () => {
+    // The vault is small enough that the limit is the whole of it: a missing hit is a missing
+    // hit, not a note that fell off the end of the list.
+    const found = (query: string): string[] =>
+      index.search(query, manifest.notes.count).hits.map((hit) => hit.path);
+
+    // Every alias a link resolves through is a name a reader may type into the search box.
+    for (const { target, resolvesTo } of manifest.aliasLinks) {
+      expect(found(target), target).toContain(resolvesTo);
+    }
+    // And every alias the vault declares, whether or not a link happens to use it.
+    for (const note of index.listNotes()) {
+      for (const alias of note.aliases) {
+        expect(found(alias), `${alias} -> ${note.path}`).toContain(note.path);
+      }
+    }
+  });
+
   it('keeps embeds apart from links', () => {
     for (const embed of manifest.embeds) {
       const link = findLink(embed.from, embed.raw, 'embed');

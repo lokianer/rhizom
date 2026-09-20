@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The index schema version is 4, so the index file is rebuilt once on the next start. It costs
+  one vault scan and no data: the Markdown files are the source of truth.
+
 - Smart folders: a note that declares `type: query` is a saved search, and the sidebar shows it
   as a folder that fills itself by running the block inside it. A saved search is therefore a
   file — it travels with the vault, reads without Rhizom and can be edited in any editor, rather
@@ -99,6 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   says. Only the three characters of the box change; the rest of the line, links and trailing tags
   and indentation, comes through untouched, and a line that is no longer a task is refused rather
   than written into.
+- Search finds a note by the aliases it declares. Silverstadt answers to "the Silver City" in
+  every other part of Rhizom — links resolve through it, the glossary lists it, the mention scan
+  looks for it — and the search was the one place that did not know.
 - Block references: `[[Note#^abc]]` points at one block of a note and `![[Note#^abc]]` shows it.
   A marker is an id written at the end of a block, the way Obsidian writes one, and it is hidden
   from the reader. What counts as the block is the outermost thing the marker ends — a list item

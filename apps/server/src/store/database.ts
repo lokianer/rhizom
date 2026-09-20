@@ -11,7 +11,7 @@ import Database from 'better-sqlite3';
  * rebuilt: `syncVault` skips a file whose size and modification time are unchanged and would
  * otherwise keep the old answer forever.
  */
-export const INDEX_SCHEMA_VERSION = 3;
+export const INDEX_SCHEMA_VERSION = 4;
 
 const DDL = `
 create table if not exists notes (
@@ -69,22 +69,33 @@ create table if not exists meta (
   value text not null
 );
 
+-- The aliases are in the index because they are names: a note that answers to "the Silver City"
+-- should be findable under it, the way links, the glossary and the mention scan already find it.
+-- They go in as the JSON text the column holds, brackets and quotes and all, rather than unfolded
+-- into a list. An external-content table promises that what the triggers write is what the content
+-- table would return, and integrity-check and rebuild hold it to that promise; a second, prettier
+-- spelling of the same value would break it silently, because nothing reads the index until
+-- somebody searches. The tokeniser makes the promise cheap: brackets, quotes and commas are
+-- separators to unicode61, so what lands in the index is the words of the aliases and nothing else.
 create virtual table if not exists notes_fts using fts5(
   title,
+  aliases,
   body,
   content='notes',
   content_rowid='id',
   tokenize='unicode61 remove_diacritics 2'
 );
 create trigger if not exists notes_fts_insert after insert on notes begin
-  insert into notes_fts (rowid, title, body) values (new.id, new.title, new.body);
+  insert into notes_fts (rowid, title, aliases, body) values (new.id, new.title, new.aliases, new.body);
 end;
 create trigger if not exists notes_fts_delete after delete on notes begin
-  insert into notes_fts (notes_fts, rowid, title, body) values ('delete', old.id, old.title, old.body);
+  insert into notes_fts (notes_fts, rowid, title, aliases, body)
+  values ('delete', old.id, old.title, old.aliases, old.body);
 end;
 create trigger if not exists notes_fts_update after update on notes begin
-  insert into notes_fts (notes_fts, rowid, title, body) values ('delete', old.id, old.title, old.body);
-  insert into notes_fts (rowid, title, body) values (new.id, new.title, new.body);
+  insert into notes_fts (notes_fts, rowid, title, aliases, body)
+  values ('delete', old.id, old.title, old.aliases, old.body);
+  insert into notes_fts (rowid, title, aliases, body) values (new.id, new.title, new.aliases, new.body);
 end;
 `;
 

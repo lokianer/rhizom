@@ -828,3 +828,35 @@ moving somebody's text because a stale line number said so is the one thing this
 
 In the wiki the box stays what the renderer makes it: disabled, a picture of what the file says.
 The wiki is read-only, and a box that looked clickable there would be lying about it.
+
+## 2026-09-20 — An alias is a name, so it is searched like one
+
+Every other part of Rhizom treats an alias as a name of the note: a link resolves through it, the
+glossary lists it, the unlinked-mention scan looks for it. Full-text search was the one place
+that did not, so a vault that called Silverstadt "the Silver City" could not be searched for the
+name half the notes used.
+
+The aliases are now a column of the full-text table, and three decisions came with it.
+
+**They go in as the JSON text the column already holds**, not unfolded into a tidy list. The
+table is external-content: FTS5 promises that what the triggers wrote equals what the content
+table would return, and `integrity-check` and `rebuild` hold it to that promise. A second,
+prettier spelling would break it silently, because nothing reads the index until somebody
+searches. It costs nothing, because the tokeniser treats brackets, quotes and commas as
+separators — only the alias words are indexed.
+
+**The weights are title 10, aliases 8, body 1.** A note _called_ the term is nearly always what
+was meant; an alias is the other name the note answers to, so it belongs just below the title and
+far above a passing mention. The gap between 10 and 8 is small on purpose: it decides a tie
+without pretending an alias is second-class.
+
+**The snippet stays on the body.** A snippet cut from the aliases column would show raw JSON; the
+body is the only column that reads as a sentence. So a hit that matched only an alias shows the
+note's opening with nothing highlighted, which says "this note is _called_ that" more honestly
+than a marked scrap of frontmatter would.
+
+One thing deliberately left alone: the unlinked-mention scan asks the index for candidates and is
+now scoped to the title and body columns. The scan ignores frontmatter on purpose — `aliases:
+[Mira]` names Mira without mentioning her — so a note matched through the alias column would be
+read and thrown away, and would take a place in the candidate limit from a note with something
+to say.

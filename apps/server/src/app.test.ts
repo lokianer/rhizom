@@ -313,6 +313,14 @@ describe('vault API', () => {
 
     expect((await app.inject({ method: 'GET', url: '/api/search' })).statusCode).toBe(400);
 
+    // Mira answers to "The Ledger-Keeper", and only her frontmatter says so: the hit comes from
+    // the aliases column, and the snippet from the body, which marks nothing here.
+    const byAlias = await app.inject({ method: 'GET', url: '/api/search?q=Keeper' });
+    const aliasResult: SearchResponse = byAlias.json();
+    expect(aliasResult.hits.map((hit) => hit.path)).toEqual(['Campaign/NPCs/Mira.md']);
+    expect(aliasResult.hits[0]?.snippet).toContain('She keeps the harbour ledger');
+    expect(aliasResult.hits[0]?.snippet).not.toContain('<mark>');
+
     const backlinks = await app.inject({
       method: 'GET',
       url: '/api/backlinks?path=Campaign/NPCs/Mira.md',

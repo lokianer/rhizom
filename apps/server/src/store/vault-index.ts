@@ -454,6 +454,20 @@ export class VaultIndex {
       .all() as { target: string; count: number }[];
   }
 
+  /**
+   * Full-text search over the three columns of `notes_fts`, weighted apart rather than equally.
+   * A note *called* the search term is nearly always what was meant, so the title carries ten
+   * times a word in the body; an alias is a name too — the other name the note answers to — and
+   * sits just below the title at eight, which keeps the title in front where a note wears the
+   * term as its title and another only as an alias, while still putting both ahead of prose that
+   * merely mentions it.
+   *
+   * The snippet always comes from the body (column 2), because that is the only column that
+   * reads as a sentence: a snippet cut from the aliases column would show the stored JSON. A hit
+   * that matched an alias alone therefore shows the opening of the note with nothing marked,
+   * which is the honest answer — the term is not in the prose, it is what the note is called,
+   * and the reader gets the first line to recognise it by.
+   */
   search(query: string, limit: number): SearchResponse {
     const tokens = query.match(/[\p{L}\p{N}_]+/gu) ?? [];
     if (tokens.length === 0) {
@@ -466,8 +480,8 @@ export class VaultIndex {
     const rows = this.sqlite
       .prepare(
         `select n.path, n.title,
-                snippet(notes_fts, 1, ?, ?, '…', 24) as snippet,
-                bm25(notes_fts, 10.0, 1.0) as score
+                snippet(notes_fts, 2, ?, ?, '…', 24) as snippet,
+                bm25(notes_fts, 10.0, 8.0, 1.0) as score
          from notes_fts join notes n on n.id = notes_fts.rowid
          where notes_fts match ? order by score limit ?`,
       )
@@ -494,6 +508,11 @@ export class VaultIndex {
    * filter — it tokenises and folds differently from the term matcher — so it may hand back a
    * note that holds no mention after all; the scan drops those. It must never miss one, which
    * is why the terms are ANDed per term and ORed between them, without prefix matching.
+   *
+   * Only the title and the body are searched. A mention lives in prose, and the scan skips
+   * frontmatter on purpose — `aliases: [Mira]` names Mira without mentioning her — so a note
+   * that matched through the aliases column would be read and thrown away, and would take a
+   * place in the candidate limit from a note that has something to say.
    */
   mentionCandidates(terms: readonly string[], limit: number): string[] {
     const phrases = terms
@@ -511,7 +530,7 @@ export class VaultIndex {
           `select n.path from notes_fts join notes n on n.id = notes_fts.rowid
            where notes_fts match ? order by n.path limit ?`,
         )
-        .all(phrases.join(' OR '), limit) as { path: string }[]
+        .all(`{title body} : (${phrases.join(' OR ')})`, limit) as { path: string }[]
     ).map((row) => row.path);
   }
 

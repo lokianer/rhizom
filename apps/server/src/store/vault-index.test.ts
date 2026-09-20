@@ -172,6 +172,83 @@ describe('search', () => {
     );
   });
 
+  it('finds a note by an alias it declares, and not by one it does not', () => {
+    index.upsertNote(
+      note(
+        'Campaign/Places/Silverstadt.md',
+        '---\ntags: [campaign, places]\naliases: [the Silver City, Silverstadt-on-Selle]\n---\n# Silverstadt\n\nA harbour city. The ledger is kept by [[Mira]].\nSee also [[Home]].',
+      ),
+    );
+    // Nothing in the prose of this vault says "Selle"; the alias is the only place it stands.
+    expect(index.search('Selle', 10).hits.map((hit) => hit.path)).toEqual([
+      'Campaign/Places/Silverstadt.md',
+    ]);
+    expect(index.search('Golden City', 10).hits).toEqual([]);
+  });
+
+  it('shows the opening of the note when only an alias matched, marking nothing', () => {
+    index.upsertNote(
+      note(
+        'Campaign/Places/Sunken Archive.md',
+        '---\naliases: [Drowned Library, the Archive below]\n---\n# Sunken Archive\n\nThe lower stacks, under the water line since 841.',
+      ),
+    );
+    const hit = index.search('drowned', 10).hits[0];
+    expect(hit?.path).toBe('Campaign/Places/Sunken Archive.md');
+    expect(hit?.snippet).toContain('The lower stacks');
+    expect(hit?.snippet).not.toContain('<mark>');
+  });
+
+  it('ranks a title before an alias and an alias before a mention in the body', () => {
+    const prose = 'A tower over the water, lit against the tide.';
+    index.upsertNote(note('Rank/Beacon.md', `# Beacon\n\n${prose}`));
+    index.upsertNote(
+      note('Rank/Watchfire.md', `---\naliases: [Beacon]\n---\n# Watchfire\n\n${prose}`),
+    );
+    index.upsertNote(note('Rank/Quay.md', `# Quay\n\nThe beacon burns here, ${prose}`));
+    expect(index.search('beacon', 10).hits.map((hit) => hit.path)).toEqual([
+      'Rank/Beacon.md',
+      'Rank/Watchfire.md',
+      'Rank/Quay.md',
+    ]);
+  });
+
+  it('indexes an alias in another script and one carrying an emoji', () => {
+    index.upsertNote(
+      note(
+        'Garten/Wurzeln.md',
+        '---\naliases: [Über die Wurzeln, Луна, 🌱 Sprout]\n---\n# Wurzeln\n\nSchön.',
+      ),
+    );
+    const found = (query: string): string[] => index.search(query, 10).hits.map((hit) => hit.path);
+    // `remove_diacritics 2` folds the umlaut, and unicode61 folds case beyond ASCII.
+    expect(found('Über')).toContain('Garten/Wurzeln.md');
+    expect(found('uber')).toContain('Garten/Wurzeln.md');
+    expect(found('Луна')).toContain('Garten/Wurzeln.md');
+    expect(found('ЛУН')).toContain('Garten/Wurzeln.md');
+    // The emoji is a separator to the tokeniser: it indexes nothing and breaks no neighbour.
+    expect(found('Sprout')).toContain('Garten/Wurzeln.md');
+    expect(index.search('🌱', 10)).toEqual({ query: '🌱', hits: [], total: 0 });
+  });
+
+  it('forgets an alias the note no longer declares', () => {
+    const archive = (alias: string) =>
+      note(
+        'Campaign/Places/Sunken Archive.md',
+        `---\naliases: [${alias}]\n---\n# Sunken Archive\n\nThe lower stacks, under the water line since 841.`,
+      );
+    index.upsertNote(archive('Drowned Library'));
+    expect(index.search('Drowned Library', 10).hits.map((hit) => hit.path)).toEqual([
+      'Campaign/Places/Sunken Archive.md',
+    ]);
+
+    index.upsertNote(archive('Lost Library'));
+    expect(index.search('Drowned Library', 10).hits).toEqual([]);
+    expect(index.search('Lost Library', 10).hits.map((hit) => hit.path)).toEqual([
+      'Campaign/Places/Sunken Archive.md',
+    ]);
+  });
+
   it('escapes HTML in snippets and survives query syntax characters', () => {
     index.upsertNote(
       note('Html.md', '# Html\n\nCompare a < b & c > d with "quotes" OR NOT ( stuff'),
@@ -352,6 +429,17 @@ describe('mentionCandidates', () => {
     index.upsertNote(note('Places/Rhone.md', `# ${decomposed}\n\nA river.`));
     index.upsertNote(note('Journal/Trip.md', `# Trip\n\nWe followed the ${decomposed} south.`));
     expect(index.mentionCandidates([decomposed], 10)).toContain('Journal/Trip.md');
+  });
+
+  it('passes over a note that only declares the term as an alias', () => {
+    index.upsertNote(
+      note(
+        'Glossary/Tide.md',
+        '---\naliases: [spring tides]\n---\n# Tide\n\nThe sea, twice a day.',
+      ),
+    );
+    // Frontmatter is metadata, not prose: the scan would find nothing to mark in this note.
+    expect(index.mentionCandidates(['spring tides'], 10)).not.toContain('Glossary/Tide.md');
   });
 
   it('asks for nothing when the terms hold no word', () => {
