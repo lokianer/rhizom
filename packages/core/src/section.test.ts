@@ -296,6 +296,15 @@ describe('blockIdOnLine', () => {
     expect(blockIdOnLine('One. ^one\r\n')).toBe('one');
   });
 
+  it('answers at once on a line of nothing but tabs', () => {
+    // The grammar used to be a regular expression anchored at the end, which the engine retries
+    // from every one of these: 40,000 tabs took it quadratic time, and a note is somebody else's
+    // file. If this ever goes back to that, the test does not fail — it hangs.
+    expect(blockIdOnLine('\t'.repeat(40_000))).toBeUndefined();
+    expect(blockIdOnLine(`${'\t'.repeat(40_000)}x`)).toBeUndefined();
+    expect(blockIdOnLine(`text${'\t'.repeat(40_000)}^id`)).toBe('id');
+  });
+
   it('is not fooled by a caret that is not an address', () => {
     for (const line of ['The ledger was open.', '2^8 is 256', 'a ^ b', 'E = mc^2^', '^alone']) {
       expect(blockIdOnLine(line), line).toBeUndefined();

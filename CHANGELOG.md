@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A block id is read by walking the end of the line backwards rather than with a regular
+  expression anchored at the end. The pattern was quadratic on a line made of nothing but spaces
+  and tabs — the engine starts again at every one of them — and a note is somebody else's file.
+  CodeQL raised it as `js/polynomial-redos`; the grammar it recognises is unchanged.
+
 ## [0.2.0] - 2026-09-20
 
 ### Added

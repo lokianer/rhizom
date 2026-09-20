@@ -33,15 +33,47 @@ const parser = unified()
   .freeze();
 
 /**
- * A block id as Obsidian writes it: at the end of the block's last line, after a space, a caret
- * and then letters, digits and hyphens. The whole id has to match — `^café` is not the id `caf`
- * followed by a letter, it is a word with a caret in front of it.
+ * What a block id is made of, one character at a time. An id as Obsidian writes it stands at the
+ * end of the block's last line, after a space: a caret, then letters, digits and hyphens. The
+ * whole id counts — `^café` is not the id `caf` followed by a letter, it is a word with a caret
+ * in front of it, which is why the scan below stops at the first character that is not one of
+ * these and then insists on the caret.
  *
  * ASCII only, on purpose. The id travels into the page as an anchor and into the address bar as
  * a `#fragment`, and both stay exactly as written that way; and it is a token the author copies
  * rather than reads, so nothing is lost by keeping it to the set Obsidian itself generates.
  */
-const MARKER = /[ \t]+\^([A-Za-z0-9-]+)$/;
+const ID_CHARACTER = /[A-Za-z0-9-]/;
+
+/** What a marker may have behind it: a line break, and the space or `|` a table row ends with. */
+const TRAILING: ReadonlySet<string> = new Set([' ', '\t', '|', '\r', '\n']);
+
+/**
+ * The marker a string ends with: the id itself, and where the run of spaces before its caret
+ * begins — which is what a rewrite has to replace, marker and separating space together.
+ *
+ * Read backwards from the end rather than with `/[ \t]+\^([A-Za-z0-9-]+)$/`, although that is the
+ * grammar this implements. A pattern of that shape is quadratic on a line made of nothing but
+ * spaces and tabs: the engine starts again at every one of them, consumes the rest, and fails the
+ * anchor. A note is somebody else's file and a line of ten thousand tabs is a legal one, so the
+ * scan walks each character once instead.
+ */
+function markerAtEnd(text: string): { id: string; offset: number } | undefined {
+  let start = text.length;
+  while (start > 0 && ID_CHARACTER.test(text[start - 1]!)) {
+    start -= 1;
+  }
+  // An id of no characters, or one with no caret in front of it, is not a marker.
+  if (start === text.length || start === 0 || text[start - 1] !== '^') {
+    return undefined;
+  }
+  let offset = start - 1;
+  while (offset > 0 && (text[offset - 1] === ' ' || text[offset - 1] === '\t')) {
+    offset -= 1;
+  }
+  // The caret has to follow whitespace: `E = mc^2` ends in an id and is not one.
+  return offset === start - 1 ? undefined : { id: text.slice(start), offset };
+}
 
 /**
  * The id one line of source ends with, if it ends with one at all — the same grammar and the
@@ -54,7 +86,13 @@ const MARKER = /[ \t]+\^([A-Za-z0-9-]+)$/;
  * `sliceBlock`.
  */
 export function blockIdOnLine(line: string): string | undefined {
-  return MARKER.exec(line.replace(/[\r\n]+$/, '').replace(/[ \t|]+$/, ''))?.[1];
+  let end = line.length;
+  // A line break, and the trailing space or `|` a table row ends with: the marker stands before
+  // all of it. Trimmed by hand for the reason `markerAtEnd` gives.
+  while (end > 0 && TRAILING.has(line[end - 1]!)) {
+    end -= 1;
+  }
+  return markerAtEnd(line.slice(0, end))?.id;
 }
 
 /** The same set again, for checking a reference before it is looked up. */
@@ -244,13 +282,12 @@ function dedent(line: string, indent: number): string {
 
 /** The id this text node ends with, if it ends with one at all. */
 function markerIn(node: Text, markdown: string): { id: string; offset: number } | undefined {
-  const match = MARKER.exec(node.value);
-  const id = match?.[1];
+  const marker = markerAtEnd(node.value);
   const end = node.position?.end.offset;
-  if (match === null || id === undefined || end === undefined) {
+  if (marker === undefined || end === undefined) {
     return undefined;
   }
-  return endsTheLine(markdown, end) ? { id, offset: match.index } : undefined;
+  return endsTheLine(markdown, end) ? marker : undefined;
 }
 
 /**
