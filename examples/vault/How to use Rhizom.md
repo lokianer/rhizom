@@ -18,6 +18,8 @@ reads like the thing it is while you work in it.
 | --- | --- |
 | `Ctrl/⌘ + S` | Save now. Notes autosave anyway, about a second after you stop typing. |
 | `Ctrl/⌘ + F` | Find. `Ctrl/⌘ + H` opens replace with it. |
+| `Ctrl/⌘ + B`, `+ I` | Bold, italic. A second press takes the markers back off. |
+| `Ctrl/⌘ + K` | Turns the selection into a link and puts the cursor where the address goes. |
 | `Ctrl/⌘ + P` | The command palette: everything in this document has an entry there. |
 | `Enter` in a list | Continues the list. `Tab` indents, `Shift + Tab` goes back out. |
 
@@ -55,7 +57,20 @@ Escape then means what Vim means by it rather than leaving zen.
 
 `[[Silverstadt]]` links by name, `[[Campaign/Places/Silverstadt]]` by path, and
 `[[Silverstadt|the city]]` shows your own words. A link to a note that does not exist yet is
-marked; clicking it creates the note. `[[Silverstadt#Districts]]` points at a heading.
+marked; clicking it creates the note. `[[Silverstadt#Districts]]` points at a heading, and
+`[[Silverstadt#^abc123]]` at one block of it.
+
+A block id is written at the end of the block it belongs to — a paragraph, a list item, a whole
+quotation — and is hidden when the note is read. `![[Silverstadt#^abc123]]` shows that one block
+here. What counts as the block is the outermost thing the marker ends: a list item rather than
+the list around it, a whole table rather than the row, because a row cut out of a table is a
+line with pipes in it.
+
+You do not have to write the id yourself. **Copy a link to this block**, in the palette or with
+`Ctrl/⌘ + Shift + X`, gives the block under the cursor an id if it has none and puts the link
+on the clipboard. The id is made of the block's first words, so both ends of the link say what
+they point at. A heading and a code block are refused, and say why: a heading already answers to
+`[[Note#Heading]]`, and in code the marker would be code.
 
 Ordinary Markdown links to `.md` files work too, and count as links everywhere Rhizom counts
 them.
@@ -135,6 +150,15 @@ vault and can be edited in any editor.
 asking for a level asks for everything under it — filtering by `campaign` finds a note that only
 ever wrote `campaign/silverstadt/npcs`. A level nobody wrote on its own is still shown, because
 that row is how you ask for both of its children at once.
+
+Reaching for a tag shows a pencil beside it: that renames the tag in every note that carries it,
+under the same rules a note rename works by — a dry run first, then the write, and a file that
+changed meanwhile is reported rather than overwritten. A level takes the levels under it with
+it, in the prose and in the frontmatter alike, and a tag in a code block stays where it is.
+
+> [!warning] Renaming onto a tag that exists merges the two
+> A tag is only its name, so afterwards nothing remembers there were two of them. The dialog
+> says which tags it would merge with before you press anything.
 
 ### Daily notes
 
@@ -217,6 +241,11 @@ note. Tags filter it. Both layouts export as SVG or PNG.
 writable.
 
 **Search** in the sidebar is full text across every note, with the matches marked in the snippet.
+It also finds a note by the aliases it declares, ranked just below a match in the title — so
+searching for "the Silver City" finds Silverstadt, which is the name half this vault uses.
+
+The palette has two more ways in: **Open a random note**, worth stumbling through a vault with,
+and **Duplicate this note**, which names the copy the way a file manager would.
 
 ## Running it
 
