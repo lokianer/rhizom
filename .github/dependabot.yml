@@ -39,6 +39,15 @@ updates:
         exclude-patterns:
           - vitest
           - '@vitest/*'
+    ignore:
+      # The Node types have to describe the oldest runtime this project supports, not the newest
+      # one that exists: `engines` says 22.22 and up, so types from 26 would let code compile
+      # against APIs a supported Node has never heard of, and nothing in CI would catch it —
+      # every job there runs a Node new enough for them. Majors here are chosen by hand, at the
+      # same time as the engines field, exactly as the base image's are.
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
