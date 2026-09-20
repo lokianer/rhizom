@@ -289,8 +289,17 @@ in may still move._
       second tool: the same rules as above, over HTTP. One file at a time, a hash per file, and a
       conflict written to disk as a file rather than resolved in silence. Only worth building
       once the item above has proved the conflict model on somebody else's sync tool
-- [ ] Installers for Windows, macOS and Linux, with an update the user asks for rather than one
-      that happens to them
+- [ ] Installers in this order: **Windows, then macOS, then Linux** — the order the maintainer
+      works in, so each one is used before the next is started. Signing is the part that differs
+      and it is not free: Windows without a code-signing certificate means SmartScreen warns
+      every downloader, macOS without an Apple developer account means Gatekeeper refuses until
+      the user knows the right-click trick, and Linux needs neither. For a `0.x` the honest
+      answer may well be to ship unsigned and say so on the download page; it is a decision to
+      take deliberately rather than to discover
+- [ ] An update the user asks for rather than one that happens to them: a desktop build says
+      that a new version exists and installs it when told to. Nothing phones home to find out —
+      the check is a request to the release feed, made when the app is opened, and it can be
+      switched off
 - [ ] Published OpenAPI docs, webhooks, CLI (`rhizom new`, `rhizom search`, `rhizom export`)
 - [ ] Documented theme system (CSS variables) plus two example community themes
 - [ ] Spaced repetition: definitions as flashcards (SM-2 algorithm)
