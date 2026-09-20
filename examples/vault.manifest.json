@@ -2,9 +2,9 @@
   "description": "What a checker should find when it indexes examples/vault. Paths are vault paths: forward slashes, relative to the vault root, NFC-normalised, with extension.",
   "vault": "vault",
   "notes": {
-    "count": 40,
+    "count": 41,
     "byFolder": {
-      "": 1,
+      "": 2,
       "Campaign": 2,
       "Campaign/NPCs": 6,
       "Campaign/Places": 4,

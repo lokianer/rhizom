@@ -188,6 +188,26 @@ describe('sliceBlock', () => {
     );
   });
 
+  it('takes the whole table for an id in a row that is not the last one', () => {
+    const table = [
+      '| item | who |',
+      '| --- | --- |',
+      '| lantern | Mira ^first |',
+      '| ledger | Aldric |',
+    ].join('\n');
+    expect(sliceBlock(table, 'first')).toBe(table);
+  });
+
+  it('takes the table for an id in a row that ends on an empty cell', () => {
+    const table = ['| item | who |', '| --- | --- |', '| lantern ^unclaimed | |'].join('\n');
+    expect(sliceBlock(table, 'unclaimed')).toBe(table);
+  });
+
+  it('has nothing for an id ending a hard-wrapped line inside a paragraph', () => {
+    // Two trailing spaces break the line but not the block; the paragraph goes on below.
+    expect(sliceBlock('One line. ^wrapped  \nand the rest of it.', 'wrapped')).toBeUndefined();
+  });
+
   it('takes the paragraph an id ends halfway down a quotation, not the quotation', () => {
     const quote = ['> One. ^first', '>', '> Two.'].join('\n');
     expect(sliceBlock(quote, 'first')).toBe('> One. ^first');

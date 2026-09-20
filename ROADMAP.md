@@ -72,10 +72,12 @@ changes only with a documented migration.
       belong to was never installed. Both dependencies — `mermaid` and `@replit/codemirror-vim`
       — are behind a dynamic import, so neither is downloaded by somebody who does not use it;
       the justification is in `DECISIONS.md`
-- [ ] Block references: `[[Note#^id]]` and `![[Note#^id]]`. The parser has read the id since
-      Phase 1 and nothing has ever used it; transclusion can show a note and a section but not
-      the one paragraph somebody meant to point at. No index change — a block embed has the
-      target's own text in hand
+- [x] Block references: `[[Note#^id]]` and `![[Note#^id]]`. No index change — a block embed has
+      the target's own text in hand. Two things left open on purpose: a marker on a _heading_
+      embeds correctly but a link to it lands on the note rather than the line, because a heading
+      already owns an id (its slug) and an element has only one; and Obsidian sometimes writes an
+      id on a line of its own after a table or a list, which Rhizom does not read. Both want
+      checking against a real Obsidian vault
 - [ ] Rename a tag across the vault, under the rules renaming a note works by: a dry run, a hash
       per file, a file that changed meanwhile reported rather than overwritten. A tag is a
       hierarchy now, so renaming a level takes the levels under it with it

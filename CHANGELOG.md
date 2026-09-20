@@ -99,6 +99,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   says. Only the three characters of the box change; the rest of the line, links and trailing tags
   and indentation, comes through untouched, and a line that is no longer a task is refused rather
   than written into.
+- Block references: `[[Note#^abc]]` points at one block of a note and `![[Note#^abc]]` shows it.
+  A marker is an id written at the end of a block, the way Obsidian writes one, and it is hidden
+  from the reader. What counts as the block is the outermost thing the marker ends — a list item
+  rather than the list around it, a whole quotation rather than the paragraph inside it, and a
+  whole table rather than the row, because a row cut out of a table is a line with pipes in it.
+  Nothing goes into the index: a block embed has the target's own text in hand.
 - Find and replace in the editor, with Ctrl/Cmd+F and Ctrl/Cmd+H. The keys were bound from the
   start and the panel they belong to was never installed, so the editor answered them by doing
   nothing at all; it also highlights the other occurrences of whatever is selected.
