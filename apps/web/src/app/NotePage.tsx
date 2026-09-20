@@ -22,7 +22,7 @@ import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
 import { RenameDialog } from '../components/RenameDialog.js';
 import { MarkdownEditor, SLASH_COMMANDS } from '../editor/index.js';
-import { BacklinksPanel, MentionsPanel } from '../panels/index.js';
+import { BacklinksPanel, FrontmatterPanel, MentionsPanel } from '../panels/index.js';
 import { filesFor } from '../panels/rename-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
@@ -269,6 +269,18 @@ function NoteView({ path, revisions }: NoteViewProps) {
     [navigate, refreshVault, save],
   );
 
+  // The form edits the note's own text, so it goes the way an external change goes: into the
+  // draft, into the editor, and onto the autosave. It never writes the file itself — one note,
+  // one writer, and that writer is `save`.
+  const applyFrontmatter = useCallback(
+    (next: string) => {
+      setDraft(next);
+      setExternalContent(next);
+      scheduleSave(next);
+    },
+    [scheduleSave],
+  );
+
   const remove = useCallback(() => {
     setAskDelete(false);
     // A pending autosave would recreate the file right after it was moved away.
@@ -388,6 +400,12 @@ function NoteView({ path, revisions }: NoteViewProps) {
           ) : null}
         </nav>
       </header>
+
+      <FrontmatterPanel
+        content={draft}
+        onChange={applyFrontmatter}
+        readOnly={saveState === 'conflict'}
+      />
 
       <div className={`rz-note-body${splitView ? ' rz-note-split' : ''}`}>
         <MarkdownEditor

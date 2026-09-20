@@ -83,6 +83,27 @@
     "outgoing": "Links from this note",
     "unresolved": "Missing"
   },
+  "frontmatter": {
+    "title": "Frontmatter",
+    "count_one": "{{count}} field",
+    "count_other": "{{count}} fields",
+    "empty": "This note has no frontmatter yet.",
+    "broken": "This frontmatter cannot be read, so the form leaves it alone: {{message}}",
+    "unsupported": "A nested value, which this form does not edit. It stays as it is.",
+    "remove": "Remove {{name}}",
+    "listPlaceholder": "One entry per line",
+    "newKey": "New key",
+    "newKind": "Kind",
+    "add": "Add",
+    "notEditable": "This frontmatter is not a list of keys, so nothing can be added to it.",
+    "kinds": {
+      "text": "Text",
+      "number": "Number",
+      "boolean": "Yes or no",
+      "date": "Date",
+      "list": "List"
+    }
+  },
   "graph": {
     "label": "Graph of the vault",
     "title": "Graph",

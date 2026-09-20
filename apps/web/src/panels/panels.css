@@ -381,3 +381,139 @@
   border-radius: var(--rz-radius-sm);
   padding: 0 var(--rz-space-1);
 }
+
+/* --- frontmatter ------------------------------------------------------------------------- */
+
+/* The head of the note as a form, on the same kind of shelf as the backlinks. Every word in it
+   is part of what the note says and is read as closely as the prose above — the key, the value
+   and the aside about a value the form leaves alone — so nothing in here drops below the body
+   size; a muted tone is enough to set the asides apart. */
+.rz-frontmatter {
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  /* It does not give ground: folded it is one line, and unfolded it takes the height it needs
+     up to this cap and scrolls inside it. Shrinking instead would slice a row in half, which
+     reads as a broken panel rather than as a full one. */
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+/* The fold's handle: a heading you can click, so the row reads as a title and behaves as a
+   control. `display: flex` takes the browser's own marker away, so the caret is drawn here —
+   the same two characters the file tree turns a folder with, because they mean the same thing. */
+.rz-frontmatter summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-3);
+  cursor: pointer;
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+  list-style: none;
+}
+
+.rz-frontmatter summary::-webkit-details-marker {
+  display: none;
+}
+
+.rz-frontmatter summary::before {
+  content: '▸';
+  color: var(--rz-text-muted);
+  font-weight: 400;
+}
+
+.rz-frontmatter details[open] > summary::before {
+  content: '▾';
+}
+
+.rz-frontmatter-note {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-fm-rows {
+  display: grid;
+  gap: var(--rz-space-2);
+  margin-top: var(--rz-space-3);
+}
+
+.rz-fm-rows:empty {
+  margin-top: 0;
+}
+
+.rz-fm-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 12rem) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--rz-space-2);
+}
+
+/* The label wraps the key and its box, so the key names the box without an id passing between
+   them; `contents` lets the two stand in the row's own columns all the same. */
+.rz-fm-field {
+  display: contents;
+}
+
+.rz-fm-key {
+  padding-top: var(--rz-space-1);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rz-fm-box {
+  width: 100%;
+  min-width: 0;
+}
+
+/* A textarea is outside the reset that gives the other boxes their frame. */
+.rz-fm-lines {
+  font: inherit;
+  color: inherit;
+  background: var(--rz-surface);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  padding: var(--rz-space-1) var(--rz-space-2);
+  resize: vertical;
+}
+
+.rz-fm-tick {
+  justify-self: start;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: var(--rz-space-1);
+  padding: 0;
+  accent-color: var(--rz-accent);
+}
+
+.rz-fm-remove {
+  border: 0;
+  background: none;
+  color: var(--rz-text-muted);
+  line-height: 1;
+  padding: var(--rz-space-1) var(--rz-space-2);
+}
+
+.rz-fm-remove:hover:not(:disabled) {
+  color: var(--rz-rust-strong);
+}
+
+.rz-fm-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--rz-space-2);
+  margin-top: var(--rz-space-4);
+  padding-top: var(--rz-space-3);
+  border-top: 1px solid var(--rz-border);
+}
+
+.rz-fm-add-field {
+  display: grid;
+  gap: var(--rz-space-1);
+}
+
+.rz-fm-add input {
+  min-width: 10rem;
+}

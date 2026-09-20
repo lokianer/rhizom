@@ -748,3 +748,26 @@ Unicode, and every case-insensitive comparison in SQL goes through it. It is dec
 deterministic, so SQLite may use it wherever it would use its own. Full-text search is not
 affected: FTS5's `unicode61` tokeniser already folds properly, which is why search has always
 found `Über` and a query block would not have.
+
+## 2026-09-20 — The frontmatter form rewrites keys, not blocks
+
+A note's frontmatter is the user's YAML, in the user's file. It can hold comments, blank lines,
+a deliberate key order, block scalars, quoting somebody chose. Reading it into an object and
+writing that object back would be the obvious implementation and would destroy all of that on the
+first save — silently, on a file nobody was looking at.
+
+So the form replaces the value span of the keys it changed and nothing else. Everything outside
+those spans is copied through character for character. A key that is not there is appended at the
+end of the block; a key set to nothing is removed with its line; a block nobody can parse is
+reported and left completely alone, because rewriting a file whose head no parser understood is
+how notes get destroyed.
+
+Two smaller decisions follow from the same rule. A nested mapping is shown read-only with a
+sentence saying why, rather than flattened into boxes it does not fit. And values are written as
+YAML 1.1 although Rhizom reads 1.2, because 1.1 is what Obsidian and Python use and it is the
+stricter of the two about bare words: `yes`, `no`, `on` and `1:30` come out quoted and stay
+strings in every reader the vault will meet.
+
+The form is folded away to start with. The frontmatter is already in the note, three lines above
+the cursor — the form is there to edit it, not to read it, and a panel open by default would take
+a third of the page from the text the reader came for.

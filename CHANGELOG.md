@@ -68,6 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anywhere and opening one must never run anything. A block that is partly wrong still answers:
   the rows are what could be read, and each line that could not is named underneath.
 - `POST /api/query`, in the OpenAPI document with the rest.
+- Frontmatter as a form: a fold above the editor showing every key of the open note as a field —
+  text, number, yes-or-no, date or list — with keys that can be added and removed. It edits the
+  note's own text and saves it the way typing does, so there is one writer and one undo history.
+  Everything the form did not touch survives character for character: comments, blank lines, key
+  order, quoting style. A nested value is shown and left alone rather than flattened, and a
+  frontmatter block nobody can parse is reported instead of rewritten.
 - Query blocks are drawn where they stand, in the wiki and in the editor's preview alike: a list
   of note links, a table of the columns the block named, or cards. The links are ordinary note
   links, so a click inside a result navigates like any other. Everything a row carries — a title,

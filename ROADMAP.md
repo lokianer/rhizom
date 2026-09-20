@@ -59,7 +59,7 @@ changes only with a documented migration.
       mandatory hash per file and a file that changed meanwhile reported rather than overwritten.
       Folders, assets and the note's own title are out; see `DECISIONS.md` for why, and for the
       link forms the parser cannot see
-- [ ] Frontmatter editable as a form
+- [x] Frontmatter editable as a form
 - [ ] Query blocks: a ` ```rhizom-query ` code block renders live tables/lists from the
       index (filter by type/tag/folder/frontmatter fields); saved searches appear as smart
       folders in the sidebar. A closed set of keys and no expression language: a query is read

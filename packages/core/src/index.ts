@@ -34,7 +34,17 @@ export type {
   UploadResponse,
   VaultInfo,
 } from './api.js';
-export { NOTE_TYPES, noteTypeOf, type NoteType } from './frontmatter.js';
+export {
+  findFrontmatter,
+  frontmatterFields,
+  setFrontmatter,
+  NOTE_TYPES,
+  noteTypeOf,
+  type FieldKind,
+  type FrontmatterBlock,
+  type FrontmatterField,
+  type NoteType,
+} from './frontmatter.js';
 export {
   renderNoteWithEmbeds,
   type EmbedLabels,

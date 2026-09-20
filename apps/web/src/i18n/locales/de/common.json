@@ -83,6 +83,27 @@
     "outgoing": "Verweise aus dieser Notiz",
     "unresolved": "Fehlt"
   },
+  "frontmatter": {
+    "title": "Frontmatter",
+    "count_one": "{{count}} Feld",
+    "count_other": "{{count}} Felder",
+    "empty": "Diese Notiz hat noch kein Frontmatter.",
+    "broken": "Dieses Frontmatter lässt sich nicht lesen, das Formular rührt es deshalb nicht an: {{message}}",
+    "unsupported": "Ein verschachtelter Wert, den dieses Formular nicht bearbeitet. Er bleibt, wie er ist.",
+    "remove": "{{name}} entfernen",
+    "listPlaceholder": "Ein Eintrag pro Zeile",
+    "newKey": "Neuer Schlüssel",
+    "newKind": "Art",
+    "add": "Hinzufügen",
+    "notEditable": "Dieses Frontmatter ist keine Liste von Schlüsseln, es lässt sich also nichts hinzufügen.",
+    "kinds": {
+      "text": "Text",
+      "number": "Zahl",
+      "boolean": "Ja oder nein",
+      "date": "Datum",
+      "list": "Liste"
+    }
+  },
   "graph": {
     "label": "Graph des Tresors",
     "title": "Graph",
