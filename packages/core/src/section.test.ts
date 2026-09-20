@@ -240,7 +240,9 @@ describe('sliceBlock', () => {
   });
 
   it('accepts digits and hyphens, which is what Obsidian generates', () => {
-    expect(sliceBlock('The party went in. ^a1b2-c3', 'a1b2-c3')).toBe('The party went in. ^a1b2-c3');
+    expect(sliceBlock('The party went in. ^a1b2-c3', 'a1b2-c3')).toBe(
+      'The party went in. ^a1b2-c3',
+    );
   });
 
   it('gives a repeated id to the first block that carries it', () => {

@@ -5,6 +5,8 @@ class: rogue
 alignment: lawful evil
 faction: The Gutter Court
 occupation: moneylender
+outlook: 55
+standing: 30
 tags:
   - campaign/silverstadt/npcs
   - npc/antagonist

@@ -5,6 +5,8 @@ class: wizard
 alignment: lawful neutral
 faction: The Archivists
 rank: Second Keeper
+outlook: 35
+standing: 88
 tags:
   - campaign/silverstadt/npcs
   - npc/patron

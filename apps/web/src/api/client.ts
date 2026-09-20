@@ -120,9 +120,22 @@ export const api = {
   search: (query: string, options?: RequestOptions) =>
     request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`, options),
 
-  /** Answers one `rhizom-query` block against the index; the body is the text between the fences. */
-  runQuery: (body: string, options?: RequestOptions) =>
-    request<QueryResult>('/api/query', { method: 'POST', ...json({ body }), ...options }),
+  /**
+   * Answers one `rhizom-query` block against the index; the body is the text between the fences.
+   *
+   * `fields` names frontmatter keys the caller needs on every row beyond the ones the block asked
+   * to show. The milieu field is what they are for: it draws a note at the position two of its own
+   * keys give, and those keys are named by the axes rather than by the block. They arrive in
+   * `row.fields` as text, next to the block's own columns, and change nothing about the block.
+   */
+  runQuery: (body: string, fields?: readonly string[], options?: RequestOptions) =>
+    request<QueryResult>('/api/query', {
+      method: 'POST',
+      ...json(
+        fields === undefined || fields.length === 0 ? { body } : { body, fields: [...fields] },
+      ),
+      ...options,
+    }),
 
   assets: (options?: RequestOptions) => request<AssetSummary[]>('/api/assets', options),
 

@@ -1,0 +1,140 @@
+/*
+ * The milieu field and the tray beside it. Everything that paints inside the SVG is an attribute
+ * on the element (see MilieuField.tsx): what is set here is the room the drawing gets, the cursor
+ * and the tray around it, none of which an exported file has any use for.
+ */
+
+/* Two of these sit up in .rz-graph-controls, beside the buttons the bubble field brought. */
+.rz-milieu-count {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-milieu-trouble {
+  color: var(--rz-danger);
+  font-size: var(--rz-text-md);
+}
+
+.rz-milieu {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--rz-space-3) var(--rz-space-4);
+  height: 100%;
+  min-height: 0;
+  padding: var(--rz-space-4);
+  box-sizing: border-box;
+}
+
+.rz-milieu-field {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--rz-radius-md);
+  /* The bubbles are dragged with the pointer; without this a touch drag scrolls the page. */
+  touch-action: none;
+}
+
+/* A note is over the field and can be let go here. */
+.rz-milieu-field-over {
+  outline: var(--rz-focus-outline);
+  outline-offset: calc(-1 * var(--rz-focus-offset));
+}
+
+.rz-milieu-bubble {
+  cursor: grab;
+}
+
+.rz-milieu-bubble:active {
+  cursor: grabbing;
+}
+
+.rz-milieu-bubble:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: var(--rz-focus-offset);
+}
+
+.rz-milieu-hint {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-milieu-tray {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--rz-space-3);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-md);
+  background: var(--rz-surface);
+}
+
+.rz-milieu-tray-title {
+  margin: 0 0 var(--rz-space-2);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-milieu-tray-empty {
+  margin: 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-milieu-tray-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-2);
+}
+
+.rz-milieu-tray-note {
+  display: grid;
+  gap: var(--rz-space-1);
+  padding: var(--rz-space-2);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  background: var(--rz-surface-raised);
+  color: inherit;
+  text-decoration: none;
+  cursor: grab;
+}
+
+.rz-milieu-tray-note:hover {
+  border-color: var(--rz-border-strong);
+}
+
+.rz-milieu-tray-name {
+  font-size: var(--rz-text-md);
+}
+
+.rz-milieu-tray-missing {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+/* Under a narrow window the tray goes below the field rather than squeezing it. */
+@media (width <= 60rem) {
+  .rz-milieu {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+
+  .rz-milieu-tray {
+    grid-column: 1;
+    grid-row: 3;
+    max-height: 14rem;
+  }
+
+  .rz-milieu-hint {
+    grid-row: 2;
+  }
+}

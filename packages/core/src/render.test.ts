@@ -457,9 +457,9 @@ describe('renderNote: block ids', () => {
     expect(render('> [!warning] The tide\n> It floods twice a day. ^tide')).toContain(
       '<div class="rz-callout rz-callout-warning" id="^tide">',
     );
-    expect(
-      render('| item | who |\n| --- | --- |\n| lantern | Mira ^row |'),
-    ).toContain('<table id="^row">');
+    expect(render('| item | who |\n| --- | --- |\n| lantern | Mira ^row |')).toContain(
+      '<table id="^row">',
+    );
   });
 
   it('lets a heading keep the slug the index gave it, and still hides the marker', () => {
@@ -481,8 +481,10 @@ describe('renderNote: block ids', () => {
 
   it('keeps a standalone embed standalone when a block id follows it', () => {
     const html = render('![[Templates/NPC]] ^npc', { renderEmbed: () => ready('<p>body</p>') });
-    expect(html).toBe('<div class="rz-embed" data-state="ready" data-path="Templates/NPC.md" ' +
-      'id="^npc"><p>body</p></div>');
+    expect(html).toBe(
+      '<div class="rz-embed" data-state="ready" data-path="Templates/NPC.md" ' +
+        'id="^npc"><p>body</p></div>',
+    );
   });
 
   it('routes a Markdown link to a block through the same fragment, encoded or not', () => {

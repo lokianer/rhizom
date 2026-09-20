@@ -81,7 +81,7 @@ changes only with a documented migration.
       hierarchy now, so renaming a level takes the levels under it with it
 - [ ] A new note can start from a template. The templates are there and the slash menu inserts
       one, but only into a note that already exists
-- [ ] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
+- [x] Milieu axes mode: two freely named axes; position from frontmatter values or by drag
       (dragging writes the values back); a second graph layout mode with axis labels and export.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes
       with the hash the note was loaded at and swallows the echo the watcher sends back

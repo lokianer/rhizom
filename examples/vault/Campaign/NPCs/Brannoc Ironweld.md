@@ -5,6 +5,7 @@ class: artificer
 alignment: neutral good
 faction: none
 workshop: Tidewater, third pier
+outlook: 70
 tags:
   - campaign/silverstadt/npcs
   - npc/contact

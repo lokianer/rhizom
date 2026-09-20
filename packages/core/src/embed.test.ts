@@ -238,12 +238,12 @@ describe('renderNoteWithEmbeds', () => {
     expect(render('![[Templates/NPC#Nowhere]]')).toContain('no section Nowhere in Templates/NPC');
   });
 
-  it('renders only the block an id names, and not the marker', () => {
-    const html = render('![[Ledger#^lantern]]');
-    expect(html).toContain('<li id="e1-^lantern">a lantern</li>');
-    expect(html).not.toContain('a ledger');
-    expect(html).not.toContain('The party went in.');
-    expect(html).not.toContain('^lantern');
+  it('renders only the block an id names, with the marker gone from the text', () => {
+    expect(render('![[Ledger#^lantern]]')).toBe(
+      '<div class="rz-embed" data-state="ready" data-path="Ledger.md"><ul>\n' +
+        '<li id="e1-^lantern">a lantern</li>\n' +
+        '</ul></div>',
+    );
   });
 
   it('says which block is missing when the note is there but the id is not', () => {

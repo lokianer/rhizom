@@ -6,6 +6,8 @@ alignment: lawful good
 faction: Order of the Lantern
 age: 47
 alive: true
+outlook: 15
+standing: 78
 tags:
   - campaign
   - campaign/silverstadt/npcs

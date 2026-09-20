@@ -68,6 +68,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anywhere and opening one must never run anything. A block that is partly wrong still answers:
   the rows are what could be read, and each line that could not is named underneath.
 - `POST /api/query`, in the OpenAPI document with the rest.
+- Milieu fields: a second layout on the graph page that lays the vault out between two freely
+  named axes, in the manner of the Sinus-Milieu studies. A field is a note, the way a saved
+  search is — `type: axes`, six flat keys naming the two directions, and a query block saying
+  which notes stand in it — and every placed note carries its own position as an ordinary
+  number from 0 to 100 under the keys the field named. So a field is readable, editable and
+  shareable without Rhizom, and nothing goes stale when a note is renamed. Each note is drawn
+  as a bubble in the colours the bubble field uses; the notes that give no position wait in a
+  tray beside the rectangle saying which value each still owes; and the whole field exports as
+  SVG or PNG. Dragging a bubble writes the position back into the note — one write when it is
+  let go, carrying the hash the file was read at, so a note that changed on disk meanwhile is
+  said so rather than overwritten. `POST /api/query` gained a `fields` argument for it, which
+  hands back any frontmatter key a caller names beside the block's own columns.
+
+### Changed
+
 - Smart folders: a note that declares `type: query` is a saved search, and the sidebar shows it
   as a folder that fills itself by running the block inside it. A saved search is therefore a
   file — it travels with the vault, reads without Rhizom and can be edited in any editor, rather

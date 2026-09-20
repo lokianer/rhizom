@@ -2,10 +2,10 @@
   "description": "What a checker should find when it indexes examples/vault. Paths are vault paths: forward slashes, relative to the vault root, NFC-normalised, with extension.",
   "vault": "vault",
   "notes": {
-    "count": 39,
+    "count": 40,
     "byFolder": {
       "": 1,
-      "Campaign": 1,
+      "Campaign": 2,
       "Campaign/NPCs": 6,
       "Campaign/Places": 4,
       "Campaign/Factions": 3,
@@ -234,7 +234,18 @@
       "race": "human",
       "alive": true,
       "age": 47,
-      "aliases": ["Captain Thane"]
+      "aliases": ["Captain Thane"],
+      "outlook": 15,
+      "standing": 78
+    },
+    "Campaign/Milieus of Silverstadt.md": {
+      "type": "axes",
+      "xKey": "outlook",
+      "xFrom": "tradition",
+      "xTo": "change",
+      "yKey": "standing",
+      "yFrom": "gutter",
+      "yTo": "council"
     },
     "Research/v2.0 Notes.md": {
       "tags": "research, meta, research/pkm",

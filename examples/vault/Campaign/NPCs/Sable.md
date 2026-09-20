@@ -5,6 +5,8 @@ class: rogue
 alignment: chaotic neutral
 faction: The Gutter Court
 level: 5
+outlook: 85
+standing: 12
 tags:
   - campaign/silverstadt/npcs
   - npc/rival

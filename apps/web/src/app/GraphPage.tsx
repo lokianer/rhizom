@@ -1,20 +1,29 @@
-// The bubble field: the whole vault, or the neighbourhood of the open note, optionally
-// narrowed to a few tags. The canvas owns its own layout; this page only feeds it data.
+// The graph page, in two layouts. The bubble field is the whole vault, or the neighbourhood of
+// the open note, optionally narrowed to a few tags; the canvas owns its own layout and this page
+// only feeds it data. The milieu field is the same vault laid out between two axes a note names,
+// and lives in ../milieu.
 import type { GraphResponse } from '@rhizom/core';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import { api, isAbortError } from '../api/client.js';
 import { downloadBlob, GraphCanvas, type GraphCanvasHandle } from '../graph/index.js';
+import { MilieuLayout } from '../milieu/MilieuLayout.js';
 import { matchesTags } from '../panels/tag-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
+import { GraphLayoutSelect } from './GraphLayoutSelect.js';
 import { noteHref } from './paths.js';
 
 const DEPTHS = [0, 1, 2, 3];
 
-export function GraphPage() {
+export function GraphPage(): JSX.Element {
+  const layout = useUiStore((state) => state.graphLayout);
+  return layout === 'milieu' ? <MilieuLayout /> : <BubbleLayout />;
+}
+
+function BubbleLayout(): JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -79,6 +88,8 @@ export function GraphPage() {
   return (
     <div className="rz-graph-page">
       <div className="rz-graph-controls">
+        <GraphLayoutSelect />
+
         <div className="rz-field">
           <label htmlFor="rz-cluster-by">{t('graph.clusterBy')}</label>{' '}
           <select
