@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-20
+
 ### Added
 
 - Reserved frontmatter vocabulary: a flat `type:` key with the values `definition`, `template`,
@@ -302,4 +304,6 @@ Phase 1: open a vault, write in it, link it and see the field.
 - Docker image with `/vault` and `/data` volumes; `RHIZOM_VAULT_DIR` and `RHIZOM_DATA_DIR`
   configure the server.
 
-[Unreleased]: https://github.com/lokianer/rhizom/commits/main
+[Unreleased]: https://github.com/lokianer/rhizom/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/lokianer/rhizom/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/lokianer/rhizom/releases/tag/v0.1.0

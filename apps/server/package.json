@@ -1,6 +1,6 @@
 {
   "name": "@rhizom/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Rhizom REST API (Fastify) that also serves the built web app",
   "license": "AGPL-3.0-only",
