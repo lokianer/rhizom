@@ -1,0 +1,42 @@
+# What a pull request would add to the dependency tree, checked before it is merged.
+#
+# Two things are refused. A dependency with a known vulnerability, because the whole point of
+# getting the update pull requests on a Monday is not to merge a new advisory on the way. And a
+# licence that is not on the list below, because Rhizom is AGPL-3.0-only: a package under a
+# licence that cannot be combined with that makes the vault tool undistributable, and finding out
+# at release time is finding out too late.
+#
+# The list is an allow-list rather than a list of the forbidden, which means an unusual licence
+# stops the pull request rather than slipping through — including a package whose licence GitHub
+# cannot determine at all. That is the intended answer: `CLAUDE.md` says a larger dependency
+# wants a short justification first, and this is the same question asked by a machine. To let one
+# through, add its SPDX identifier here, or name the package under `allow-dependencies-licenses`.
+name: Dependency review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  # Only so the refusal is written under the pull request instead of being buried in a log.
+  pull-requests: write
+
+jobs:
+  review:
+    name: Review the dependencies a pull request adds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/dependency-review-action@v4
+        with:
+          # Everything below moderate is noise in a tree this size; a real one is rarely quiet.
+          fail-on-severity: moderate
+          # Permissive licences, plus the copyleft ones AGPL-3.0-only can be combined with.
+          # BlueOak and 0BSD are here because parts of the unified/remark ecosystem use them.
+          allow-licenses: >-
+            MIT, ISC, Apache-2.0, BSD-2-Clause, BSD-3-Clause, 0BSD, CC0-1.0, CC-BY-4.0,
+            Unlicense, BlueOak-1.0.0, Python-2.0, MPL-2.0, LGPL-2.1-or-later, LGPL-3.0-or-later,
+            GPL-3.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later
+          comment-summary-in-pr: on-failure
