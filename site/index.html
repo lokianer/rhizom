@@ -3,20 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rhizom — networked knowledge, self-hosted</title>
+    <title>Rhizom — a self-hosted wiki for a folder of Markdown files</title>
     <meta
       name="description"
-      content="Rhizom is a self-hostable, open-source tool for networked knowledge: a Markdown editor, a local index and a bubble-field graph of the notes in a folder. The first version reads an Obsidian vault as it is."
+      content="Rhizom runs on a folder of Markdown files on your own machine: an editor, a local index and a graph of the links between the notes. Obsidian vaults open as they are."
     />
     <!-- Without JavaScript the page is always Humus, so both schemes start dark; the script at the
          end of the body keeps these in step with the chosen theme. -->
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14110f" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#14110f" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Rhizom — networked knowledge, self-hosted" />
+    <meta
+      property="og:title"
+      content="Rhizom — a self-hosted wiki for a folder of Markdown files"
+    />
     <meta
       property="og:description"
-      content="A self-hostable, open-source tool for networked knowledge. Plain Markdown files, a rebuildable index and a bubble-field graph. The first version is here."
+      content="An editor, a local index and a graph for a folder of Markdown files, on your own machine. The files stay plain Markdown; the index can be rebuilt at any time."
     />
     <meta property="og:url" content="https://lokianer.github.io/rhizom/" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -68,8 +71,8 @@
           Rhizom
         </a>
         <nav class="site-nav" aria-label="Primary">
-          <a href="#idea">The idea</a>
-          <a href="#look">A look at it</a>
+          <a href="#idea">Files first</a>
+          <a href="#look">Screenshots</a>
           <a href="#run">Running it</a>
           <a href="#roadmap">Roadmap</a>
           <a class="site-nav__cta" href="https://github.com/lokianer/rhizom">GitHub</a>
@@ -94,13 +97,13 @@
             <span class="dot"></span> Open source · AGPL-3.0 · runs on your own machine
           </p>
           <h1 id="hero-title">
-            Networked knowledge,<br />
-            kept in <span class="grad">plain Markdown files</span>.
+            A wiki and a graph for<br />
+            <span class="grad">a folder of Markdown files</span>.
           </h1>
           <p class="hero__lead">
-            Rhizom reads a folder of Markdown files, indexes the links between them and draws the
-            vault as a field of bubbles: notes as circles, folders and tags as colour, links as
-            connections. Every vault doubles as a wiki.
+            Rhizom works on one folder of Markdown files. It indexes the links between the notes,
+            draws the graph and serves the folder as a wiki. An existing Obsidian vault opens as it
+            is.
           </p>
           <p class="hero__actions">
             <a class="button" href="https://github.com/lokianer/rhizom/releases/latest"
@@ -121,7 +124,7 @@
             </li>
             <li>
               <span class="facts__value">1</span>
-              <span class="facts__label">folder of Markdown — that is the whole format</span>
+              <span class="facts__label">folder of Markdown files is the whole format</span>
             </li>
             <li>
               <span class="facts__value">&lt;100<span class="facts__unit">ms</span></span>
@@ -241,7 +244,7 @@
           <ul class="statements" role="list">
             <li>
               <strong>The files are the source of truth.</strong> A vault is a folder of Markdown
-              files. It stays readable with any editor, with or without Rhizom.
+              files. Any editor can open it, with or without Rhizom.
             </li>
             <li>
               <strong>The index is derived.</strong> SQLite holds only what can be rebuilt from the
@@ -249,8 +252,8 @@
             </li>
             <li>
               <strong>An Obsidian vault opens as it is.</strong> Rhizom reads a folder of
-              <code>.md</code> files with <code>[[wikilinks]]</code> directly, with no import and no
-              conversion.
+              <code>.md</code> files with <code>[[wikilinks]]</code> directly. There is no import
+              step and no conversion.
             </li>
           </ul>
         </section>
@@ -258,7 +261,7 @@
 
       <section class="showcase" id="look" aria-labelledby="look-title">
         <div class="page">
-          <p class="kicker">A look at it</p>
+          <p class="kicker">Screenshots</p>
           <h2 id="look-title">Three views of the same folder</h2>
 
           <div class="tabs" role="tablist" aria-label="Screenshots">
@@ -308,8 +311,7 @@
                 alt="The editor on the left, the same note rendered on the right, the file tree beside them and the backlinks below."
               />
               <figcaption>
-                Writing, with the rendered note beside it and every link that points here
-                underneath.
+                The note on the left, the rendered version on the right, its backlinks underneath.
               </figcaption>
             </figure>
 
@@ -333,8 +335,8 @@
                 alt="The vault as a field of bubbles, coloured by folder, with the note names beside them."
               />
               <figcaption>
-                The same vault as a field: a bubble per note, its size the number of links, its
-                colour the folder or the tag.
+                One bubble per note. The size is the number of links, the colour is the folder or
+                the tag.
               </figcaption>
             </figure>
 
@@ -352,7 +354,8 @@
                 alt="A note as a read-only wiki page in the light theme, with the file tree beside it."
               />
               <figcaption>
-                Wiki mode, in the light theme called Kalk: the vault to read rather than to write.
+                Wiki mode in the light theme, Kalk. Read-only, with rendered links, navigation and
+                search.
               </figcaption>
             </figure>
           </div>
@@ -363,20 +366,20 @@
         <div class="page run__inner">
           <div class="run__text">
             <p class="kicker">Running it</p>
-            <h2 id="start-title">A download, a container, or a checkout</h2>
+            <h2 id="start-title">Download, Docker, or from source</h2>
             <p class="section__lead">
-              Point it at a folder of Markdown files — an Obsidian vault works as it is — and open
+              Point it at a folder of Markdown files (an existing Obsidian vault will do) and open
               <code>localhost:3737</code>.
             </p>
             <p class="section__note">
-              <strong>The download</strong> is one package for all three operating systems and needs
-              nothing but Node 22.22 or newer: unpack it, then <code>cd server</code> and
+              <strong>The download</strong> is one package for all three operating systems. It needs
+              Node 22.22 or newer: unpack it, then <code>cd server</code> and
               <code>node dist/server.js</code>. The <code>README.txt</code> inside lists the
-              settings, and the checksum beside it says you got what was built.
+              settings, and the checksum next to the download lets you verify it.
             </p>
             <p class="section__note">
-              The index lives beside your notes and can be deleted at any time; the files are never
-              touched by it. Nothing leaves the machine: no telemetry, no account, no cloud.
+              The SQLite index sits in its own folder and can be deleted at any time; your notes are
+              not touched. Nothing leaves the machine: no telemetry, no account, no cloud service.
               <a href="https://github.com/lokianer/rhizom#quick-start">The full quick start</a> is
               in the README.
             </p>
@@ -412,18 +415,18 @@
               <dt>Editor</dt>
               <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
-                CodeMirror 6 with live preview, <code>[[</code> autocomplete across the whole vault,
-                a rendered pane beside the text, images by drag and drop, and links that offer to
-                create the note when it does not exist yet.
+                CodeMirror 6 with live preview, <code>[[</code> autocomplete across the vault, a
+                rendered pane beside the text, images by drag and drop, and a click on a missing
+                link that creates the note.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Bubble graph</dt>
               <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
-                Bubble size follows link degree, clusters take their colour from folder or tag, a
-                local graph shows the neighbourhood of one note, and any view exports as SVG or PNG.
-                The layout runs in a worker, so the field stays smooth while it settles.
+                Bubble size is the number of links, colour comes from the folder or the tag. A local
+                mode shows one note and its neighbours, any view exports as SVG or PNG, and the
+                layout runs in a worker, so the page stays usable while it settles.
               </dd>
             </div>
             <div class="plans__item">
@@ -439,26 +442,26 @@
                 <span class="chip chip--soon">Phase 2, being built</span>
               </dd>
               <dd>
-                Definitions with an automatic glossary, terms recognised wherever they are
-                mentioned, <code>![[transclusion]]</code>, the places a note is named without being
-                linked, and templates with a slash menu.
+                Definitions with an alphabetical glossary built from them, terms recognised wherever
+                they are mentioned, <code>![[transclusion]]</code>, unlinked mentions, and templates
+                with a slash menu.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Self-hosting</dt>
               <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
-                One Docker command, or a native process on a machine you control. Installers for
-                Windows, macOS and Linux come later.
+                One Docker command, or a Node process on a machine you control. Installers for
+                Windows, macOS and Linux come in Phase 5.
               </dd>
             </div>
             <div class="plans__item">
               <dt>Milieu axes</dt>
               <dd class="plans__phase"><span class="chip">Phase 2</span></dd>
               <dd>
-                Two freely named axes and the vault arranged between them, in the manner of the
-                Sinus-Milieu studies. Drag a note and the position is written back into its
-                frontmatter.
+                A second graph layout: two axes you name yourself, with the notes placed between
+                them the way the Sinus-Milieu studies lay out a population. Drag a note and the
+                position is written back into its frontmatter.
               </dd>
             </div>
           </dl>
@@ -469,21 +472,21 @@
           <h2 id="who-title">Four kinds of vault</h2>
           <ul class="statements statements--audience" role="list">
             <li>
-              <strong>The self-hosting community.</strong> It runs as one container or one process
-              on your own hardware, with no third-party account and nothing that phones home.
+              <strong>The self-hosting community.</strong> One container or one process on your own
+              hardware. No third-party account, and nothing that phones home.
             </li>
             <li>
-              <strong>Researchers.</strong> Sources, arguments and open questions as linked notes,
-              with the shape of a topic visible at a glance.
+              <strong>Researchers.</strong> Sources, arguments and open questions as linked notes.
+              The graph shows which of them hang together.
             </li>
             <li>
-              <strong>Authors.</strong> Characters, places and plot threads as a map that grows
-              alongside the manuscript.
+              <strong>Authors.</strong> Characters, places and plot threads as notes that link to
+              each other, next to the manuscript.
             </li>
             <li>
-              <strong>Game masters.</strong> A campaign as a vault. A per-vault D&amp;D mode is
-              planned for Phase 3: NPC stat blocks, typed relationships, dice, and sections only the
-              GM can see.
+              <strong>Game masters.</strong> A campaign as a vault. A D&amp;D mode you switch on per
+              vault is planned for Phase 3: NPC stat blocks, typed relationships, dice, and sections
+              only the GM can see.
             </li>
           </ul>
         </section>
@@ -492,12 +495,12 @@
       <section class="status" id="roadmap" aria-labelledby="status-title">
         <div class="page status__row">
           <p class="kicker">Status</p>
-          <h2 id="status-title">Six phases, two of them done</h2>
+          <h2 id="status-title">Seven phases, two of them done</h2>
           <div class="status__body">
             <p class="status__note">
-              The foundation and the first version you can actually use are finished. Phase 2 adds
-              the knowledge layer — definitions with a glossary, unlinked mentions, transclusion,
-              templates and live query blocks.
+              Phases 0 and 1 are done: you can open a vault, write, link, search and see the graph.
+              Phase 2 is the knowledge layer: definitions with a glossary, unlinked mentions,
+              transclusion, templates and live query blocks.
             </p>
             <ol class="rail" role="list">
               <li class="rail__step is-done">
@@ -520,6 +523,9 @@
               <li class="rail__step">
                 <span class="rail__n">5</span><span class="rail__label">Desktop and ecosystem</span>
               </li>
+              <li class="rail__step">
+                <span class="rail__n">6</span><span class="rail__label">Everything after</span>
+              </li>
             </ol>
             <p class="status__more">
               <a href="https://github.com/lokianer/rhizom/blob/main/ROADMAP.md"
@@ -532,17 +538,17 @@
 
       <section class="cta" aria-labelledby="cta-title">
         <div class="page cta__inner">
-          <h2 id="cta-title">Your notes, your machine, your graph.</h2>
+          <h2 id="cta-title">It is early. Keep a backup.</h2>
           <p>
-            Rough edges included — keep a backup of your vault. The files are plain Markdown, so
-            nothing here can hold them hostage.
+            This is version 0.1.0, and Phase 2 of seven is still being built. Your notes stay plain
+            Markdown files, so you can stop using Rhizom at any time and still have them.
           </p>
           <p class="hero__actions">
             <a class="button" href="https://github.com/lokianer/rhizom/releases/latest"
-              >Download it</a
+              >Download 0.1.0</a
             >
             <a class="button button--ghost" href="https://github.com/lokianer/rhizom/issues"
-              >Report something</a
+              >Open an issue</a
             >
           </p>
         </div>
@@ -555,7 +561,7 @@
           Rhizom is free software under the AGPL-3.0. The source lives on
           <a href="https://github.com/lokianer/rhizom">GitHub</a>.
         </p>
-        <p>It runs where you put it. No telemetry, no third-party accounts, no mandatory cloud.</p>
+        <p>No telemetry, no third-party accounts, no mandatory cloud.</p>
       </div>
     </footer>
 

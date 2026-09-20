@@ -14,7 +14,7 @@ connections. Every vault doubles as a navigable wiki.
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A5%2022.22-3a322c.svg)](package.json)
 [![Release](https://img.shields.io/github/v/release/lokianer/rhizom?label=release&color=c9a24b)](https://github.com/lokianer/rhizom/releases/latest)
-[![Roadmap](https://img.shields.io/badge/roadmap-phase%202%20of%206-3a322c.svg)](ROADMAP.md)
+[![Roadmap](https://img.shields.io/badge/roadmap-phase%202%20of%207-3a322c.svg)](ROADMAP.md)
 
 [Project page](https://lokianer.github.io/rhizom/) · [Roadmap](ROADMAP.md) ·
 [Decisions](DECISIONS.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
