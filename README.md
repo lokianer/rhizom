@@ -14,7 +14,7 @@ connections. Every vault doubles as a navigable wiki.
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A5%2022.22-3a322c.svg)](package.json)
 [![Release](https://img.shields.io/github/v/release/lokianer/rhizom?label=release&color=c9a24b)](https://github.com/lokianer/rhizom/releases/latest)
-[![Roadmap](https://img.shields.io/badge/roadmap-phase%202%20of%207-3a322c.svg)](ROADMAP.md)
+[![Roadmap](https://img.shields.io/badge/roadmap-phase%203%20of%207-3a322c.svg)](ROADMAP.md)
 
 [Project page](https://lokianer.github.io/rhizom/) · [Roadmap](ROADMAP.md) ·
 [Decisions](DECISIONS.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md)
@@ -23,10 +23,11 @@ connections. Every vault doubles as a navigable wiki.
 
 ---
 
-> **Early development.** Phase 1 of six is what you can run today: open a vault, write, link,
-> search, and see the field. Phase 2 — the knowledge layer — is being built now. Everything up
-> to the end of Phase 5 is a `0.x`: the format a vault is written in may still move. Keep a
-> backup of your notes.
+> **Early development.** Phases 1 and 2 of seven are what you can run today: open a vault,
+> write, link, search, see the field, and everything the knowledge layer adds — definitions,
+> transclusion, query blocks, templates, milieu axes. Phase 3, the D&D module, is next.
+> Everything up to the end of Phase 5 is a `0.x`: the format a vault is written in may still
+> move. Keep a backup of your notes.
 
 ## A look at it
 
@@ -106,7 +107,7 @@ The REST API is documented at <http://localhost:3737/api/docs>; the OpenAPI docu
 
 ## What Rhizom does, and will do
 
-Phase 1 is what you can run today; the later phases are planned. The
+Phases 1 and 2 are what you can run today; the later phases are planned. The
 [roadmap](ROADMAP.md) has the detail.
 
 | Area             | Highlights                                                                                             | Phase |
@@ -114,8 +115,10 @@ Phase 1 is what you can run today; the later phases are planned. The
 | Editor           | CodeMirror 6 with live preview, `[[` autocomplete with fuzzy search, create notes from missing links   | 1 ✓   |
 | Bubble graph     | Size by link degree, clusters by folder or tag, local graph, tag filters, SVG/PNG export               | 1 ✓   |
 | Wiki mode        | Read-only view of the whole vault with rendered links, navigation and full-text search                 | 1 ✓   |
-| Knowledge        | Definitions with glossary and hover tooltips, unlinked mentions, transclusion, templates, query blocks | 2     |
-| Milieu axes      | Two freely named axes; drag a note and its frontmatter values follow                                   | 2     |
+| Knowledge        | Definitions with glossary and hover tooltips, unlinked mentions, transclusion, templates, query blocks | 2 ✓   |
+| Editor, further  | Outline, callouts, Mermaid, task ticks, zen and Vim modes, find and replace, block references          | 2 ✓   |
+| Renaming         | Rename or move a note and rename a tag, each with a dry run and every mention rewritten                | 2 ✓   |
+| Milieu axes      | Two freely named axes; drag a note and its frontmatter values follow                                   | 2 ✓   |
 | D&D mode         | Stat blocks, typed relationships, reveal markers, a player view, dice and decks — enabled per vault    | 3     |
 | Sharing          | Multi-user permissions, publish flag per note, static HTML export, version history, PWA                | 4     |
 | Desktop & more   | Electron installers, CLI, OpenAPI docs, theme system, spaced repetition, maps, fantasy calendar        | 5     |

@@ -438,13 +438,12 @@
             </div>
             <div class="plans__item">
               <dt>Knowledge layer</dt>
-              <dd class="plans__phase">
-                <span class="chip chip--soon">Phase 2, being built</span>
-              </dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 Definitions with an alphabetical glossary built from them, terms recognised wherever
-                they are mentioned, <code>![[transclusion]]</code>, unlinked mentions, and templates
-                with a slash menu.
+                they are mentioned, <code>![[transclusion]]</code>, block references, unlinked
+                mentions, templates with a slash menu, and query blocks that answer from the index.
+                Renaming a note or a tag rewrites every mention, after showing you what it would do.
               </dd>
             </div>
             <div class="plans__item">
@@ -457,7 +456,7 @@
             </div>
             <div class="plans__item">
               <dt>Milieu axes</dt>
-              <dd class="plans__phase"><span class="chip">Phase 2</span></dd>
+              <dd class="plans__phase"><span class="chip chip--now">Here now</span></dd>
               <dd>
                 A second graph layout: two axes you name yourself, with the notes placed between
                 them the way the Sinus-Milieu studies lay out a population. Drag a note and the
@@ -495,12 +494,13 @@
       <section class="status" id="roadmap" aria-labelledby="status-title">
         <div class="page status__row">
           <p class="kicker">Status</p>
-          <h2 id="status-title">Seven phases, two of them done</h2>
+          <h2 id="status-title">Seven phases, three of them done</h2>
           <div class="status__body">
             <p class="status__note">
-              Phases 0 and 1 are done: you can open a vault, write, link, search and see the graph.
-              Phase 2 is the knowledge layer: definitions with a glossary, unlinked mentions,
-              transclusion, templates and live query blocks.
+              Phases 0 to 2 are done: you can open a vault, write, link, search, see the graph, and
+              use the knowledge layer — definitions with a glossary, unlinked mentions,
+              transclusion, block references, templates and live query blocks. Phase 3 is the
+              D&amp;D module.
             </p>
             <ol class="rail" role="list">
               <li class="rail__step is-done">
@@ -509,11 +509,11 @@
               <li class="rail__step is-done">
                 <span class="rail__n">1</span><span class="rail__label">Write, link, see</span>
               </li>
-              <li class="rail__step is-current" aria-current="step">
+              <li class="rail__step is-done">
                 <span class="rail__n">2</span
                 ><span class="rail__label">Knowledge layer and editor</span>
               </li>
-              <li class="rail__step">
+              <li class="rail__step is-current" aria-current="step">
                 <span class="rail__n">3</span><span class="rail__label">D&amp;D mode</span>
               </li>
               <li class="rail__step">
@@ -540,8 +540,8 @@
         <div class="page cta__inner">
           <h2 id="cta-title">It is early. Keep a backup.</h2>
           <p>
-            This is version 0.1.0, and Phase 2 of seven is still being built. Your notes stay plain
-            Markdown files, so you can stop using Rhizom at any time and still have them.
+            This is version 0.1.0, three of seven phases in. Your notes stay plain Markdown files,
+            so you can stop using Rhizom at any time and still have them.
           </p>
           <p class="hero__actions">
             <a class="button" href="https://github.com/lokianer/rhizom/releases/latest"
