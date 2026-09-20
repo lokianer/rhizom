@@ -258,29 +258,39 @@ person: what they may see, what they may change, and what happened to the file i
 _The end of this phase is 1.0, so this is the last stretch in which the format a vault is written
 in may still move._
 
-- [ ] **A desktop app — and it need not be Electron.** What is wanted is a window with an icon,
-      not a second programme: the server stays headless and the desktop build is a shell around
-      the very same Fastify server. Four ways to get there, to be decided before anything is
-      built:
-      **(a) Nothing but a launcher.** The release archive already starts a server and the browser
-      already renders the app; a small launcher that starts it and opens the default browser is
-      most of a desktop app for no new dependency. With the Phase 4 PWA installed it even gets
-      its own window and its own icon. No installer, no auto-update, no file associations.
-      **(b) Tauri 2.** A Rust shell around the system WebView: an installer of roughly ten
-      megabytes instead of Electron's hundred and fifty, and no second copy of Chromium on the
-      machine. The cost is a Rust toolchain in CI and shipping the Node server as a sidecar
-      binary, one per platform.
-      **(c) Electron with electron-builder.** The best-trodden path and the one with the fewest
-      surprises — auto-update, file associations, a tray, deep OS menus — at the price of the
-      largest download and a native module rebuilt against Electron's own ABI.
-      **(d) Neither, on purpose.** Say plainly that Rhizom is a server you run, and spend the
-      effort on the PWA instead.
-      The thing that decides it is `better-sqlite3`: a native module is what makes (b) and (c)
-      awkward in different ways. Worth measuring first whether Node's own `node:sqlite` can
-      replace it — if it can, and if it carries FTS5, every option above gets simpler, and the
-      server needs no compiler on any machine that runs it
+- [ ] **The desktop app, in two steps: Electron first, Tauri after.** What is wanted is a window
+      with an icon, not a second programme: the server stays headless and the desktop build is a
+      shell around the very same Fastify server. Electron comes first because it is the safe one
+      — one rendering engine on all three systems, so the editor behaves the same everywhere, and
+      auto-update, file associations and a tray are well-trodden ground. It costs the largest
+      download and a native module rebuilt against Electron's own ABI. Tauri 2 follows as the
+      lean build for anyone who does not want a second copy of Chromium on the machine: a Rust
+      shell around the system WebView, at the price of a Rust toolchain in CI and the Node server
+      shipped beside it as a sidecar
+- [ ] Two measurements come before either of them, because each one changes what has to be built:
+      whether Node's own `node:sqlite` can replace `better-sqlite3`, **FTS5 included** — if it
+      can, the native module is gone, no machine needs a compiler and both shells get simpler;
+      and whether the app runs correctly under **WebKitGTK**, which is what Tauri uses on Linux
+      (Windows gets Chromium either way, macOS WKWebView). `<dialog>` with `showModal()`,
+      `light-dark()`, the Canvas field, `CSS.escape`, EventSource and the clipboard are the
+      things to try there. The size argument is weaker than it is usually told, and the roadmap
+      should say so: Rhizom ships a Node runtime whichever shell it wears, so Tauri saves
+      Chromium, not everything — call it half the download rather than a tenth
+- [ ] **The vault that travels: work offline, reconcile later.** The desktop app is what makes
+      offline real — server, index and files all on the machine — so this is about the second
+      copy rather than the first. Files first decides the shape: a vault is a folder, so the
+      cheapest honest answer is to let the tool the user already runs move it (Syncthing, git, a
+      cloud folder) and make Rhizom _good at being synced_ rather than a sync tool of its own.
+      That means noticing a file that changed underneath it, which the watcher already does;
+      never writing over a file that moved on, which the hash gate already does; and reading the
+      `.sync-conflict-…` files those tools leave behind as what they are — a second version of a
+      note, shown side by side and merged by a person, never merged by a guess
+- [ ] Sync between a desktop vault and a Rhizom server, for people who would rather not run a
+      second tool: the same rules as above, over HTTP. One file at a time, a hash per file, and a
+      conflict written to disk as a file rather than resolved in silence. Only worth building
+      once the item above has proved the conflict model on somebody else's sync tool
 - [ ] Installers for Windows, macOS and Linux, with an update the user asks for rather than one
-      that happens to them — whichever shell the item above chooses
+      that happens to them
 - [ ] Published OpenAPI docs, webhooks, CLI (`rhizom new`, `rhizom search`, `rhizom export`)
 - [ ] Documented theme system (CSS variables) plus two example community themes
 - [ ] Spaced repetition: definitions as flashcards (SM-2 algorithm)

@@ -891,7 +891,7 @@ is what the tag tree already promises: asking for a level asks for everything un
 level that was asked about changes, so `Campaign/NPCs` becomes `chronicle/NPCs` — the rest of the
 path keeps the spelling the file gave it.
 
-## 2026-09-20 — The desktop build is not decided, and Electron is not the default
+## 2026-09-20 — The desktop build: Electron first, Tauri after
 
 The roadmap has said "Electron builds with electron-builder" since it was written, which read as
 a decision and was never taken as one. It is now an open item with four candidates — a launcher
@@ -915,5 +915,27 @@ not after it.
 
 The bias, stated so it can be argued with: a hundred and fifty megabytes of Chromium for a
 program whose whole point is that it is small and local is a poor trade, and the Phase 4 PWA
-already gives a window with an icon for nothing. Electron stays the answer if desktop integration
-— auto-update, file associations, a tray — turns out to matter more than size.
+already gives a window with an icon for nothing.
+
+**Decided, the same day: Electron first, Tauri second.** The maintainer's reason is the one
+argument that outweighs size — Electron carries its own rendering engine, so the editor behaves
+identically on all three systems, and auto-update, file associations and a tray are well-trodden
+there. Tauri follows as the lean build for people who would rather not have a second Chromium on
+the machine. The order is deliberate: the safe one first, so there is something to compare the
+lean one against.
+
+One number belongs in the record, because the usual comparison overstates it. Tauri's "ten
+megabytes instead of a hundred and fifty" is for an app that ships only a web interface. Rhizom
+ships a Node runtime whichever shell it wears, because the server _is_ Node; Tauri saves Chromium
+and nothing else. Half the download, then, not a tenth — still worth having, and not the reason
+to reorder anything.
+
+And the offline question, which prompted the decision, is not a property of the shell. A desktop
+build makes offline real by putting the server, the index and the files on the machine; what
+happens to a second copy is a separate item, and files first answers it: a vault is a folder, so
+the first move is to be _good at being synced_ by the tool somebody already runs rather than to
+become one. The watcher already notices a file that changed underneath, the hash gate already
+refuses to write over one that moved on, and what is missing is reading the `.sync-conflict-…`
+files those tools leave behind as a second version of a note — shown side by side, merged by a
+person. Sync of Rhizom's own is worth building only after that conflict model has been proved
+against somebody else's.
