@@ -80,6 +80,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kind stays a blockquote.
 - Task lists: `- [ ]` and `- [x]` are drawn with a box, ticked where the note ticked them. The box
   is disabled for now — ticking one has to write the file, and that is a slice of its own.
+- Tag hierarchies: the tag panel nests `campaign/silverstadt/npcs` as three levels rather than
+  showing one long word, and a level nobody wrote on its own is still there, because that row is
+  how you ask for everything below it. Asking for a level now means asking for its whole subtree:
+  filtering the graph by `campaign` finds a note that only ever wrote `campaign/silverstadt/npcs`.
 - Daily notes: a command that opens today's, making it from the vault's own template when it is
   not there yet. Where it goes and what a day is called come from the vault — the operator's
   `RHIZOM_DAILY_DIR`, Obsidian's `daily-notes.json`, or simply a folder called Daily — so a

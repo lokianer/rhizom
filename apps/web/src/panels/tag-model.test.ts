@@ -1,47 +1,104 @@
+import type { TagCount } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
-import { groupTags, tagChipLabel } from './tag-model.js';
+import { buildTagTree, isUnderTag, matchesTags, type TagNode } from './tag-model.js';
 
-describe('groupTags', () => {
-  it('groups nested tags under their first segment', () => {
-    const groups = groupTags([
-      { tag: 'npc/ally', count: 2 },
-      { tag: 'campaign/silverstadt', count: 7 },
-      { tag: 'campaign', count: 4 },
-      { tag: 'campaign/silverstadt/npcs', count: 3 },
+const counted = (...entries: [string, number][]): TagCount[] =>
+  entries.map(([tag, count]) => ({ tag, count }));
+
+/** The tree as `name(count/total)` lines, indented — the shape is what these tests are about. */
+function shape(nodes: readonly TagNode[], depth = 0): string[] {
+  return nodes.flatMap((node) => [
+    `${'  '.repeat(depth)}${node.name}(${String(node.count)}/${String(node.total)})`,
+    ...shape(node.children, depth + 1),
+  ]);
+}
+
+describe('buildTagTree', () => {
+  it('nests every level and sorts each of them by name', () => {
+    expect(
+      shape(
+        buildTagTree(
+          counted(
+            ['campaign/silverstadt/npcs', 3],
+            ['campaign/places', 2],
+            ['campaign', 1],
+            ['research', 4],
+          ),
+        ),
+      ),
+    ).toEqual([
+      'campaign(1/6)',
+      '  places(2/2)',
+      '  silverstadt(0/3)',
+      '    npcs(3/3)',
+      'research(4/4)',
     ]);
+  });
 
-    expect(groups.map((group) => group.name)).toStrictEqual(['campaign', 'npc']);
-    expect(groups[0]?.tags.map((tag) => tag.tag)).toStrictEqual([
-      'campaign',
-      'campaign/silverstadt',
-      'campaign/silverstadt/npcs',
+  it('fills in a level nobody wrote, because that level is how you ask for both at once', () => {
+    // No note carries `npc` on its own, but `npc` is still the way to ask for allies and rivals
+    // together.
+    expect(shape(buildTagTree(counted(['npc/ally', 2], ['npc/rival', 1])))).toEqual([
+      'npc(0/3)',
+      '  ally(2/2)',
+      '  rival(1/1)',
     ]);
-    expect(groups[0]?.total).toBe(14);
-    expect(groups[0]?.flat).toBe(false);
   });
 
-  it('marks a group that is only its own tag as flat', () => {
-    const groups = groupTags([{ tag: 'idea', count: 1 }]);
-
-    expect(groups[0]).toMatchObject({ name: 'idea', total: 1, flat: true });
+  it('counts a note under every level it wrote', () => {
+    // A note tagged both `campaign` and `campaign/npcs` is counted twice under `campaign`, which
+    // is what "how much is written about this" means.
+    const [campaign] = buildTagTree(counted(['campaign', 1], ['campaign/npcs', 1]));
+    expect(campaign?.count).toBe(1);
+    expect(campaign?.total).toBe(2);
   });
 
-  it('does not treat a one-entry nested group as flat', () => {
-    const groups = groupTags([{ tag: 'research/pkm', count: 5 }]);
-
-    expect(groups[0]?.flat).toBe(false);
+  it('has nothing to show for a vault with no tags', () => {
+    expect(buildTagTree([])).toEqual([]);
   });
 
-  it('returns nothing for an empty vault', () => {
-    expect(groupTags([])).toStrictEqual([]);
+  it('is not confused by a tag written with an empty segment', () => {
+    expect(shape(buildTagTree(counted(['a//b', 1])))).toEqual(['a(0/1)', '  b(1/1)']);
+    expect(buildTagTree(counted(['/', 1]))).toEqual([]);
+  });
+
+  it('keeps a tag written in another script, and one made of emoji', () => {
+    // The collator puts a symbol before a letter, which is its business; what matters here is
+    // that both survive the split and the nesting intact.
+    expect(shape(buildTagTree(counted(['forschung/wurzeln', 1], ['🌱/keimling', 2])))).toEqual([
+      '🌱(0/2)',
+      '  keimling(2/2)',
+      'forschung(0/1)',
+      '  wurzeln(1/1)',
+    ]);
   });
 });
 
-describe('tagChipLabel', () => {
-  it('drops the prefix of the group the chip sits in', () => {
-    expect(tagChipLabel('campaign/silverstadt/npcs', 'campaign')).toBe('silverstadt/npcs');
-    expect(tagChipLabel('campaign', 'campaign')).toBe('campaign');
-    expect(tagChipLabel('campaigns/other', 'campaign')).toBe('campaigns/other');
+describe('isUnderTag', () => {
+  it('holds for the tag itself and for everything below it', () => {
+    expect(isUnderTag('campaign', 'campaign')).toBe(true);
+    expect(isUnderTag('campaign/npcs', 'campaign')).toBe(true);
+    expect(isUnderTag('campaign/silverstadt/npcs', 'campaign')).toBe(true);
+  });
+
+  it('does not hold for a tag that merely begins with the same letters', () => {
+    expect(isUnderTag('campaigning', 'campaign')).toBe(false);
+    expect(isUnderTag('campaign', 'campaign/npcs')).toBe(false);
+  });
+});
+
+describe('matchesTags', () => {
+  it('finds a note that only ever wrote a tag further down', () => {
+    expect(matchesTags(['campaign/silverstadt/npcs'], ['campaign'])).toBe(true);
+    expect(matchesTags(['research'], ['campaign'])).toBe(false);
+  });
+
+  it('is any of the tags asked for, not all of them', () => {
+    expect(matchesTags(['research'], ['campaign', 'research'])).toBe(true);
+  });
+
+  it('asks nothing of a note when nothing was asked', () => {
+    expect(matchesTags(['research'], [])).toBe(false);
   });
 });

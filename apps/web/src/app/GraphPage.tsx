@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 
 import { api, isAbortError } from '../api/client.js';
 import { downloadBlob, GraphCanvas, type GraphCanvasHandle } from '../graph/index.js';
+import { matchesTags } from '../panels/tag-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { noteHref } from './paths.js';
@@ -53,7 +54,7 @@ export function GraphPage() {
       return graph;
     }
     const tagged = new Set(
-      notes.filter((entry) => graphTags.some((tag) => entry.tags.includes(tag))).map((e) => e.path),
+      notes.filter((entry) => matchesTags(entry.tags, graphTags)).map((e) => e.path),
     );
     const nodes = graph.nodes.filter((node) => tagged.has(node.path));
     const kept = new Set(nodes.map((node) => node.path));

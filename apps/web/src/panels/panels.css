@@ -262,7 +262,7 @@
 
 /* --- tags -------------------------------------------------------------------------------- */
 
-.rz-tag-groups {
+.rz-tag-tree {
   list-style: none;
   margin: 0;
   padding: var(--rz-space-3);
@@ -270,8 +270,19 @@
   min-height: 0;
   overflow: auto;
   display: grid;
-  gap: var(--rz-space-4);
+  gap: var(--rz-space-2);
   align-content: start;
+}
+
+/* Every level is indented by one step and keeps a line down its left, so a deep tag reads as a
+   branch rather than as a list that happens to be shifted. */
+.rz-tag-children {
+  list-style: none;
+  margin: var(--rz-space-2) 0 0;
+  padding-left: var(--rz-space-3);
+  border-left: 1px solid var(--rz-border);
+  display: grid;
+  gap: var(--rz-space-2);
 }
 
 .rz-tag-group-name {
