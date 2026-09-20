@@ -32,8 +32,10 @@ if (vaultDir === '' && !isProduction && existsSync(exampleVault)) {
   vaultNote = 'RHIZOM_VAULT_DIR is not set; using the example vault from the repository';
 }
 const dataDir = resolve(env('RHIZOM_DATA_DIR', 'data'));
-// Where the templates are, when the vault itself does not say — see vault/templates.ts.
+// Where the templates and the daily notes are, when the vault itself does not say — see
+// vault/templates.ts.
 const templateDir = env('RHIZOM_TEMPLATE_DIR', '');
+const dailyDir = env('RHIZOM_DAILY_DIR', '');
 
 // Pretty logs only where a person reads them: outside production, on a terminal, and only when
 // the development-only pino-pretty transport is actually installed.
@@ -51,7 +53,14 @@ const app = await buildApp({
     : { level },
   ...(vaultDir === ''
     ? {}
-    : { vault: { dir: vaultDir, dataDir, ...(templateDir === '' ? {} : { templateDir }) } }),
+    : {
+        vault: {
+          dir: vaultDir,
+          dataDir,
+          ...(templateDir === '' ? {} : { templateDir }),
+          ...(dailyDir === '' ? {} : { dailyDir }),
+        },
+      }),
 });
 
 if (vaultNote !== '') {

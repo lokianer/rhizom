@@ -21,6 +21,8 @@ export interface VaultInfo {
   indexedAt: string | null;
   /** Where this vault keeps its templates, and what its placeholders default to. */
   templates: TemplateSettings;
+  /** Where this vault keeps its daily notes, and what a day is called. */
+  daily: DailySettings;
 }
 
 /**
@@ -32,6 +34,19 @@ export interface TemplateSettings {
   folder: string | null;
   dateFormat: string;
   timeFormat: string;
+}
+
+/**
+ * What the vault declares about daily notes — the operator's setting, Obsidian's own
+ * `daily-notes.json`, or simply a folder called Daily. `folder` is null when the vault keeps
+ * none, and the command that opens today's note is then not offered at all.
+ */
+export interface DailySettings {
+  folder: string | null;
+  /** The file name, in the same format tokens a template uses. */
+  format: string;
+  /** The note a new day starts from, as a vault path, or null when there is none. */
+  template: string | null;
 }
 
 export interface Heading {

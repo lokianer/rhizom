@@ -9,7 +9,12 @@ import type { IndexEvent } from '@rhizom/core';
 import { indexPaths, syncVault, type SyncResult } from '../store/sync.js';
 import { VaultIndex } from '../store/vault-index.js';
 import { openVault, type Vault } from './files.js';
-import { readTemplateSettings, type TemplateSettings } from './templates.js';
+import {
+  readDailySettings,
+  readTemplateSettings,
+  type DailySettings,
+  type TemplateSettings,
+} from './templates.js';
 import { watchVault, type VaultWatcher } from './watcher.js';
 
 export interface VaultContextOptions {
@@ -21,6 +26,8 @@ export interface VaultContextOptions {
   watch?: boolean;
   /** Template folder, where the operator would rather say than let the vault decide. */
   templateDir?: string;
+  /** Daily-note folder, likewise. */
+  dailyDir?: string;
   onWatchError?: (error: unknown) => void;
   onLog?: (message: string) => void;
 }
@@ -38,6 +45,8 @@ export interface VaultContext {
    * be told about it, while Rhizom is running.
    */
   templates(): TemplateSettings;
+  /** Where this vault keeps its daily notes, read afresh for the same reason. */
+  daily(): DailySettings;
   close(): Promise<void>;
 }
 
@@ -66,6 +75,9 @@ export async function openVaultContext(options: VaultContextOptions): Promise<Va
     },
     templates() {
       return readTemplateSettings(vault.root, options.templateDir);
+    },
+    daily() {
+      return readDailySettings(vault.root, options.dailyDir);
     },
     async rebuild() {
       const result = await syncVault(vault, index);

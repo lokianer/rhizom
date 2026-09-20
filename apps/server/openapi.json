@@ -94,7 +94,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["name", "noteCount", "indexedAt", "templates"],
+                  "required": ["name", "noteCount", "indexedAt", "templates", "daily"],
                   "properties": {
                     "name": {
                       "description": "Folder name of the vault",
@@ -136,6 +136,38 @@
                         "timeFormat": {
                           "description": "What {{time}} means without a format of its own",
                           "type": "string"
+                        }
+                      }
+                    },
+                    "daily": {
+                      "type": "object",
+                      "required": ["folder", "format", "template"],
+                      "properties": {
+                        "folder": {
+                          "description": "Vault path of the daily-note folder, or null when the vault keeps none",
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "format": {
+                          "description": "The file name, in a template format",
+                          "type": "string"
+                        },
+                        "template": {
+                          "description": "The note a new day starts from",
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       }
                     }

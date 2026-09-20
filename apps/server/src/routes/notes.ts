@@ -73,6 +73,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
         noteCount: stats.noteCount,
         indexedAt: stats.indexedAt,
         templates: ctx.templates(),
+        daily: ctx.daily(),
       };
     },
   );

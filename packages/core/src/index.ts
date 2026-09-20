@@ -3,6 +3,7 @@ export type {
   AssetSummary,
   Backlink,
   CreateNoteRequest,
+  DailySettings,
   GlossaryEntry,
   GraphResponse,
   Heading,

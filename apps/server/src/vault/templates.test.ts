@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { isInFolder } from '@rhizom/core';
 
-import { readTemplateSettings } from './templates.js';
+import { readDailySettings, readTemplateSettings } from './templates.js';
 
 let root: string;
 
@@ -18,9 +18,9 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-function obsidian(settings: string): void {
+function obsidian(settings: string, file = 'templates.json'): void {
   mkdirSync(join(root, '.obsidian'), { recursive: true });
-  writeFileSync(join(root, '.obsidian', 'templates.json'), settings, 'utf8');
+  writeFileSync(join(root, '.obsidian', file), settings, 'utf8');
 }
 
 describe('readTemplateSettings', () => {
@@ -114,5 +114,49 @@ describe('isInFolder', () => {
     expect(isInFolder('Templates.md', 'Templates')).toBe(false);
     expect(isInFolder('Campaign/Templates.md', 'Templates')).toBe(false);
     expect(isInFolder('Templates/NPC.md', null)).toBe(false);
+  });
+});
+
+describe('readDailySettings', () => {
+  const daily = (file: string) => obsidian(file, 'daily-notes.json');
+
+  it('says a vault keeps no daily notes when nothing points at any', () => {
+    expect(readDailySettings(root)).toEqual({ folder: null, format: 'YYYY-MM-DD', template: null });
+  });
+
+  it("reads Obsidian's own setting", () => {
+    daily('{"folder":"Journal","format":"YYYY/MM/DD dddd","template":"Templates/Tag"}');
+    expect(readDailySettings(root)).toEqual({
+      folder: 'Journal',
+      format: 'YYYY/MM/DD dddd',
+      // The template is a note, so it is reported with the extension a note has.
+      template: 'Templates/Tag.md',
+    });
+  });
+
+  it('keeps the extension a template already carries', () => {
+    daily('{"template":"Templates/Tag.md"}');
+    expect(readDailySettings(root).template).toBe('Templates/Tag.md');
+  });
+
+  it('falls back to a folder called Daily, in whatever case the vault spells it', () => {
+    mkdirSync(join(root, 'DAILY'));
+    expect(readDailySettings(root).folder).toBe('DAILY');
+  });
+
+  it('lets the operator say, over anything the vault says', () => {
+    daily('{"folder":"Journal"}');
+    mkdirSync(join(root, 'Daily'));
+    expect(readDailySettings(root, 'Notes/Tage').folder).toBe('Notes/Tage');
+  });
+
+  it('refuses a setting that names something outside the vault', () => {
+    daily('{"folder":"../elsewhere","template":"C:/Windows/notes"}');
+    expect(readDailySettings(root)).toEqual({ folder: null, format: 'YYYY-MM-DD', template: null });
+  });
+
+  it('treats a settings file that is not JSON as a vault that has not said', () => {
+    daily('not json at all');
+    expect(readDailySettings(root)).toEqual({ folder: null, format: 'YYYY-MM-DD', template: null });
   });
 });

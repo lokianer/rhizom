@@ -8,6 +8,7 @@ import type {
   AssetSummary,
   Backlink,
   CreateNoteRequest,
+  DailySettings,
   GlossaryEntry,
   GraphResponse,
   Heading,
@@ -46,6 +47,7 @@ import type {
   AssetSummarySchema,
   BacklinkSchema,
   CreateNoteBodySchema,
+  DailySettingsSchema,
   ErrorSchema,
   GlossaryEntrySchema,
   GraphSchema,
@@ -119,6 +121,7 @@ type Checked = [
   Pair<TagCount, Static<typeof TagCountSchema>>,
   Pair<TreeEntry, Static<typeof TreeEntrySchema>>,
   Pair<TemplateSettings, Static<typeof TemplateSettingsSchema>>,
+  Pair<DailySettings, Static<typeof DailySettingsSchema>>,
   Pair<GraphResponse, Static<typeof GraphSchema>>,
   Pair<CreateNoteRequest, Static<typeof CreateNoteBodySchema>>,
   Pair<SaveNoteRequest, Static<typeof SaveNoteBodySchema>>,
@@ -180,8 +183,9 @@ describe('API contracts', () => {
       true,
       true,
       true,
+      true,
     ];
-    expect(checked).toHaveLength(34);
+    expect(checked).toHaveLength(35);
   });
 
   it('has teeth: the comparison rejects a shape that only looks the same', () => {

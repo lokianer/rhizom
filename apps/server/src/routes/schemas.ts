@@ -28,12 +28,26 @@ export const TemplateSettingsSchema = Type.Object(
   { $id: 'TemplateSettings' },
 );
 
+export const DailySettingsSchema = Type.Object(
+  {
+    folder: Type.Union([Type.String(), Type.Null()], {
+      description: 'Vault path of the daily-note folder, or null when the vault keeps none',
+    }),
+    format: Type.String({ description: 'The file name, in a template format' }),
+    template: Type.Union([Type.String(), Type.Null()], {
+      description: 'The note a new day starts from',
+    }),
+  },
+  { $id: 'DailySettings' },
+);
+
 export const VaultInfoSchema = Type.Object(
   {
     name: Type.String({ description: 'Folder name of the vault' }),
     noteCount: Type.Integer(),
     indexedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
     templates: TemplateSettingsSchema,
+    daily: DailySettingsSchema,
   },
   { $id: 'VaultInfo' },
 );

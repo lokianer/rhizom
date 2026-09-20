@@ -49,6 +49,8 @@ export interface BuildAppOptions {
     watch?: boolean;
     /** Template folder, when the operator would rather say than let the vault decide. */
     templateDir?: string;
+    /** Daily-note folder, likewise. */
+    dailyDir?: string;
   };
 }
 
@@ -101,6 +103,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       ...(options.vault.templateDir === undefined
         ? {}
         : { templateDir: options.vault.templateDir }),
+      ...(options.vault.dailyDir === undefined ? {} : { dailyDir: options.vault.dailyDir }),
       onLog: (message) => {
         app.log.info(message);
       },

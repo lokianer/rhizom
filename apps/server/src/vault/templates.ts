@@ -1,4 +1,6 @@
-// Where a vault keeps its templates, and what its placeholders mean by "the date".
+// What a vault says about itself: where it keeps its templates, and where it keeps its daily
+// notes. Both answers come from the same three places and are read the same way, which is why
+// they live together.
 //
 // A template is not marked in the note; it is a note that lives in the template folder. That is
 // how Obsidian does it, and the two templates in this repository's own example vault carry
@@ -12,7 +14,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { toVaultPath } from '@rhizom/core';
+import { ensureMarkdownExtension, toVaultPath } from '@rhizom/core';
 
 /** What `GET /api/vault` reports about templates. */
 export interface TemplateSettings {
@@ -26,8 +28,9 @@ export interface TemplateSettings {
 
 const DEFAULT_DATE = 'YYYY-MM-DD';
 const DEFAULT_TIME = 'HH:mm';
-/** The folder name to look for when nothing has been configured, compared case-folded. */
+/** Folder names to look for when nothing has been configured, compared case-folded. */
 const CONVENTIONAL = 'templates';
+const CONVENTIONAL_DAILY = 'daily';
 
 /**
  * Reads the template settings of the vault rooted at `root`. Nothing here throws: a vault with
@@ -35,8 +38,9 @@ const CONVENTIONAL = 'templates';
  * "this vault has not said", not "this vault cannot be opened".
  */
 export function readTemplateSettings(root: string, configured?: string): TemplateSettings {
-  const obsidian = readObsidianSettings(root);
-  const folder = vaultFolder(configured) ?? vaultFolder(obsidian.folder) ?? conventional(root);
+  const obsidian = readObsidianSettings(root, 'templates.json');
+  const folder =
+    vaultFolder(configured) ?? vaultFolder(obsidian.folder) ?? conventional(root, CONVENTIONAL);
   return {
     folder,
     dateFormat: nonEmpty(obsidian.dateFormat) ?? DEFAULT_DATE,
@@ -44,17 +48,48 @@ export function readTemplateSettings(root: string, configured?: string): Templat
   };
 }
 
-interface ObsidianTemplates {
+/** What a vault declares about its daily notes. */
+export interface DailySettings {
+  /** Vault path of the folder they go in, or null when this vault keeps none. */
+  folder: string | null;
+  /** The file name, in the same format tokens a template uses. */
+  format: string;
+  /** Vault path of the note a new day starts from, or null when there is none. */
+  template: string | null;
+}
+
+/**
+ * Reads what the vault says about daily notes. Same three places as the templates, same
+ * silence on a vault that has not said: a folder called Daily is enough to make one work.
+ *
+ * The template is only reported when it names something inside the vault; whether the note is
+ * actually there is the caller's business, because a settings file outlives the note it names.
+ */
+export function readDailySettings(root: string, configured?: string): DailySettings {
+  const obsidian = readObsidianSettings(root, 'daily-notes.json');
+  const folder =
+    vaultFolder(configured) ??
+    vaultFolder(obsidian.folder) ??
+    conventional(root, CONVENTIONAL_DAILY);
+  const template = vaultFolder(obsidian.template);
+  return {
+    folder,
+    format: nonEmpty(obsidian.format) ?? DEFAULT_DATE,
+    template: template === null ? null : ensureMarkdownExtension(template),
+  };
+}
+
+interface ObsidianSettings {
   folder?: unknown;
   dateFormat?: unknown;
   timeFormat?: unknown;
+  format?: unknown;
+  template?: unknown;
 }
 
-function readObsidianSettings(root: string): ObsidianTemplates {
+function readObsidianSettings(root: string, file: string): ObsidianSettings {
   try {
-    const raw: unknown = JSON.parse(
-      readFileSync(join(root, '.obsidian', 'templates.json'), 'utf8'),
-    );
+    const raw: unknown = JSON.parse(readFileSync(join(root, '.obsidian', file), 'utf8'));
     return typeof raw === 'object' && raw !== null ? raw : {};
   } catch {
     return {};
@@ -78,11 +113,11 @@ function vaultFolder(value: unknown): string | null {
   return folder;
 }
 
-/** A top-level folder named Templates, in whatever case the vault spells it. */
-function conventional(root: string): string | null {
+/** A top-level folder of that name, in whatever case the vault spells it. */
+function conventional(root: string, name: string): string | null {
   try {
     const entry = readdirSync(root, { withFileTypes: true }).find(
-      (candidate) => candidate.isDirectory() && candidate.name.toLowerCase() === CONVENTIONAL,
+      (candidate) => candidate.isDirectory() && candidate.name.toLowerCase() === name,
     );
     return entry?.name ?? null;
   } catch {
