@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 import { buildNoteIndex, editorContext, type EditorContextValue } from './context.js';
 import { baseExtensions } from './extensions.js';
-import { commandChange, definitionChange, slashCompletion, templateNotes } from './slash.js';
+import { commandChange, definitionChange, slashCompletion } from './slash.js';
+import { templateNotes } from './template-model.js';
 
 function note(path: string, title: string, folder: string): NoteSummary {
   return {

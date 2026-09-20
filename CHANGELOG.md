@@ -96,7 +96,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The index schema version is 4, so the index file is rebuilt once on the next start. It costs
+- The first page no longer downloads the editor. Opening a note loads CodeMirror with the note
+  page, the way the graph, the wiki and the Markdown renderer were already loaded where they are
+  used, so the entry bundle falls from 1,010 kB to 355 kB — 333 kB to 111 kB over the wire — and
+  what a reader waits for before anything appears roughly halves.
+- The index schema version is 5, so the index file is rebuilt once on the next start. It costs
   one vault scan and no data: the Markdown files are the source of truth.
 
 - Smart folders: a note that declares `type: query` is a saved search, and the sidebar shows it
@@ -199,8 +203,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `NoteSummary` and `NoteDocument` carry the note's `aliases`, which the web app now uses:
   clicking `[[An Alias]]` in the preview or the wiki resolves the same way the server does.
-- The index schema version is 3. The index file is deleted and rebuilt on first start, which
-  costs one vault scan and no data: every vault stays the Markdown files it was.
 - Building the index no longer resolves links once per note. A first build of a generated vault
   of 5,000 notes and 47,000 links went from 198 s to about 10 s, and the server answers nothing
   until that build is done.

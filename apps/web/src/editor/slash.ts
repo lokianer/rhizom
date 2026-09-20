@@ -18,17 +18,10 @@ import {
 import { syntaxTree } from '@codemirror/language';
 import { StateEffect, StateField } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import {
-  expandTemplate,
-  folderOf,
-  isInFolder,
-  noteNameOf,
-  type NoteSummary,
-  type TemplateContext,
-  type TemplateSettings,
-} from '@rhizom/core';
+import { expandTemplate, folderOf, noteNameOf, type TemplateContext } from '@rhizom/core';
 
 import { editorContext, frontmatterEnd, NOT_PROSE, type EditorContextValue } from './context.js';
+import { templateNotes } from './template-model.js';
 
 /**
  * `/` at the start of a line or after a space, plus the word typed so far. The word is whatever
@@ -89,14 +82,6 @@ export function slashCompletion(context: CompletionContext): CompletionResult | 
   // `from` is past the slash so that what the reader typed is what gets matched; the slash
   // itself is swallowed when an option is applied.
   return { from: match.to - typed(match.text).length, options };
-}
-
-/** The notes offered as templates: the ones in the vault's template folder. */
-export function templateNotes(
-  notes: readonly NoteSummary[],
-  templates: TemplateSettings,
-): NoteSummary[] {
-  return notes.filter((note) => isInFolder(note.path, templates.folder));
 }
 
 /** What has been typed after the slash. */

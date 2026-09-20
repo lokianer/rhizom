@@ -16,7 +16,10 @@ import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { TagRenameDialog } from '../components/TagRenameDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
-import { templateNotes } from '../editor/index.js';
+// Straight from the module, not through the editor's barrel: that barrel reaches MarkdownEditor,
+// whose stylesheet import makes it a side effect no bundler may drop, and the frame would carry
+// all of CodeMirror for the sake of one filter.
+import { templateNotes } from '../editor/template-model.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore, type SidebarTab } from '../store/ui.js';
