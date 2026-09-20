@@ -64,7 +64,7 @@ changes only with a documented migration.
       index (filter by type/tag/folder/frontmatter fields); saved searches appear as smart
       folders in the sidebar. A closed set of keys and no expression language: a query is read
       by the index, never evaluated as code out of somebody else's vault
-- [ ] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
+- [x] Tag hierarchies (`#campaign/silvercity/npcs`), daily notes
 - [ ] Editor expansion: outline panel, callouts, Mermaid, task checkboxes, zen mode,
       optional Vim mode (split view already shipped with Phase 1). Callouts and task checkboxes
       are in; a ticked box is read, not yet written, which wants a slice of its own. Mermaid
