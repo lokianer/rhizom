@@ -83,6 +83,7 @@ export {
   type ProseSpan,
 } from './mentions.js';
 export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from './parse.js';
+export { queryBlocks } from './query-blocks.js';
 export {
   parseQuery,
   BUILT_IN_COLUMNS,

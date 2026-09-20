@@ -147,7 +147,7 @@
     }
   },
   "smartFolders": {
-    "title": "Gespeicherte Suchen",
+    "title": "Intelligente Ordner",
     "notes_one": "{{count}} Notiz",
     "notes_other": "{{count}} Notizen",
     "noBlock": "Diese Notiz enthält keinen Abfrageblock.",

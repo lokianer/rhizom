@@ -68,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anywhere and opening one must never run anything. A block that is partly wrong still answers:
   the rows are what could be read, and each line that could not is named underneath.
 - `POST /api/query`, in the OpenAPI document with the rest.
+- Smart folders: a note that declares `type: query` is a saved search, and the sidebar shows it
+  as a folder that fills itself by running the block inside it. A saved search is therefore a
+  file — it travels with the vault, reads without Rhizom and can be edited in any editor, rather
+  than living in one browser's storage. The section is not there at all in a vault that keeps
+  none.
 - Callouts in Obsidian's syntax: `> [!warning] Title` and the twenty-nine spellings that fold
   onto thirteen kinds, with `+` and `-` for a fold that starts open or closed. A folded callout is
   a `<details>`, so it works with JavaScript switched off, and the colours come out of the vault's

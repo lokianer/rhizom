@@ -9,7 +9,7 @@ import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { ThemeSwitch } from '../components/ThemeSwitch.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
-import { FileTree, SearchPanel, TagList } from '../panels/index.js';
+import { FileTree, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { noteHref, notePathFromLocation } from './paths.js';
@@ -257,12 +257,16 @@ export function Layout() {
           </div>
 
           {sidebarTab === 'tree' ? (
-            <FileTree
-              tree={tree}
-              activePath={openNotePath}
-              onOpen={openNote}
-              onCreate={setNewNoteFolder}
-            />
+            <>
+              {/* Above the tree, and nothing at all in a vault that saves no searches. */}
+              <SmartFolders activePath={openNotePath} onOpen={openNote} />
+              <FileTree
+                tree={tree}
+                activePath={openNotePath}
+                onOpen={openNote}
+                onCreate={setNewNoteFolder}
+              />
+            </>
           ) : null}
           {sidebarTab === 'search' ? (
             <SearchPanel activePath={openNotePath} onOpen={openNote} />
