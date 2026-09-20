@@ -1721,6 +1721,16 @@
                   "body": {
                     "maxLength": 8000,
                     "type": "string"
+                  },
+                  "fields": {
+                    "maxItems": 20,
+                    "description": "Frontmatter keys wanted on every row, beyond the block own columns",
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "maxLength": 200,
+                      "type": "string"
+                    }
                   }
                 }
               }

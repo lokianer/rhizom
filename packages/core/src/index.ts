@@ -37,6 +37,20 @@ export type {
 } from './api.js';
 export { calloutKindOf, CALLOUT_KINDS, type CalloutKind, type CalloutLabels } from './callout.js';
 export {
+  axisValueOf,
+  placeNote,
+  placementOf,
+  readAxes,
+  AXES_KEYS,
+  AXIS_MAX,
+  AXIS_MIN,
+  type Axis,
+  type AxesMissing,
+  type AxesPlacement,
+  type AxesPoint,
+  type AxesSettings,
+} from './axes.js';
+export {
   findFrontmatter,
   frontmatterFields,
   setFrontmatter,

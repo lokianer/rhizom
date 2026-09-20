@@ -47,8 +47,12 @@ afterAll(async () => {
   rmSync(root, { recursive: true, force: true });
 });
 
-async function run(body: string): Promise<QueryResult> {
-  const res = await app.inject({ method: 'POST', url: '/api/query', payload: { body } });
+async function run(body: string, fields?: string[]): Promise<QueryResult> {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/api/query',
+    payload: fields === undefined ? { body } : { body, fields },
+  });
   expect(res.statusCode).toBe(200);
   return res.json();
 }
@@ -152,6 +156,15 @@ describe('POST /api/query', () => {
     expect(mira?.tags).toEqual(['campaign/npcs', 'ledger']);
     const corvin = result.rows.find((row) => row.path === 'Campaign/NPCs/Corvin.md');
     expect(corvin?.fields.status).toBe('draft, review');
+  });
+
+  it('hands back frontmatter the caller asked for, leaving the block as it is', async () => {
+    // The milieu field draws a note at the position two of its own keys give, and those keys
+    // are named by the axes rather than by the block.
+    const result = await run('tag: campaign/npcs\nsort: path', ['status', 'created']);
+    expect(result.columns).toEqual([]);
+    expect(result.view).toBe('list');
+    expect(result.rows[1]?.fields).toEqual({ status: 'done', created: '2026-01-02' });
   });
 
   it('answers a block it could only partly read, and says what it skipped', async () => {

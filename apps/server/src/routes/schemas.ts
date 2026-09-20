@@ -362,6 +362,12 @@ export const QueryBodySchema = Type.Object({
   // A query block is text in a note; the server parses it with the same reader the browser
   // uses, so there is one grammar and one set of error messages.
   body: Type.String({ maxLength: 8000 }),
+  fields: Type.Optional(
+    Type.Array(Type.String({ minLength: 1, maxLength: 200 }), {
+      maxItems: 20,
+      description: 'Frontmatter keys wanted on every row, beyond the block own columns',
+    }),
+  ),
 });
 
 export const QueryRowSchema = Type.Object(

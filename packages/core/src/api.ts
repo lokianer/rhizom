@@ -292,6 +292,13 @@ export interface RenameNoteResult {
 export interface QueryRequest {
   /** The text between the fences, exactly as the note writes it. */
   body: string;
+  /**
+   * Frontmatter keys the caller needs on every row, beyond the ones the block asked to show.
+   * The milieu field is the reason: it draws a note at the position two of its own keys give,
+   * and those keys are named by the axes rather than by the block. They arrive in `fields`
+   * alongside the block's own columns and change nothing about how the block renders.
+   */
+  fields?: string[];
 }
 
 /** One note a query matched. */

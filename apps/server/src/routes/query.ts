@@ -28,8 +28,21 @@ export function registerQueryRoutes(app: TypedApp, context: () => VaultContext):
     (request) => {
       const ctx = context();
       const { query, problems } = parseQuery(request.body.body);
-      const { rows, total } = ctx.index.runQuery(query);
-      return { rows, total, view: query.view, columns: query.columns, problems };
+      // What the caller asked for is added to what the block shows, without changing what the
+      // block shows: `columns` is the view, `fields` is the data a caller happens to need.
+      const wanted = request.body.fields ?? [];
+      const answered = ctx.index.runQuery(
+        wanted.length === 0
+          ? query
+          : { ...query, columns: [...new Set([...query.columns, ...wanted])] },
+      );
+      return {
+        rows: answered.rows,
+        total: answered.total,
+        view: query.view,
+        columns: query.columns,
+        problems,
+      };
     },
   );
 }
