@@ -2,7 +2,7 @@
   "description": "What a checker should find when it indexes examples/vault. Paths are vault paths: forward slashes, relative to the vault root, NFC-normalised, with extension.",
   "vault": "vault",
   "notes": {
-    "count": 38,
+    "count": 39,
     "byFolder": {
       "": 1,
       "Campaign": 1,
@@ -11,7 +11,7 @@
       "Campaign/Factions": 3,
       "Campaign/Quests": 3,
       "Campaign/Sessions": 3,
-      "Research": 9,
+      "Research": 10,
       "Daily": 5,
       "Glossary": 1,
       "Templates": 2
@@ -39,12 +39,26 @@
   "definitions": {
     "notes": ["Glossary/Spring tide.md"],
     "terms": [
-      { "surface": "Spring tide", "path": "Glossary/Spring tide.md", "alias": false },
-      { "surface": "spring tides", "path": "Glossary/Spring tide.md", "alias": true }
+      {
+        "surface": "Spring tide",
+        "path": "Glossary/Spring tide.md",
+        "alias": false
+      },
+      {
+        "surface": "spring tides",
+        "path": "Glossary/Spring tide.md",
+        "alias": true
+      }
     ],
     "unlinkedMentions": [
-      { "in": "Campaign/Places/Silverstadt.md", "text": "spring tides" },
-      { "in": "Campaign/Places/Silverstadt.md", "text": "Spring tide" }
+      {
+        "in": "Campaign/Places/Silverstadt.md",
+        "text": "spring tides"
+      },
+      {
+        "in": "Campaign/Places/Silverstadt.md",
+        "text": "Spring tide"
+      }
     ],
     "note": "Only a note with type: definition contributes terms. The two mentions in Silverstadt.md are plain prose, not links, and the defining note mentions its own term as well."
   },
@@ -70,10 +84,22 @@
     "note": "A bare [[Archive]] is ambiguous by design. It must resolve to one of the candidates (same folder first, then shortest path) and never be reported as broken."
   },
   "aliasLinks": [
-    { "target": "Mira Voss", "resolvesTo": "Campaign/NPCs/Mira's Ledger.md" },
-    { "target": "Mira", "resolvesTo": "Campaign/NPCs/Mira's Ledger.md" },
-    { "target": "Captain Thane", "resolvesTo": "Campaign/NPCs/Aldric Thane.md" },
-    { "target": "Drowned Library", "resolvesTo": "Campaign/Places/Sunken Archive.md" }
+    {
+      "target": "Mira Voss",
+      "resolvesTo": "Campaign/NPCs/Mira's Ledger.md"
+    },
+    {
+      "target": "Mira",
+      "resolvesTo": "Campaign/NPCs/Mira's Ledger.md"
+    },
+    {
+      "target": "Captain Thane",
+      "resolvesTo": "Campaign/NPCs/Aldric Thane.md"
+    },
+    {
+      "target": "Drowned Library",
+      "resolvesTo": "Campaign/Places/Sunken Archive.md"
+    }
   ],
   "spacedWikilink": {
     "from": "Home.md",
@@ -91,7 +117,11 @@
       "raw": "[[Campaign/Campaign|Campaign]]",
       "resolvesTo": "Campaign/Campaign.md"
     },
-    { "from": "Home.md", "raw": "[[Research/Archive]]", "resolvesTo": "Research/Archive.md" }
+    {
+      "from": "Home.md",
+      "raw": "[[Research/Archive]]",
+      "resolvesTo": "Research/Archive.md"
+    }
   ],
   "headingLinks": [
     {
@@ -169,11 +199,17 @@
     "crlf": "Research/Zettelkasten.md",
     "bom": "Research/Sinus-Milieus.md",
     "empty": "Daily/Scratch.md",
-    "long": { "path": "Research/Personal knowledge management.md", "minBytes": 15000 },
+    "long": {
+      "path": "Research/Personal knowledge management.md",
+      "minBytes": 15000
+    },
     "invalidFrontmatter": "Campaign/Quests/The Missing Bellringer.md",
     "emptyFrontmatter": "Campaign/Places/Archive.md",
     "commaSeparatedTags": "Research/v2.0 Notes.md",
-    "folderNote": { "path": "Campaign/Campaign.md", "color": "#c9a24b" },
+    "folderNote": {
+      "path": "Campaign/Campaign.md",
+      "color": "#c9a24b"
+    },
     "umlautInName": "Research/Über die Wurzeln.md",
     "apostropheInName": "Campaign/NPCs/Mira's Ledger.md",
     "dotInName": "Research/v2.0 Notes.md",
@@ -186,7 +222,11 @@
       "color": "#c9a24b",
       "sessions_played": 13,
       "active": true,
-      "party": { "level": 6, "size": 4, "shared_gold": 1240 },
+      "party": {
+        "level": 6,
+        "size": 4,
+        "shared_gold": 1240
+      },
       "started": "2026-03-14"
     },
     "Campaign/NPCs/Aldric Thane.md": {
@@ -226,9 +266,18 @@
       "campaign/silverstadt/npcs."
     ],
     "inlineEdgeCases": {
-      "startOfLine": { "path": "Campaign/Campaign.md", "tag": "campaign" },
-      "nested": { "path": "Campaign/NPCs/Sable.md", "tag": "campaign/silverstadt/npcs" },
-      "followedByPunctuation": { "path": "Research/Zettelkasten.md", "tag": "research/pkm" },
+      "startOfLine": {
+        "path": "Campaign/Campaign.md",
+        "tag": "campaign"
+      },
+      "nested": {
+        "path": "Campaign/NPCs/Sable.md",
+        "tag": "campaign/silverstadt/npcs"
+      },
+      "followedByPunctuation": {
+        "path": "Research/Zettelkasten.md",
+        "tag": "research/pkm"
+      },
       "insideCodeSpan": {
         "path": "Research/Personal knowledge management.md",
         "text": "`#not-a-tag`"
