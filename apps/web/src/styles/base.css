@@ -522,8 +522,20 @@ mark {
   font-size: var(--rz-text-md);
 }
 
+/* Tags are written one after another with nothing between them, so the gap has to come from
+   here: `#campaign#campaign/npcs` reads as one long tag, which is not what the note says. */
 .rz-query-tag {
   color: var(--rz-accent-strong);
+}
+
+.rz-query-tag + .rz-query-tag {
+  margin-left: var(--rz-space-2);
+}
+
+/* A date is one word. Wrapping `2026-09-20` over two lines makes a narrow column look broken
+   and tells the reader nothing they did not already know. */
+.rz-query-table .rz-query-date {
+  white-space: nowrap;
 }
 
 /* What the block asked that could not be read, and how much of the answer is on screen. One line

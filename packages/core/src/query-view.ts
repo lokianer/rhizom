@@ -178,10 +178,12 @@ function cell(row: QueryRow, column: string, links: QueryLinks): ElementContent[
       return [text(row.folder)];
     case 'tags':
       return tags(row);
+    // A date and a size are each one word, marked as such so a narrow column does not break
+    // `2026-09-20` over two lines and make the table look wrong.
     case 'modified':
-      return [text(dateOf(row.modifiedAt))];
+      return [element('span', { className: ['rz-query-date'] }, [text(dateOf(row.modifiedAt))])];
     case 'size':
-      return [text(sizeOf(row.size))];
+      return [element('span', { className: ['rz-query-date'] }, [text(sizeOf(row.size))])];
     default:
       // The server has already turned the frontmatter value into text; whatever it says is text.
       return [text(row.fields[column] ?? '')];

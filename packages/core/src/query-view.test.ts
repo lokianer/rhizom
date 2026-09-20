@@ -83,8 +83,8 @@ describe('renderQueryResult', () => {
     expect(html).toContain('<td>Campaign/NPCs</td>');
     expect(html).toContain('<td><span class="rz-query-tag">#campaign/npcs</span></td>');
     // The day out of the timestamp, the size in SI units, the field as the server rendered it.
-    expect(html).toContain('<td>2026-01-02</td>');
-    expect(html).toContain('<td>1.2 kB</td>');
+    expect(html).toContain('<td><span class="rz-query-date">2026-01-02</span></td>');
+    expect(html).toContain('<td><span class="rz-query-date">1.2 kB</span></td>');
     expect(html).toContain('<td>done</td>');
   });
 
@@ -159,13 +159,13 @@ describe('renderQueryResult', () => {
       columns: ['size'],
       rows: [row({ size: 0 }), row({ size: 999 }), row({ size: 2_500_000 }), row({ size: 4e12 })],
     });
-    expect(sizes).toContain('<td>0 B</td>');
-    expect(sizes).toContain('<td>999 B</td>');
-    expect(sizes).toContain('<td>2.5 MB</td>');
-    expect(sizes).toContain('<td>4000.0 GB</td>');
+    expect(sizes).toContain('<td><span class="rz-query-date">0 B</span></td>');
+    expect(sizes).toContain('<td><span class="rz-query-date">999 B</span></td>');
+    expect(sizes).toContain('<td><span class="rz-query-date">2.5 MB</span></td>');
+    expect(sizes).toContain('<td><span class="rz-query-date">4000.0 GB</span></td>');
     expect(
       render({ view: 'table', columns: ['modified'], rows: [row({ modifiedAt: 'never' })] }),
-    ).toContain('<td>never</td>');
+    ).toContain('<td><span class="rz-query-date">never</span></td>');
   });
 
   it('shows the path when a note has no title to show', () => {
