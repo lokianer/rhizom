@@ -23,6 +23,7 @@ import {
 import { wikilinkCompletion } from './completion.js';
 import { definitionMarks, definitionTooltip } from './definitions.js';
 import { editorContext } from './context.js';
+import { formatKeymap } from './format.js';
 import { fileUpload } from './imageDrop.js';
 import { wikilinkClicks } from './links.js';
 import { imagePreview, livePreviewMarks } from './livePreview.js';
@@ -82,6 +83,9 @@ export function baseExtensions(): Extension {
     editorTheme,
     keymap.of([
       ...saveKeymap,
+      // Ahead of the defaults, whose platform-dependent half reaches for some of these letters:
+      // in a Markdown editor the three of them mean bold, italic and a link.
+      ...formatKeymap,
       ...closeBracketsKeymap,
       ...completionKeymap,
       ...searchKeymap,

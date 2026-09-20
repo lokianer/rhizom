@@ -80,6 +80,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   let go, carrying the hash the file was read at, so a note that changed on disk meanwhile is
   said so rather than overwritten. `POST /api/query` gained a `fields` argument for it, which
   hands back any frontmatter key a caller names beside the block's own columns.
+- The keys a Markdown editor is expected to answer: Ctrl/Cmd+B and Ctrl/Cmd+I put `**bold**` and
+  `*italic*` around the selection and take them off again on a second press — with the text
+  reading exactly as it did before, whether the markers were selected along with it or not — and
+  Ctrl/Cmd+K makes the selection the text of a link and leaves the cursor where the address goes.
+  With nothing selected the markers are written and the cursor waits between them. A press is one
+  step of the undo history, a row of asterisks is read the way Markdown reads it, so italic on a
+  bold word adds to it rather than taking from it, and every position is counted in the document
+  rather than in characters, so a word in any script comes back out unharmed.
+- Two palette commands: "Open a random note", for a Zettelkasten worth stumbling through, which
+  never hands back the note already open and is not offered in an empty vault; and "Duplicate this
+  note", which writes the open note's words to the next free name beside it — `Note copy`, then
+  `Note copy 2` — and opens the copy. Nothing is renamed and no link is rewritten: a copy is a new
+  note that happens to say the same thing.
 
 ### Changed
 

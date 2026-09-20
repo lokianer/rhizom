@@ -266,6 +266,8 @@
       "openGlossary": "Open the glossary",
       "openWiki": "Read as wiki",
       "openToday": "Today's note",
+      "randomNote": "Open a random note",
+      "duplicateNote": "Duplicate this note",
       "renameNote": "Rename this note",
       "search": "Search all notes",
       "openOutline": "Open the outline",

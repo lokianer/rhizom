@@ -14,6 +14,7 @@ import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore, type SidebarTab } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
+import { copyPath, randomNotePath } from './commands-model.js';
 import { dailyNotePath } from './daily.js';
 import { headingHref, noteHref, notePathFromLocation } from './paths.js';
 import { applyTheme } from './theme.js';
@@ -151,6 +152,35 @@ export function Layout() {
     void navigate(noteHref(path));
   }, [daily, i18n.language, navigate, refresh, templates]);
 
+  // Duplicating a note: the same words under the next free name beside it. Nothing is renamed and
+  // no link is rewritten — a copy is a new note that happens to say the same thing, and what the
+  // original pointed at, the copy points at too.
+  const duplicateNote = useCallback(async () => {
+    if (openNotePath === null) {
+      return;
+    }
+    const source = await api.note(openNotePath);
+    const taken = new Set(notes.map((note) => note.path));
+    // The note list is a moment old, so a name it believes free may have been taken since. The
+    // server's refusal (409) is an answer rather than a failure: that name is gone, and the next
+    // one in the series is asked for instead. Five tries, then it is a failure like any other.
+    for (let attempt = 0; ; attempt += 1) {
+      const path = copyPath(openNotePath, taken);
+      try {
+        const created = await api.createNote({ path, content: source.content });
+        await refresh();
+        void navigate(noteHref(created.path));
+        return;
+      } catch (error) {
+        const nameTaken = error instanceof ApiRequestError && error.status === 409;
+        if (!nameTaken || attempt >= 4) {
+          throw error;
+        }
+        taken.add(path);
+      }
+    }
+  }, [navigate, notes, openNotePath, refresh]);
+
   const commands = useMemo<PaletteCommand[]>(
     () => [
       {
@@ -200,6 +230,33 @@ export function Layout() {
               label: t('palette.commandNames.openToday'),
               run: () => {
                 void openToday();
+              },
+            },
+          ]),
+      // Nothing to open at random in a vault with no notes in it.
+      ...(notes.length === 0
+        ? []
+        : [
+            {
+              id: 'randomNote',
+              label: t('palette.commandNames.randomNote'),
+              run: () => {
+                const path = randomNotePath(notes, openNotePath);
+                if (path !== null) {
+                  openNote(path);
+                }
+              },
+            },
+          ]),
+      // Only with a note open: there is nothing to copy otherwise.
+      ...(openNotePath === null
+        ? []
+        : [
+            {
+              id: 'duplicateNote',
+              label: t('palette.commandNames.duplicateNote'),
+              run: () => {
+                void duplicateNote();
               },
             },
           ]),
@@ -260,7 +317,10 @@ export function Layout() {
     ],
     [
       daily,
+      duplicateNote,
       navigate,
+      notes,
+      openNote,
       openNotePath,
       openToday,
       refresh,
