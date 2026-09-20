@@ -97,7 +97,11 @@ jobs:
           done
           echo
           curl -sf http://127.0.0.1:3838/api/health | grep '"status":"ok"'
-          curl -sf http://127.0.0.1:3838/api/vault | grep '"noteCount":38'
+          # The count comes from the manifest, which is the acceptance test's own idea of how
+          # many notes the example vault holds. Writing it out here made adding one note to the
+          # vault a red build in a place nobody would look for it.
+          expected=$(node -p "require('$GITHUB_WORKSPACE/examples/vault.manifest.json').notes.count")
+          curl -sf http://127.0.0.1:3838/api/vault | grep "\"noteCount\":$expected"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/api/docs)" = 200
           kill %1
