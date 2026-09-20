@@ -16,7 +16,7 @@ import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { EditorState, StateCommand } from '@codemirror/state';
 import type { KeyBinding } from '@codemirror/view';
 import type { SyntaxNode, Tree } from '@lezer/common';
-import { linkTextFor } from '@rhizom/core';
+import { blockIdOnLine, linkTextFor } from '@rhizom/core';
 
 import { editorContext, frontmatterEnd } from './context.js';
 
@@ -55,22 +55,6 @@ const IS_CODE: ReadonlySet<string> = new Set(['FencedCode', 'CodeBlock']);
  * nowhere. A heading is addressed by its text, which is what `[[Note#Heading]]` is for.
  */
 const IS_HEADING = /^(?:ATX|Setext)Heading[1-6]$/;
-
-/**
- * A block id as it stands at the end of a line, with the caret stripped off the answer.
- *
- * The grammar is `packages/core`'s — letters, digits and hyphens, ASCII only, nothing but the end
- * of the line behind it, where a trailing `|` counts as the end because that is how an id reaches
- * a table row. The core reads it off the parsed tree, because it has to be exact about a caret in
- * running text or inside a fence; here it is read off a single line, and the two places that know
- * the grammar should be one. Core exports `sliceBlock`, which would answer exactly this — but it
- * brings the whole remark pipeline with it, and the editor is deliberately the one part of the
- * app that does not carry the Markdown renderer.
- */
-const MARKER_AT_LINE_END = /[ \t]+\^([A-Za-z0-9-]+)[ \t|]*$/;
-
-/** The same again for a whole document, line by line. */
-const EVERY_MARKER = /[ \t]+\^([A-Za-z0-9-]+)[ \t|]*$/gm;
 
 /** At most four words and twenty-four characters: about a short heading, and no longer. */
 const MOST_WORDS = 4;
@@ -145,11 +129,6 @@ function blockAround(node: SyntaxNode): BlockAt | undefined {
   return undefined;
 }
 
-/** The id a line already ends with, if it ends with one at all. */
-export function blockIdOn(line: string): string | undefined {
-  return MARKER_AT_LINE_END.exec(line)?.[1];
-}
-
 /**
  * Every id the note has already handed out.
  *
@@ -160,8 +139,8 @@ export function blockIdOn(line: string): string | undefined {
  */
 export function takenBlockIds(doc: string): Set<string> {
   const taken = new Set<string>();
-  for (const match of doc.matchAll(EVERY_MARKER)) {
-    const id = match[1];
+  for (const line of doc.split('\n')) {
+    const id = blockIdOnLine(line);
     if (id !== undefined) {
       taken.add(id);
     }
@@ -317,7 +296,9 @@ export function planBlockLink(
   }
 
   const line = state.doc.lineAt(found.block.to);
-  const existing = blockIdOn(line.text);
+  // The reader's own rule, so the side that writes an id and the side that looks one up cannot
+  // drift apart. `sliceBlock` would answer it too, and brings the whole remark pipeline with it.
+  const existing = blockIdOnLine(line.text);
   if (existing !== undefined) {
     // An address that something may already point at. It is reused rather than replaced, and
     // pressing the key twice on the same block copies the same link both times.

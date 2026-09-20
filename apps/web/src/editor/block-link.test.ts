@@ -7,7 +7,6 @@ import { describe, expect, it } from 'vitest';
 import {
   blockAt,
   blockIdFrom,
-  blockIdOn,
   blockLinkKeymap,
   copyBlockLink,
   markerPlacement,
@@ -162,21 +161,6 @@ describe('blockAt', () => {
     const front = '---\ntitle: Ledger\ntags: [a]\n---\n\nThe body.';
     const inKeys = after(front, 'title: Led');
     expect(blockAt(stateOf(front, inKeys), inKeys)).toEqual({ ok: false, reason: 'noBlock' });
-  });
-});
-
-describe('blockIdOn', () => {
-  it('reads the id a line already ends with, in every shape the core accepts', () => {
-    expect(blockIdOn('The ledger was open. ^ledger')).toBe('ledger');
-    expect(blockIdOn('The ledger was open.\t^ledger-2  ')).toBe('ledger-2');
-    expect(blockIdOn('| Brass | Astrolabe ^loot |')).toBe('loot');
-  });
-
-  it('is not fooled by a caret that is not an address', () => {
-    expect(blockIdOn('The ledger was open.')).toBeUndefined();
-    expect(blockIdOn('2^8 is 256')).toBeUndefined();
-    expect(blockIdOn('a ^ b')).toBeUndefined();
-    expect(blockIdOn('E = mc^2^')).toBeUndefined();
   });
 });
 

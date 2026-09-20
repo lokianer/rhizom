@@ -43,6 +43,20 @@ const parser = unified()
  */
 const MARKER = /[ \t]+\^([A-Za-z0-9-]+)$/;
 
+/**
+ * The id one line of source ends with, if it ends with one at all — the same grammar and the
+ * same end-of-line rule `sliceBlock` reads a marker by, on a line rather than on a parsed tree.
+ *
+ * It exists for the editor, which writes these markers and must agree with the reader about what
+ * one is, but cannot import `sliceBlock` without pulling the whole remark pipeline into a bundle
+ * that deliberately does not carry the Markdown renderer. On a line rather than a tree, it
+ * cannot tell a caret in running text from one in a fenced block; a caller that needs that
+ * distinction wants `sliceBlock`.
+ */
+export function blockIdOnLine(line: string): string | undefined {
+  return MARKER.exec(line.replace(/[\r\n]+$/, '').replace(/[ \t|]+$/, ''))?.[1];
+}
+
 /** The same set again, for checking a reference before it is looked up. */
 const BLOCK_ID = /^[A-Za-z0-9-]+$/;
 

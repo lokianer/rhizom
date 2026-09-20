@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseNote } from './parse.js';
-import { sliceBlock, sliceSection } from './section.js';
+import { blockIdOnLine, sliceBlock, sliceSection } from './section.js';
 
 function slice(markdown: string, reference: string): string | undefined {
   return sliceSection(markdown, parseNote(markdown, { fallbackTitle: 'N' }).headings, reference);
@@ -284,5 +284,21 @@ describe('sliceBlock', () => {
 
   it('reads a reference that was copied with spaces around it', () => {
     expect(sliceBlock(BLOCKS, '  intro  ')).toBe('The party went in. ^intro');
+  });
+});
+
+describe('blockIdOnLine', () => {
+  it('reads the id a line ends with, through the spacing a file may have', () => {
+    expect(blockIdOnLine('The ledger was open. ^ledger')).toBe('ledger');
+    expect(blockIdOnLine('The ledger was open.\t^ledger-2  ')).toBe('ledger-2');
+    // A table row has nowhere else to put one, so the closing pipe counts as the end of the line.
+    expect(blockIdOnLine('| Brass | Astrolabe ^loot |')).toBe('loot');
+    expect(blockIdOnLine('One. ^one\r\n')).toBe('one');
+  });
+
+  it('is not fooled by a caret that is not an address', () => {
+    for (const line of ['The ledger was open.', '2^8 is 256', 'a ^ b', 'E = mc^2^', '^alone']) {
+      expect(blockIdOnLine(line), line).toBeUndefined();
+    }
   });
 });
