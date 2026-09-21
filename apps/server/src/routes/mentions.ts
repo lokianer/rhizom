@@ -17,7 +17,7 @@ import {
   LinkMentionsResultSchema,
   MentionsQuerySchema,
   MentionsResponseSchema,
-} from './schemas.js';
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 /** How many notes the full-text filter may hand back before the answer says it is short. */

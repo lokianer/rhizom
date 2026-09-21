@@ -47,7 +47,7 @@ import {
   RenameNoteResultSchema,
   RenamePreviewSchema,
   RenameQuerySchema,
-} from './schemas.js';
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 /** References listed per file. Beyond this the preview counts them; the write still does them. */

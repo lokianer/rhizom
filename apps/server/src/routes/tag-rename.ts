@@ -32,7 +32,7 @@ import {
   TagRenamePreviewSchema,
   TagRenameQuerySchema,
   TagRenameResultSchema,
-} from './schemas.js';
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 /** Occurrences listed per file. Beyond this the preview counts them; the write still does them. */

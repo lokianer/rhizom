@@ -4,7 +4,7 @@
 import { Type } from '@sinclair/typebox';
 
 import type { VaultContext } from '../vault/context.js';
-import { ErrorSchema, GlossaryEntrySchema } from './schemas.js';
+import { ErrorSchema, GlossaryEntrySchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 export function registerTermRoutes(app: TypedApp, context: () => VaultContext): void {

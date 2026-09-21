@@ -79,7 +79,7 @@ import type {
   TreeEntrySchema,
   UploadResponseSchema,
   VaultInfoSchema,
-} from './schemas.js';
+} from './index.js';
 
 /**
  * True only when the two types accept exactly the same values *and* declare the same fields.

@@ -1,7 +1,12 @@
 import { Type } from '@sinclair/typebox';
 
 import type { VaultContext } from '../vault/context.js';
-import { ErrorSchema, SearchQuerySchema, SearchResponseSchema, TagCountSchema } from './schemas.js';
+import {
+  ErrorSchema,
+  SearchQuerySchema,
+  SearchResponseSchema,
+  TagCountSchema,
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 export function registerSearchRoutes(app: TypedApp, context: () => VaultContext): void {

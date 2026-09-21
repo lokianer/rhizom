@@ -1,7 +1,12 @@
 import { buildGraph, localGraph } from '@rhizom/core';
 
 import type { VaultContext } from '../vault/context.js';
-import { ErrorSchema, GraphQuerySchema, GraphSchema, LocalGraphQuerySchema } from './schemas.js';
+import {
+  ErrorSchema,
+  GraphQuerySchema,
+  GraphSchema,
+  LocalGraphQuerySchema,
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 export function registerGraphRoutes(app: TypedApp, context: () => VaultContext): void {

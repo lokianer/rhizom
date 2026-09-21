@@ -1,7 +1,7 @@
 import type { IndexEvent } from '@rhizom/core';
 
 import type { VaultContext } from '../vault/context.js';
-import { ErrorSchema, SyncResultSchema } from './schemas.js';
+import { ErrorSchema, SyncResultSchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 const HEARTBEAT_MS = 25_000;

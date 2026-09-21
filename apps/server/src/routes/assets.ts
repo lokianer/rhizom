@@ -5,7 +5,7 @@ import type { VaultContext } from '../vault/context.js';
 import { HttpError } from './errors.js';
 import { Type } from '@sinclair/typebox';
 
-import { AssetSummarySchema, ErrorSchema, UploadResponseSchema } from './schemas.js';
+import { AssetSummarySchema, ErrorSchema, UploadResponseSchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;

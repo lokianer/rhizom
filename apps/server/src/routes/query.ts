@@ -11,7 +11,7 @@
 import { parseQuery } from '@rhizom/core';
 
 import type { VaultContext } from '../vault/context.js';
-import { ErrorSchema, QueryBodySchema, QueryResultSchema } from './schemas.js';
+import { ErrorSchema, QueryBodySchema, QueryResultSchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 export function registerQueryRoutes(app: TypedApp, context: () => VaultContext): void {

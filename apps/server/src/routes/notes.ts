@@ -15,7 +15,7 @@ import {
   SaveNoteBodySchema,
   TreeEntrySchema,
   VaultInfoSchema,
-} from './schemas.js';
+} from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
 /** Reads the current file and index record of a note into the API document shape. */

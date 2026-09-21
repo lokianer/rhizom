@@ -1,7 +1,7 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { VaultError, type VaultErrorCode } from '../vault/files.js';
-import type { ErrorBody } from './schemas.js';
+import type { ErrorBody } from './schemas/index.js';
 
 const STATUS_BY_CODE: Record<VaultErrorCode, number> = {
   INVALID_ROOT: 503,
