@@ -1,0 +1,27 @@
+/* Task lists. The box is disabled until ticking one writes the file, which is a later slice;
+   it is shown all the same, because a task list that reads as a bullet list reads wrong. */
+.rz-tasks {
+  padding-left: 0;
+  list-style: none;
+}
+
+.rz-task {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+}
+
+.rz-task > input[type='checkbox'] {
+  flex: none;
+  accent-color: var(--rz-accent-strong);
+}
+
+/* Where the box is a control rather than a picture of the file, it says so under the pointer. */
+.rz-task > input[type='checkbox']:not(:disabled) {
+  cursor: pointer;
+}
+
+.rz-task-done {
+  color: var(--rz-text-muted);
+  text-decoration: line-through;
+}

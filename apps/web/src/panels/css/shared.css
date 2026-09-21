@@ -1,0 +1,46 @@
+/* What every panel wears, whichever one it is: the frame, the empty state, the failure line. */
+
+.rz-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rz-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-panel-action {
+  font-size: var(--rz-text-sm);
+  padding: var(--rz-space-1) var(--rz-space-2);
+}
+
+.rz-panel-empty,
+.rz-panel-status {
+  padding: var(--rz-space-2) var(--rz-space-3);
+  color: var(--rz-text-muted);
+}
+
+/* A panel line that reports a failure reads as one. This stylesheet is loaded after base.css,
+   so .rz-error alone would lose the colour to the muted rule above it. */
+.rz-panel-empty.rz-error,
+.rz-panel-status.rz-error {
+  color: var(--rz-danger);
+}
+
+.rz-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

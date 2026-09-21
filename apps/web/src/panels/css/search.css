@@ -1,0 +1,51 @@
+/* --- search ------------------------------------------------------------------------------ */
+
+.rz-search-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.rz-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--rz-space-2) var(--rz-space-3);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: var(--rz-space-1);
+  align-content: start;
+}
+
+.rz-hit {
+  display: grid;
+  gap: var(--rz-space-1);
+  padding: var(--rz-space-2);
+  border-radius: var(--rz-radius-sm);
+  color: var(--rz-text);
+  text-decoration: none;
+}
+
+.rz-hit:hover {
+  background: var(--rz-surface);
+}
+
+.rz-hit[aria-current='page'] {
+  background: var(--rz-surface-raised);
+  box-shadow: inset 2px 0 0 var(--rz-accent);
+}
+
+.rz-hit-title {
+  font-weight: 600;
+}
+
+.rz-hit-folder {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+}
+
+.rz-hit-snippet {
+  color: var(--rz-text-muted);
+  line-height: var(--rz-leading-normal);
+  overflow-wrap: anywhere;
+}

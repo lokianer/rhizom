@@ -1,0 +1,106 @@
+/* --- app frame ----------------------------------------------------------------------- */
+
+.rz-app {
+  display: grid;
+  grid-template-columns: minmax(200px, 18rem) 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    'header header'
+    'sidebar main';
+  height: 100%;
+}
+
+.rz-app-collapsed {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    'header'
+    'main';
+}
+
+/* Zen: the text and nothing else. The header and the sidebar are taken out of the layout rather
+   than hidden behind it, so the editor really does get the window. */
+.rz-app-zen {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'main';
+}
+
+.rz-app-zen > .rz-header,
+.rz-app-zen > .rz-sidebar {
+  display: none;
+}
+
+.rz-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  padding: var(--rz-space-2) var(--rz-space-4);
+  border-bottom: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  flex-wrap: wrap;
+}
+
+.rz-brand {
+  font-weight: 600;
+  color: var(--rz-text);
+  text-decoration: none;
+}
+
+.rz-nav {
+  display: flex;
+  gap: var(--rz-space-3);
+  margin-right: auto;
+}
+
+.rz-nav a {
+  text-decoration: none;
+  color: var(--rz-text-muted);
+}
+
+.rz-nav a.active,
+.rz-nav a:hover {
+  color: var(--rz-link);
+}
+
+.rz-palette-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-2);
+  color: var(--rz-text-muted);
+}
+
+.rz-sidebar {
+  grid-area: sidebar;
+  border-right: 1px solid var(--rz-border);
+  background: var(--rz-surface-sunken);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rz-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-tabs button {
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--rz-text-muted);
+  padding: var(--rz-space-2);
+}
+
+.rz-tabs button[aria-selected='true'] {
+  color: var(--rz-text);
+  box-shadow: inset 0 -2px 0 var(--rz-accent);
+}
+
+.rz-main {
+  grid-area: main;
+  min-height: 0;
+  overflow: auto;
+}

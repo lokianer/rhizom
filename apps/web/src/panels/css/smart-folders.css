@@ -1,0 +1,75 @@
+/* --- smart folders ------------------------------------------------------------------------ */
+
+/* Saved searches above the file tree. A saved search is a note, so its folder borrows the tree's
+   own row and reads as one; all the rules below have to do is take the chrome off the button and
+   the link that carry it, and indent what hangs underneath by one level, the way flattenTree
+   indents a note inside a folder.
+
+   It sits above the tree and gives way before it does: unfolded searches must never push the
+   vault off the screen, so the section caps its height and scrolls inside it. */
+.rz-smart {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 40vh;
+  overflow: auto;
+  padding-bottom: var(--rz-space-2);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-smart-title {
+  margin: 0;
+  padding: var(--rz-space-3) var(--rz-space-3) var(--rz-space-1);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-smart-list,
+.rz-smart-notes,
+.rz-smart-problems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rz-smart-row {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding-inline: var(--rz-space-2);
+  color: var(--rz-text);
+  text-align: start;
+  text-decoration: none;
+}
+
+.rz-smart-row:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: calc(var(--rz-focus-offset) * -1);
+}
+
+/* One level in, matching indentOf(2) in the file tree. */
+.rz-smart-notes .rz-smart-row,
+.rz-smart-line,
+.rz-smart-problems li {
+  padding-inline-start: calc(var(--rz-space-2) + var(--rz-space-4));
+}
+
+/* The count, and every line the folder says instead of a note: "no query block", a problem in
+   the block, a search that found nothing. Muted, but never smaller than the body text — these
+   are sentences, and a sentence nobody can read is a sentence that was not written. */
+.rz-smart-count {
+  flex: none;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.rz-smart-line,
+.rz-smart-problems li {
+  margin: 0;
+  padding-block: var(--rz-space-1);
+  padding-inline-end: var(--rz-space-3);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}

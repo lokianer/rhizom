@@ -1,0 +1,71 @@
+/* --- note view ------------------------------------------------------------------------ */
+
+/* Header, the editor, then the two panels that answer "what points here" and "what nearly
+   does". A column rather than four grid rows, because when the window is too short for all of
+   them something has to give, and in a grid that something is the row that grows: the editor
+   would be squeezed to nothing while both panels kept their full height. Here the panels give
+   way instead — they scroll already — and the editor keeps a floor it never falls below. */
+.rz-note {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.rz-note > header {
+  flex: 0 0 auto;
+}
+
+.rz-note-body {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 10rem;
+  overflow: hidden;
+}
+
+.rz-note-split {
+  grid-template-columns: 1fr 1fr;
+}
+
+.rz-note-split > * {
+  min-width: 0;
+  overflow: auto;
+}
+
+.rz-note-preview {
+  border-left: 1px solid var(--rz-border);
+  padding: var(--rz-space-4) var(--rz-space-5);
+  background: var(--rz-surface-sunken);
+}
+
+.rz-note-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--rz-space-3);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-note-header h2 {
+  font-size: var(--rz-text-xl);
+}
+
+.rz-note-actions {
+  display: flex;
+  gap: var(--rz-space-2);
+  margin-left: auto;
+  align-items: center;
+}
+
+.rz-home h2 {
+  font-size: var(--rz-text-2xl);
+}
+
+.rz-recent {
+  list-style: none;
+  padding: 0;
+  margin: var(--rz-space-4) 0 0;
+  display: grid;
+  gap: var(--rz-space-2);
+}

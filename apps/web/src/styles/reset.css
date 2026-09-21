@@ -1,0 +1,95 @@
+/* The reset: what every element starts from, before anything of this app's own applies. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--rz-font-sans);
+  line-height: var(--rz-leading-normal);
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--rz-bg);
+  color: var(--rz-text);
+  font-size: var(--rz-text-md);
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--rz-link);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: var(--rz-surface);
+  color: var(--rz-text);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  padding: var(--rz-space-1) var(--rz-space-3);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--rz-border-strong);
+}
+
+button:disabled {
+  color: var(--rz-text-faint);
+  cursor: not-allowed;
+}
+
+input,
+select {
+  background: var(--rz-surface);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  padding: var(--rz-space-1) var(--rz-space-2);
+}
+
+kbd {
+  font-family: var(--rz-font-mono);
+  font-size: var(--rz-text-xs);
+  border: 1px solid var(--rz-border);
+  border-bottom-width: 2px;
+  border-radius: var(--rz-radius-sm);
+  padding: 0 var(--rz-space-1);
+  color: var(--rz-text-muted);
+}
+
+:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: var(--rz-focus-offset);
+}
+
+::selection {
+  background: var(--rz-selection);
+}
+
+mark {
+  background: var(--rz-selection);
+  color: inherit;
+}

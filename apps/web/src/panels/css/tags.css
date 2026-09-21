@@ -1,0 +1,91 @@
+/* --- tags -------------------------------------------------------------------------------- */
+
+.rz-tag-tree {
+  list-style: none;
+  margin: 0;
+  padding: var(--rz-space-3);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: var(--rz-space-2);
+  align-content: start;
+}
+
+/* Every level is indented by one step and keeps a line down its left, so a deep tag reads as a
+   branch rather than as a list that happens to be shifted. */
+.rz-tag-children {
+  list-style: none;
+  margin: var(--rz-space-2) 0 0;
+  padding-left: var(--rz-space-3);
+  border-left: 1px solid var(--rz-border);
+  display: grid;
+  gap: var(--rz-space-2);
+}
+
+.rz-tag-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-2);
+}
+
+/* A wrapped row of leaves keeps the branch's indent and line, and loses the grid. */
+.rz-tag-children.rz-tag-chips {
+  display: flex;
+}
+
+.rz-tag-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  border-radius: var(--rz-radius-full);
+  padding: var(--rz-space-1) var(--rz-space-3);
+  color: var(--rz-text-muted);
+}
+
+.rz-tag-chip[aria-pressed='true'] {
+  background: var(--rz-selection);
+  border-color: var(--rz-accent);
+  color: var(--rz-text);
+}
+
+/* Chip and its rename, one unit: the pair is what hovering and focus apply to. */
+.rz-tag-chip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-1);
+}
+
+.rz-tag-rename {
+  border: none;
+  background: none;
+  padding: 0 var(--rz-space-1);
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  line-height: 1;
+  opacity: 0;
+}
+
+/* Reachable by keyboard before it is visible, so the opacity follows the focus as well as the
+   pointer. Where the pointer cannot hover, it stays: the pair is never the only way to a tag. */
+.rz-tag-chip-group:hover .rz-tag-rename,
+.rz-tag-chip-group:focus-within .rz-tag-rename {
+  opacity: 1;
+}
+
+.rz-tag-rename:hover {
+  color: var(--rz-text);
+}
+
+@media (hover: none) {
+  .rz-tag-rename {
+    opacity: 1;
+  }
+}
+
+.rz-tag-count {
+  font-size: var(--rz-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--rz-text-muted);
+}

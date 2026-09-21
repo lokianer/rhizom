@@ -1,0 +1,80 @@
+/* A ```mermaid fence. The renderer leaves the diagram's source here as an ordinary code block
+   and the app draws over it, so this is what the reader sees with no JavaScript, before the
+   library arrives, and while the diagram is still being written. The source is not thrown away
+   once the picture is there, only put out of sight: it is what the diagram is drawn from again
+   when the theme changes. */
+.rz-mermaid {
+  margin: var(--rz-space-4) 0;
+}
+
+.rz-mermaid[data-state='ready'] > pre {
+  display: none;
+}
+
+/* A wide diagram scrolls rather than pushing the column out; a tall one keeps its proportions. */
+.rz-mermaid-figure {
+  overflow-x: auto;
+}
+
+.rz-mermaid-figure svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+/* What mermaid would not read, under the source it could not read. One muted line at reading
+   size, never an error: a diagram being typed is a syntax error on nearly every keystroke. */
+.rz-mermaid-failure {
+  margin: var(--rz-space-2) 0 0;
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-md);
+}
+
+.rz-prose code {
+  font-family: var(--rz-font-mono);
+  font-size: 0.9em;
+  background: var(--rz-surface-sunken);
+  padding: 0 var(--rz-space-1);
+  border-radius: var(--rz-radius-sm);
+}
+
+.rz-prose pre {
+  background: var(--rz-surface-sunken);
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-md);
+  padding: var(--rz-space-3);
+  overflow: auto;
+}
+
+.rz-prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.rz-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--rz-radius-md);
+}
+
+.rz-prose table {
+  border-collapse: collapse;
+}
+
+.rz-prose th,
+.rz-prose td {
+  border: 1px solid var(--rz-border);
+  padding: var(--rz-space-1) var(--rz-space-3);
+  text-align: left;
+}
+
+.rz-prose hr {
+  border: 0;
+  border-top: 1px solid var(--rz-border);
+}
+
+.rz-wikilink-missing {
+  color: var(--rz-link-missing);
+  text-decoration-style: dashed;
+}

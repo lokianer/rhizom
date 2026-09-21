@@ -1,0 +1,143 @@
+/* --- backlinks --------------------------------------------------------------------------- */
+
+.rz-backlinks {
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  /* Both shelves may shrink further than their content when the window is short: the editor
+     above them has the stronger claim on the height, and they scroll. */
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 30vh;
+  overflow: auto;
+}
+
+/* Unlinked mentions: the same shelf as the backlinks, with room for fewer lines — it is the
+   rarer of the two and must not push the editor out of the way. */
+.rz-mentions {
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  padding: var(--rz-space-3) var(--rz-space-5);
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 24vh;
+  overflow: auto;
+}
+
+.rz-mentions h3 {
+  margin: 0;
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-mention-group {
+  margin-top: var(--rz-space-3);
+}
+
+.rz-mention-group h4 {
+  margin: 0 0 var(--rz-space-1);
+  font-size: var(--rz-text-md);
+  font-weight: 500;
+}
+
+.rz-mention-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rz-mention label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  cursor: pointer;
+}
+
+.rz-mention-context {
+  /* Without `min-width: 0` a flex item refuses to shrink below its text, and the line runs
+     past the shelf instead of ending in the ellipsis this asks for. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-mention-note {
+  margin-left: var(--rz-space-5);
+}
+
+.rz-mention-actions {
+  margin-top: var(--rz-space-3);
+}
+
+.rz-backlinks-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-backlinks-count,
+.rz-badge {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+  font-weight: 400;
+}
+
+.rz-backlinks-subtitle {
+  margin-top: var(--rz-space-4);
+  font-size: var(--rz-text-md);
+  font-weight: 600;
+}
+
+.rz-backlink-list,
+.rz-link-list {
+  list-style: none;
+  margin: var(--rz-space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-3);
+}
+
+.rz-link-list {
+  gap: var(--rz-space-2);
+}
+
+.rz-backlink-contexts {
+  list-style: none;
+  margin: var(--rz-space-1) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--rz-space-1);
+}
+
+.rz-backlink-context {
+  color: var(--rz-text-muted);
+  border-left: 2px solid var(--rz-border-strong);
+  padding-left: var(--rz-space-3);
+  overflow-wrap: anywhere;
+}
+
+.rz-note-link {
+  color: var(--rz-link);
+  text-decoration: none;
+}
+
+.rz-note-link:hover {
+  text-decoration: underline;
+}
+
+.rz-link-missing {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  color: var(--rz-link-missing);
+}
+
+.rz-badge {
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-sm);
+  padding: 0 var(--rz-space-1);
+}

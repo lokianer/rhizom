@@ -1,0 +1,37 @@
+/* --- shared primitives --------------------------------------------------------------- */
+
+.rz-muted {
+  color: var(--rz-text-muted);
+  font-size: var(--rz-text-sm);
+}
+
+.rz-error {
+  color: var(--rz-danger);
+}
+
+.rz-page {
+  padding: var(--rz-space-5) var(--rz-space-6);
+  max-width: var(--rz-measure);
+}
+
+.rz-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+  font-size: var(--rz-text-sm);
+  color: var(--rz-text-muted);
+}
+
+.rz-skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.rz-skip:focus {
+  left: var(--rz-space-3);
+  top: var(--rz-space-3);
+  z-index: 10;
+  background: var(--rz-surface-raised);
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-radius: var(--rz-radius-sm);
+}
