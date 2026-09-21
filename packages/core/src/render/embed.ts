@@ -9,16 +9,16 @@
 // keeps the renderer a pure function of what is currently known, which is what the editor's
 // preview needs — it renders an unsaved draft on every keystroke, and no server has ever seen
 // that text.
-import type { Heading } from './api.js';
-import { headingSlug } from './parse.js';
+import type { Heading } from '../api.js';
+import { headingSlug } from '../syntax/parse.js';
 import {
   renderNote,
   type EmbedReference,
   type EmbedResult,
   type RenderOptions,
   type RenderedNote,
-} from './render.js';
-import { sliceBlock, sliceSection } from './section.js';
+} from './note.js';
+import { sliceBlock, sliceSection } from '../syntax/section.js';
 
 /** A rendered note, plus what it still needs before it is complete. */
 export interface RenderedWithEmbeds extends RenderedNote {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseNote } from './parse.js';
-import { createTermMatcher } from './terms.js';
-import { renderNote, type RenderOptions, type RenderedLink } from './render.js';
+import { parseNote } from '../syntax/parse.js';
+import { createTermMatcher } from '../vault/terms.js';
+import { renderNote, type RenderOptions, type RenderedLink } from './note.js';
 
 const VAULT = new Set(['Silverstadt.md', 'Factions/Harbour Guild.md', 'Templates/NPC.md']);
 

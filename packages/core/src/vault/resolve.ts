@@ -1,4 +1,4 @@
-import { encodeLinkUrl, type LinkRef } from './linkrefs.js';
+import { encodeLinkUrl, type LinkRef } from '../syntax/linkrefs.js';
 import {
   ensureMarkdownExtension,
   folderOf,

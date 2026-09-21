@@ -16,7 +16,7 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
-import { lineOf, lineStarts, sourceLines } from './lines.js';
+import { lineOf, lineStarts, sourceLines } from '../text/lines.js';
 
 /** One inline tag in a note's source, with the span a rewrite may replace. */
 export interface TagRef {

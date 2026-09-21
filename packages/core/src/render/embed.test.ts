@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { renderNoteWithEmbeds, type EmbedLabels, type EmbedSource } from './embed.js';
-import { createTermMatcher } from './terms.js';
-import { parseNote } from './parse.js';
-import type { RenderedLink } from './render.js';
+import { createTermMatcher } from '../vault/terms.js';
+import { parseNote } from '../syntax/parse.js';
+import type { RenderedLink } from './note.js';
 
 const LABELS: EmbedLabels = {
   loading: (target) => `loading ${target}`,

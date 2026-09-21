@@ -25,14 +25,14 @@ import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
 
-import type { Heading, LinkKind } from './api.js';
-import { applyCallout, CALLOUT_KINDS, type CalloutLabels } from './callout.js';
-import { displayText, headingSlug } from './parse.js';
-import { QUERY_LANGUAGE } from './query.js';
-import type { TermMatcher, VaultTerm } from './terms.js';
-import { remarkWikilink } from './remark-wikilink.js';
-import { blockAnchorId, findBlockMarkers, type BlockMarker } from './section.js';
-import { parseWikilink, type WikilinkTarget } from './wikilink.js';
+import type { Heading, LinkKind } from '../api.js';
+import { applyCallout, CALLOUT_KINDS, type CalloutLabels } from '../syntax/callout.js';
+import { displayText, headingSlug } from '../syntax/parse.js';
+import { QUERY_LANGUAGE } from '../query/language.js';
+import type { TermMatcher, VaultTerm } from '../vault/terms.js';
+import { remarkWikilink } from '../syntax/remark-wikilink.js';
+import { blockAnchorId, findBlockMarkers, type BlockMarker } from '../syntax/section.js';
+import { parseWikilink, type WikilinkTarget } from '../syntax/wikilink.js';
 
 export interface RenderedLink {
   /** Vault path of the note the link resolves to, or null when it does not exist. */

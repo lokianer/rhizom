@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { canLinkTo, findMentions, linkMentions, proseSpans } from './mentions.js';
-import { parseNote } from './parse.js';
+import { parseNote } from '../syntax/parse.js';
 import { createTermMatcher, type VaultTerm } from './terms.js';
 
 function term(surface: string, path = 'Places/Silverstadt.md'): VaultTerm {

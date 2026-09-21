@@ -11,7 +11,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
-import { QUERY_LANGUAGE } from './query.js';
+import { QUERY_LANGUAGE } from './language.js';
 
 // Frontmatter only: a query block is a fence at the top level of a note, and neither GFM nor
 // wikilinks change where one begins.

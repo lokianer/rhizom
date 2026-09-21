@@ -8,7 +8,7 @@ import {
   QUERY_SORTS,
   QUERY_VIEWS,
   type Query,
-} from './query.js';
+} from './language.js';
 
 /** What a query says before a body has said anything. */
 const DEFAULTS: Query = {

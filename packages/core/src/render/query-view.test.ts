@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { QueryResult, QueryRow } from './api.js';
+import type { QueryResult, QueryRow } from '../api.js';
 import { renderNoteWithEmbeds, type EmbedLabels } from './embed.js';
-import { BUILT_IN_COLUMNS } from './query.js';
+import { BUILT_IN_COLUMNS } from '../query/language.js';
 import { renderQueryResult, type QueryLabels, type QueryLinks } from './query-view.js';
-import { renderNote, type RenderedLink } from './render.js';
+import { renderNote, type RenderedLink } from './note.js';
 
 const LABELS: QueryLabels = {
   empty: 'nothing matches',

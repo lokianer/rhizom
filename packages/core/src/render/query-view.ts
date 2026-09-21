@@ -16,9 +16,9 @@ import type { Element, ElementContent, Properties, Root as HastRoot, Text } from
 import rehypeStringify from 'rehype-stringify';
 import { unified } from 'unified';
 
-import type { LinkKind, QueryResult, QueryRow } from './api.js';
-import { BUILT_IN_COLUMNS } from './query.js';
-import { noteLinkProperties, type RenderedLink } from './render.js';
+import type { LinkKind, QueryResult, QueryRow } from '../api.js';
+import { BUILT_IN_COLUMNS } from '../query/language.js';
+import { noteLinkProperties, type RenderedLink } from './note.js';
 
 /** A column a result can show without asking the note for anything; `BUILT_IN_COLUMNS` in full. */
 export type BuiltInColumn = 'title' | 'path' | 'folder' | 'tags' | 'modified' | 'size';

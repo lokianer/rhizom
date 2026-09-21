@@ -39,7 +39,12 @@ export type {
   UploadResponse,
   VaultInfo,
 } from './api.js';
-export { calloutKindOf, CALLOUT_KINDS, type CalloutKind, type CalloutLabels } from './callout.js';
+export {
+  calloutKindOf,
+  CALLOUT_KINDS,
+  type CalloutKind,
+  type CalloutLabels,
+} from './syntax/callout.js';
 export {
   axisValueOf,
   placeNote,
@@ -53,7 +58,7 @@ export {
   type AxesPlacement,
   type AxesPoint,
   type AxesSettings,
-} from './axes.js';
+} from './vault/axes.js';
 export {
   findFrontmatter,
   frontmatterFields,
@@ -64,15 +69,15 @@ export {
   type FrontmatterBlock,
   type FrontmatterField,
   type NoteType,
-} from './frontmatter.js';
+} from './vault/frontmatter.js';
 export {
   renderNoteWithEmbeds,
   type EmbedLabels,
   type EmbedRenderOptions,
   type EmbedSource,
   type RenderedWithEmbeds,
-} from './embed.js';
-export { fuzzyMatch, fuzzyRank, type FuzzyMatch, type FuzzyRanked } from './fuzzy.js';
+} from './render/embed.js';
+export { fuzzyMatch, fuzzyRank, type FuzzyMatch, type FuzzyRanked } from './text/fuzzy.js';
 export {
   buildGraph,
   clusterColorIndex,
@@ -84,15 +89,15 @@ export {
   type GraphNode,
   type GraphNote,
   type GraphOptions,
-} from './graph.js';
-export { isMarkdownFile, MARKDOWN_EXTENSIONS } from './markdown.js';
+} from './vault/graph.js';
+export { isMarkdownFile, MARKDOWN_EXTENSIONS } from './vault/markdown.js';
 export {
   encodeLinkUrl,
   findLinkRefs,
   rewriteLinkTargets,
   type LinkRef,
   type LinkTargetEdit,
-} from './linkrefs.js';
+} from './syntax/linkrefs.js';
 export {
   canLinkTo,
   findMentions,
@@ -100,9 +105,9 @@ export {
   proseSpans,
   type Mention,
   type ProseSpan,
-} from './mentions.js';
-export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from './parse.js';
-export { queryBlocks } from './query-blocks.js';
+} from './vault/mentions.js';
+export { parseNote, type ParsedLink, type ParsedNote, type ParseOptions } from './syntax/parse.js';
+export { queryBlocks } from './query/blocks.js';
 export {
   parseQuery,
   BUILT_IN_COLUMNS,
@@ -115,13 +120,13 @@ export {
   type QueryProblem,
   type QuerySort,
   type QueryView,
-} from './query.js';
+} from './query/language.js';
 export {
   renderQueryResult,
   type BuiltInColumn,
   type QueryLabels,
   type QueryLinks,
-} from './query-view.js';
+} from './render/query-view.js';
 export {
   ensureMarkdownExtension,
   folderOf,
@@ -129,7 +134,7 @@ export {
   isSafeVaultPath,
   noteNameOf,
   toVaultPath,
-} from './paths.js';
+} from './vault/paths.js';
 export {
   createNoteIndex,
   linkTextFor,
@@ -137,8 +142,8 @@ export {
   writtenTargetFor,
   type LinkResolution,
   type NoteIndex,
-} from './resolve.js';
-export { remarkWikilink, type Wikilink } from './remark-wikilink.js';
+} from './vault/resolve.js';
+export { remarkWikilink, type Wikilink } from './syntax/remark-wikilink.js';
 export {
   createTermMatcher,
   definedTerms,
@@ -149,7 +154,7 @@ export {
   type TermMatch,
   type TermMatcher,
   type VaultTerm,
-} from './terms.js';
+} from './vault/terms.js';
 export {
   DEFAULT_DATE_FORMAT,
   DEFAULT_TIME_FORMAT,
@@ -158,8 +163,8 @@ export {
   roll,
   type ExpandedTemplate,
   type TemplateContext,
-} from './template.js';
-export { parseWikilink, type WikilinkTarget } from './wikilink.js';
+} from './syntax/template.js';
+export { parseWikilink, type WikilinkTarget } from './syntax/wikilink.js';
 export {
   renderNote,
   type EmbedReference,
@@ -167,9 +172,9 @@ export {
   type RenderOptions,
   type RenderedLink,
   type RenderedNote,
-} from './render.js';
-export { blockIdOnLine, sliceBlock, sliceSection } from './section.js';
-export { isTaskLine, setTask } from './tasks.js';
+} from './render/note.js';
+export { blockIdOnLine, sliceBlock, sliceSection } from './syntax/section.js';
+export { isTaskLine, setTask } from './syntax/tasks.js';
 export {
   findTagRefs,
   isTagName,
@@ -178,4 +183,4 @@ export {
   rewriteTags,
   type TagEdit,
   type TagRef,
-} from './tagrefs.js';
+} from './syntax/tagrefs.js';

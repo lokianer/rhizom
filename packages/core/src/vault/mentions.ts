@@ -13,8 +13,8 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
-import { lineOf, lineStarts, sourceLines } from './lines.js';
-import { remarkWikilink } from './remark-wikilink.js';
+import { lineOf, lineStarts, sourceLines } from '../text/lines.js';
+import { remarkWikilink } from '../syntax/remark-wikilink.js';
 import type { TermMatcher } from './terms.js';
 
 /** A stretch of source that is ordinary prose. */

@@ -20,8 +20,8 @@
 // served by their other four filters plus a sentence about the fifth than by an empty box.
 import { isMap, isNode, isScalar, isSeq, LineCounter, parseDocument } from 'yaml';
 
-import { NOTE_TYPES } from './frontmatter.js';
-import { toVaultPath } from './paths.js';
+import { NOTE_TYPES } from '../vault/frontmatter.js';
+import { toVaultPath } from '../vault/paths.js';
 
 /** The info string of a fenced code block that holds a query. */
 export const QUERY_LANGUAGE = 'rhizom-query';

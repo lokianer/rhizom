@@ -13,7 +13,7 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
-import type { Heading } from './api.js';
+import type { Heading } from '../api.js';
 import { headingSlug } from './parse.js';
 import { remarkWikilink } from './remark-wikilink.js';
 

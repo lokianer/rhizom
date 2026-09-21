@@ -10,7 +10,7 @@ import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { parse as parseYaml } from 'yaml';
 
-import type { Heading, LinkKind } from './api.js';
+import type { Heading, LinkKind } from '../api.js';
 import { remarkWikilink } from './remark-wikilink.js';
 import { normaliseTag } from './tagrefs.js';
 import { PLACEHOLDER } from './template.js';

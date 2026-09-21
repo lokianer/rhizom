@@ -7,7 +7,7 @@ import {
   noteTypeOf,
   setFrontmatter,
 } from './frontmatter.js';
-import { parseNote } from './parse.js';
+import { parseNote } from '../syntax/parse.js';
 
 describe('noteTypeOf', () => {
   it('reads every reserved value', () => {

@@ -17,8 +17,8 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
-import type { LinkKind } from './api.js';
-import { lineOf, lineStarts, sourceLines } from './lines.js';
+import type { LinkKind } from '../api.js';
+import { lineOf, lineStarts, sourceLines } from '../text/lines.js';
 import { remarkWikilink, type Wikilink } from './remark-wikilink.js';
 import { parseWikilink } from './wikilink.js';
 

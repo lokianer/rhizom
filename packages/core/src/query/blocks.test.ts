@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { queryBlocks } from './query-blocks.js';
+import { queryBlocks } from './blocks.js';
 
 describe('queryBlocks', () => {
   it('takes the text between the fences, in the order the note writes them', () => {

@@ -1,9 +1,9 @@
 // Request and response contracts of the REST API, shared by apps/server and apps/web.
 // Paths are vault paths (see paths.ts). Timestamps are ISO 8601 strings.
 
-import type { GraphData } from './graph.js';
-import type { Mention } from './mentions.js';
-import type { QueryProblem, QueryView } from './query.js';
+import type { GraphData } from './vault/graph.js';
+import type { Mention } from './vault/mentions.js';
+import type { QueryProblem, QueryView } from './query/language.js';
 
 /** Response body of `GET /api/health`. */
 export interface HealthResponse {

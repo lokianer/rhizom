@@ -7,7 +7,7 @@ import {
   type CalloutKind,
   type CalloutLabels,
 } from './callout.js';
-import { renderNote, type RenderOptions, type RenderedLink } from './render.js';
+import { renderNote, type RenderOptions, type RenderedLink } from '../render/note.js';
 
 const VAULT = new Set(['Silverstadt.md']);
 

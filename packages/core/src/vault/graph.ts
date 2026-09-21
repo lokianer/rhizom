@@ -1,4 +1,4 @@
-import type { LinkKind } from './api.js';
+import type { LinkKind } from '../api.js';
 import { folderOf, noteNameOf } from './paths.js';
 
 export interface GraphNote {
