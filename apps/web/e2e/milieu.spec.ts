@@ -29,6 +29,14 @@ const DROP_AT = { outlook: 30, standing: 60 };
  */
 const TOLERANCE = 3;
 
+/**
+ * How long the field may take to be ready. Choosing the layout sends the app off to fetch the
+ * axes note and the query behind it, and both the select that names the field and the first
+ * bubble wait on that one answer — so they are given the same allowance. Playwright's default
+ * of five seconds is for a page that has already loaded, and a cold CI runner is not that.
+ */
+const FIELD_READY = { timeout: 15_000 };
+
 interface Point {
   x: number;
   y: number;
@@ -48,8 +56,8 @@ async function centreOf(page: Page, title: string): Promise<Point> {
 async function openMilieu(page: Page): Promise<void> {
   await page.goto('/graph');
   await page.getByLabel('Layout').selectOption('milieu');
-  await expect(page.getByLabel('Field')).toHaveValue(FIELD);
-  await expect(bubble(page, 'Aldric Thane')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByLabel('Field')).toHaveValue(FIELD, FIELD_READY);
+  await expect(bubble(page, 'Aldric Thane')).toBeVisible(FIELD_READY);
 }
 
 /**
