@@ -19,9 +19,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useOutletContext } from 'react-router';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
-import { GraphLayoutSelect } from '../app/GraphLayoutSelect.js';
+import { GraphLayoutSelect } from '../pages/GraphLayoutSelect.js';
 import type { OutletContext } from '../app/outlet.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import { revisionOf } from '../app/useIndexEvents.js';
 import { downloadBlob } from '../graph/index.js';
 import { useUiStore } from '../store/ui.js';

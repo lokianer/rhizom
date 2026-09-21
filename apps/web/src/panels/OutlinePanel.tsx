@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 
 import { api, isAbortError, SETTLE_MS } from '../api/client.js';
-import { headingHref } from '../app/paths.js';
+import { headingHref } from '../routing/paths.js';
 import { outlineRows, slugFromHash } from './outline-model.js';
 import './panels.css';
 

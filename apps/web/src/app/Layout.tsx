@@ -1,19 +1,10 @@
 // The frame around every view: header, the sidebar with its four panels, and the command
 // palette. Everything that needs the whole app (theme, shortcuts, note creation) lives here.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
-import {
-  DEFAULT_DATE_FORMAT,
-  DEFAULT_TIME_FORMAT,
-  ensureMarkdownExtension,
-  expandTemplate,
-  noteNameOf,
-  type TemplateSettings,
-} from '@rhizom/core';
-
-import { api, ApiRequestError } from '../api/client.js';
+import { api } from '../api/client.js';
 import { LanguageSwitch } from '../components/LanguageSwitch.js';
 import { NewNoteDialog } from '../components/NewNoteDialog.js';
 import { TagRenameDialog } from '../components/TagRenameDialog.js';
@@ -21,62 +12,19 @@ import { ThemeSwitch } from '../components/ThemeSwitch.js';
 // Straight from the module, not through the editor's barrel: that barrel reaches MarkdownEditor,
 // whose stylesheet import makes it a side effect no bundler may drop, and the frame would carry
 // all of CodeMirror for the sake of one filter.
-import { templateNotes } from '../editor/template-model.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
-import { useUiStore, type SidebarTab } from '../store/ui.js';
+import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
-import { copyPath, randomNotePath } from './commands-model.js';
-import { dailyNotePath } from './daily.js';
-import { headingHref, noteHref, notePathFromLocation } from './paths.js';
+import { paletteCommands } from './layout/commands.js';
+import { modifierLabel, SIDEBAR_TABS } from './layout/tabs.js';
+import { useNoteCommands } from './layout/useNoteCommands.js';
+import { noteHref, notePathFromLocation } from '../routing/paths.js';
 import { applyTheme } from './theme.js';
 import { revisionOf, useIndexEvents } from './useIndexEvents.js';
 
-/** The sidebar's tabs in the order they stand, each with the key that names it. */
-const SIDEBAR_TABS = [
-  { tab: 'tree', label: 'sidebar.files' },
-  { tab: 'search', label: 'sidebar.search' },
-  { tab: 'tags', label: 'sidebar.tags' },
-  { tab: 'outline', label: 'sidebar.outline' },
-] as const satisfies readonly { tab: SidebarTab; label: string }[];
-
-/** The modifier the shortcuts use, Command on Apple systems and Control everywhere else. */
-function modifierLabel(): string {
-  return navigator.platform.startsWith('Mac') || navigator.platform === 'iPhone' ? '⌘' : 'Ctrl';
-}
-
-/**
- * The text a new note starts from: a template of the vault's, expanded the way the slash menu
- * expands one, so `{{date}}` and `{{title}}` mean here what they mean there. A template that is
- * named and no longer there is not an error — the note starts empty, which is what it would
- * have done without a template at all.
- */
-async function templateText(
-  template: string | null,
-  path: string,
-  templates: TemplateSettings | undefined,
-  locale: string,
-): Promise<string> {
-  if (template === null) {
-    return '';
-  }
-  try {
-    const source = await api.note(template);
-    return expandTemplate(source.content, {
-      title: noteNameOf(path),
-      path,
-      now: new Date(),
-      dateFormat: templates?.dateFormat ?? DEFAULT_DATE_FORMAT,
-      timeFormat: templates?.timeFormat ?? DEFAULT_TIME_FORMAT,
-      locale,
-    }).text;
-  } catch {
-    return '';
-  }
-}
-
 export function Layout() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const openNotePath = notePathFromLocation(location.pathname);
@@ -110,10 +58,8 @@ export function Layout() {
   const requestRename = useUiStore((state) => state.requestRename);
   const requestBlockLink = useUiStore((state) => state.requestBlockLink);
   const daily = useVaultStore((state) => state.info?.daily);
-  const templates = useVaultStore((state) => state.info?.templates);
 
   const revisions = useIndexEvents();
-  const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
   const [renamingTag, setRenamingTag] = useState<string | null>(null);
 
   useEffect(() => {
@@ -124,239 +70,39 @@ export function Layout() {
     applyTheme(theme);
   }, [theme]);
 
-  // The one way into a note from the sidebar. A fragment names a heading in it: the outline
-  // sends one, everything else opens the note at the top and leaves the argument out.
-  const openNote = useCallback(
-    (path: string, fragment?: string) => {
-      void navigate(fragment === undefined ? noteHref(path) : headingHref(path, fragment));
-    },
-    [navigate],
-  );
-
-  const createNote = useCallback(
-    async (path: string, template: string | null) => {
-      setNewNoteFolder(null);
-      // A note made from a template is made with its text in hand rather than created empty and
-      // then written to: one request, and nothing to clean up if the second one never happens.
-      const content = await templateText(
-        template,
-        ensureMarkdownExtension(path),
-        templates,
-        i18n.language,
-      );
-      const created = await api.createNote(content === '' ? { path } : { path, content });
-      await refresh();
-      void navigate(noteHref(created.path));
-    },
-    [i18n.language, navigate, refresh, templates],
-  );
-
-  // Today's note: the vault says where it goes and what a day is called, and the note is made
-  // from the vault's own template when it does not exist yet. The command is not offered at all
-  // when the vault keeps no daily notes.
-  const openToday = useCallback(async () => {
-    const path = daily === undefined ? null : dailyNotePath(daily, new Date(), i18n.language);
-    if (path === null) {
-      return;
-    }
-    try {
-      await api.note(path);
-    } catch (error) {
-      if (!(error instanceof ApiRequestError) || error.status !== 404) {
-        throw error;
-      }
-      await api.createNote({
-        path,
-        content: await templateText(daily?.template ?? null, path, templates, i18n.language),
-      });
-      await refresh();
-    }
-    void navigate(noteHref(path));
-  }, [daily, i18n.language, navigate, refresh, templates]);
-
-  // Duplicating a note: the same words under the next free name beside it. Nothing is renamed and
-  // no link is rewritten — a copy is a new note that happens to say the same thing, and what the
-  // original pointed at, the copy points at too.
-  const duplicateNote = useCallback(async () => {
-    if (openNotePath === null) {
-      return;
-    }
-    const source = await api.note(openNotePath);
-    const taken = new Set(notes.map((note) => note.path));
-    // The note list is a moment old, so a name it believes free may have been taken since. The
-    // server's refusal (409) is an answer rather than a failure: that name is gone, and the next
-    // one in the series is asked for instead. Five tries, then it is a failure like any other.
-    for (let attempt = 0; ; attempt += 1) {
-      const path = copyPath(openNotePath, taken);
-      try {
-        const created = await api.createNote({ path, content: source.content });
-        await refresh();
-        void navigate(noteHref(created.path));
-        return;
-      } catch (error) {
-        const nameTaken = error instanceof ApiRequestError && error.status === 409;
-        if (!nameTaken || attempt >= 4) {
-          throw error;
-        }
-        taken.add(path);
-      }
-    }
-  }, [navigate, notes, openNotePath, refresh]);
-
-  // The notes a new one can start from: the vault's template folder, by file name, because that
-  // is the name the slash menu offers them under and the name their own heading does not give.
-  const templateChoices = useMemo(
-    () =>
-      templates === undefined
-        ? []
-        : templateNotes(notes, templates).map((note) => ({
-            path: note.path,
-            name: noteNameOf(note.path),
-          })),
-    [notes, templates],
-  );
+  const {
+    openNote,
+    createNote,
+    openToday,
+    duplicateNote,
+    templateChoices,
+    newNoteFolder,
+    setNewNoteFolder,
+  } = useNoteCommands(openNotePath);
 
   const commands = useMemo<PaletteCommand[]>(
-    () => [
-      {
-        id: 'newNote',
-        label: t('palette.commandNames.newNote'),
-        run: () => {
-          setNewNoteFolder('');
-        },
-      },
-      {
-        id: 'toggleTheme',
-        label: t('palette.commandNames.toggleTheme'),
-        run: () => {
-          setTheme(theme === 'kalk' ? 'humus' : 'kalk');
-        },
-      },
-      {
-        id: 'openGraph',
-        label: t('palette.commandNames.openGraph'),
-        run: () => {
-          void navigate(
-            openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`,
-          );
-        },
-      },
-      {
-        id: 'openGlossary',
-        label: t('palette.commandNames.openGlossary'),
-        run: () => {
-          void navigate('/glossary');
-        },
-      },
-      {
-        id: 'openWiki',
-        label: t('palette.commandNames.openWiki'),
-        run: () => {
-          if (openNotePath !== null) {
-            void navigate(noteHref(openNotePath, 'wiki'));
-          }
-        },
-      },
-      ...(daily?.folder === undefined || daily.folder === null
-        ? []
-        : [
-            {
-              id: 'openToday',
-              label: t('palette.commandNames.openToday'),
-              run: () => {
-                void openToday();
-              },
-            },
-          ]),
-      // Nothing to open at random in a vault with no notes in it.
-      ...(notes.length === 0
-        ? []
-        : [
-            {
-              id: 'randomNote',
-              label: t('palette.commandNames.randomNote'),
-              run: () => {
-                const path = randomNotePath(notes, openNotePath);
-                if (path !== null) {
-                  openNote(path);
-                }
-              },
-            },
-          ]),
-      // Only with a note open: there is nothing to copy otherwise.
-      ...(openNotePath === null
-        ? []
-        : [
-            {
-              id: 'duplicateNote',
-              label: t('palette.commandNames.duplicateNote'),
-              run: () => {
-                void duplicateNote();
-              },
-            },
-            {
-              id: 'copyBlockLink',
-              label: t('palette.commandNames.copyBlockLink'),
-              // Like the rename: only the open editor knows where the cursor is, so all this
-              // does is ask, and the editor answers with the key's own command.
-              run: requestBlockLink,
-            },
-          ]),
-      {
-        id: 'renameNote',
-        label: t('palette.commandNames.renameNote'),
-        // The dialog belongs to the note page, which is the only place that can see whether
-        // anything is still unsaved; all this does is ask for it.
-        run: () => {
-          if (openNotePath !== null) {
-            requestRename();
-          }
-        },
-      },
-      {
-        id: 'search',
-        label: t('palette.commandNames.search'),
-        run: () => {
-          setSidebarTab('search');
-        },
-      },
-      {
-        id: 'openOutline',
-        label: t('palette.commandNames.openOutline'),
-        run: () => {
-          setSidebarTab('outline');
-        },
-      },
-      {
-        id: 'toggleSidebar',
-        label: t('palette.commandNames.toggleSidebar'),
-        run: toggleSidebar,
-      },
-      {
-        id: 'togglePreview',
-        label: t('palette.commandNames.togglePreview'),
-        run: toggleSplitView,
-      },
-      {
-        id: 'toggleZen',
-        label: t('palette.commandNames.toggleZen'),
-        run: toggleZen,
-      },
-      {
-        id: 'toggleVim',
-        label: t('palette.commandNames.toggleVim'),
-        // The editor fetches the keymap itself the first time this is asked for; whoever never
-        // asks never downloads it.
-        run: toggleVimMode,
-      },
-      {
-        id: 'rebuild',
-        label: t('palette.commandNames.rebuild'),
-        run: () => {
-          void api.rebuildIndex().then(() => refresh());
-        },
-      },
-    ],
+    () =>
+      paletteCommands({
+        daily,
+        setNewNoteFolder,
+        duplicateNote,
+        navigate,
+        notes,
+        openNote,
+        openNotePath,
+        openToday,
+        refresh,
+        requestBlockLink,
+        requestRename,
+        setSidebarTab,
+        setTheme,
+        t,
+        theme,
+        toggleSidebar,
+        toggleSplitView,
+        toggleVimMode,
+        toggleZen,
+      }),
     [
       daily,
       duplicateNote,
@@ -368,6 +114,7 @@ export function Layout() {
       refresh,
       requestBlockLink,
       requestRename,
+      setNewNoteFolder,
       setSidebarTab,
       setTheme,
       t,

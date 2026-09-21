@@ -7,7 +7,7 @@ import { folderOf } from '@rhizom/core';
 import type { SearchHit } from '@rhizom/core';
 
 import { api, isAbortError } from '../api/client.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import './panels.css';
 
 export interface SearchPanelProps {

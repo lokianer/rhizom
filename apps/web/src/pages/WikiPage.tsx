@@ -7,9 +7,9 @@ import { Link, useOutletContext, useParams } from 'react-router';
 
 import { api, isAbortError } from '../api/client.js';
 import { NotePreview } from './NotePreview.js';
-import type { OutletContext } from './outlet.js';
-import { noteHref, notePathFromParam } from './paths.js';
-import { revisionOf } from './useIndexEvents.js';
+import type { OutletContext } from '../app/outlet.js';
+import { noteHref, notePathFromParam } from '../routing/paths.js';
+import { revisionOf } from '../app/useIndexEvents.js';
 
 export function WikiPage() {
   const { t } = useTranslation();

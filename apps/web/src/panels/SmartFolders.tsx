@@ -8,7 +8,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SETTLE_MS } from '../api/client.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import { useNoteSources } from '../store/notes.js';
 import { useQueryResults } from '../store/queries.js';
 import {

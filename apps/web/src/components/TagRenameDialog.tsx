@@ -10,7 +10,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api, isAbortError } from '../api/client.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 
 export interface TagRenameDialogProps {
   /** The tag being renamed, or null when the dialog is closed. */

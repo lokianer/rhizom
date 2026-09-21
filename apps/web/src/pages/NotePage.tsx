@@ -5,7 +5,6 @@ import {
   DEFAULT_DATE_FORMAT,
   DEFAULT_TIME_FORMAT,
   setTask,
-  type NoteDocument,
   type RenamePreview,
   type TemplateSettings,
 } from '@rhizom/core';
@@ -22,7 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router';
 
-import { api, ApiRequestError, isAbortError } from '../api/client.js';
+import { api } from '../api/client.js';
 import { RenameDialog } from '../components/RenameDialog.js';
 import {
   MarkdownEditor,
@@ -34,10 +33,12 @@ import { BacklinksPanel, FrontmatterPanel, MentionsPanel } from '../panels/index
 import { filesFor } from '../panels/rename-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
-import { createResolver } from './links.js';
-import type { OutletContext } from './outlet.js';
-import { noteHref, notePathFromParam } from './paths.js';
-import { revisionElsewhere, revisionOf } from './useIndexEvents.js';
+import { createResolver } from '../routing/links.js';
+import type { OutletContext } from '../app/outlet.js';
+import { noteHref, notePathFromParam } from '../routing/paths.js';
+import { revisionElsewhere } from '../app/useIndexEvents.js';
+import { SaveStatus } from './note/SaveStatus.js';
+import { useNoteDocument } from './note/useNoteDocument.js';
 
 /** A vault that has not said where its templates are; frozen, so the editor sees one identity. */
 const NO_TEMPLATES: TemplateSettings = Object.freeze({
@@ -49,8 +50,6 @@ const NO_TEMPLATES: TemplateSettings = Object.freeze({
 // The preview brings the whole Markdown renderer, which someone who only writes never needs.
 const NotePreview = lazy(async () => ({ default: (await import('./NotePreview.js')).NotePreview }));
 
-const AUTOSAVE_MS = 800;
-
 /**
  * What the page says when a block cannot be given an id. The keys are spelled out rather than
  * built from the reason, so the translation types check them one by one.
@@ -60,9 +59,6 @@ const BLOCK_LINK_REFUSALS = {
   code: 'editor.blockLink.code',
   noBlock: 'editor.blockLink.noBlock',
 } as const satisfies Record<BlockLinkRefusal, string>;
-
-type LoadState = 'loading' | 'ready' | 'missing' | 'error';
-type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 
 export function NotePage() {
   const { revisions } = useOutletContext<OutletContext>();
@@ -94,27 +90,33 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const renameRequest = useUiStore((state) => state.renameRequest);
   const zen = useUiStore((state) => state.zen);
 
-  const [doc, setDoc] = useState<NoteDocument | null>(null);
-  const [state, setState] = useState<LoadState>('loading');
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [message, setMessage] = useState('');
-  /**
-   * What the block-link command has just said, shown beside the save state. Its own line rather
-   * than the save state's: nothing here is about saving, and the save state's failure is framed
-   * as "Could not save …", which a link that did not reach the clipboard has nothing to do with.
-   */
-  const [notice, setNotice] = useState('');
-  const [externalContent, setExternalContent] = useState<string | undefined>(undefined);
-  const [draft, setDraft] = useState('');
+  const {
+    doc,
+    notice,
+    setNotice,
+    state,
+    saveState,
+    message,
+    draft,
+    externalContent,
+    setState,
+    setSaveState,
+    setMessage,
+    setDraft,
+    setExternalContent,
+    reload,
+    save,
+    scheduleSave,
+    flush,
+    cancelPending,
+    currentText,
+    currentHash,
+    overwrite,
+  } = useNoteDocument(path, revisions, t);
   const [askDelete, setAskDelete] = useState(false);
   const [renaming, setRenaming] = useState(false);
   // Rendering the preview yields to typing: the editor never waits for it.
   const previewContent = useDeferredValue(draft);
-
-  // Kept in refs so the debounced save always sees the latest values without re-arming.
-  const pending = useRef<string | null>(null);
-  const hashRef = useRef<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resolver = useMemo(() => createResolver(notes), [notes]);
   // Memoised on the term list, not on the context: the vault store replaces every array after
@@ -125,129 +127,6 @@ function NoteView({ path, revisions }: NoteViewProps) {
     () => Object.fromEntries(SLASH_COMMANDS.map((id) => [id, t(`editor.slash.${id}`)])),
     [t],
   );
-
-  const applyLoaded = useCallback((loaded: NoteDocument) => {
-    hashRef.current = loaded.hash;
-    pending.current = null;
-    setDoc(loaded);
-    setDraft(loaded.content);
-    setExternalContent(undefined);
-    setState('ready');
-    setSaveState('idle');
-    setMessage('');
-    setNotice('');
-  }, []);
-
-  const applyLoadFailure = useCallback((error: unknown) => {
-    if (isAbortError(error)) {
-      return;
-    }
-    if (error instanceof ApiRequestError && error.status === 404) {
-      setDoc(null);
-      setState('missing');
-      return;
-    }
-    setState('error');
-    setMessage(error instanceof Error ? error.message : String(error));
-  }, []);
-
-  const reload = useCallback(() => {
-    setState('loading');
-    api.note(path).then(applyLoaded).catch(applyLoadFailure);
-  }, [applyLoaded, applyLoadFailure, path]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    api.note(path, { signal: controller.signal }).then(applyLoaded).catch(applyLoadFailure);
-    return () => {
-      controller.abort();
-    };
-  }, [applyLoaded, applyLoadFailure, path]);
-
-  const save = useCallback(
-    async (content: string) => {
-      setSaveState('saving');
-      try {
-        const saved = await api.saveNote(path, { content }, hashRef.current ?? undefined);
-        hashRef.current = saved.hash;
-        pending.current = null;
-        setDoc(saved);
-        setSaveState('saved');
-        setMessage('');
-        void refreshVault();
-      } catch (error) {
-        if (error instanceof ApiRequestError && error.isConflict) {
-          setSaveState('conflict');
-          setMessage(t('editor.conflict'));
-          return;
-        }
-        setSaveState('error');
-        setMessage(error instanceof Error ? error.message : String(error));
-      }
-    },
-    [path, refreshVault, t],
-  );
-
-  const scheduleSave = useCallback(
-    (content: string) => {
-      pending.current = content;
-      setDraft(content);
-      // Typing moves on from whatever the last command said. The block-link command writes its
-      // marker before it reports, so its own notice is set after this one clears it.
-      setNotice('');
-      if (timer.current !== null) {
-        clearTimeout(timer.current);
-      }
-      timer.current = setTimeout(() => {
-        timer.current = null;
-        void save(content);
-      }, AUTOSAVE_MS);
-    },
-    [save],
-  );
-
-  // A pending edit must not be lost when the note is closed or the page unmounts.
-  useEffect(() => {
-    return () => {
-      if (timer.current !== null) {
-        clearTimeout(timer.current);
-        timer.current = null;
-      }
-      const unsaved = pending.current;
-      if (unsaved !== null) {
-        void api.saveNote(path, { content: unsaved }, hashRef.current ?? undefined);
-      }
-    };
-  }, [path]);
-
-  // The file changed outside Rhizom: take the new text over when nothing is unsaved.
-  // Counted rather than signalled: one watcher batch can report two events in a single render,
-  // and a page holding only the last of them would never hear about the first.
-  const revision = revisionOf(revisions, path);
-  const applied = useRef(revision);
-  useEffect(() => {
-    if (applied.current === revision || pending.current !== null) {
-      return;
-    }
-    applied.current = revision;
-    const controller = new AbortController();
-    api
-      .note(path, { signal: controller.signal })
-      .then((fresh) => {
-        if (fresh.hash !== hashRef.current) {
-          hashRef.current = fresh.hash;
-          setDoc(fresh);
-          setDraft(fresh.content);
-          setExternalContent(fresh.content);
-        }
-      })
-      .catch(() => {
-        // The note may have been deleted; the refreshed vault store shows that.
-      });
-    return () => {
-      controller.abort();
-    };
-  }, [revision, path]);
 
   // The palette can ask for a rename from anywhere; only this page knows whether the note has
   // unsaved text, so the request arrives as a counter and is answered here.
@@ -263,30 +142,22 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const confirmRename = useCallback(
     async (preview: RenamePreview) => {
       // What is in the editor goes to disk first: the rename reads every file from disk, and a
-      // draft saved afterwards would be written back to a path that is no longer there.
-      const unsaved = pending.current;
-      if (unsaved !== null) {
-        await save(unsaved);
-        if (pending.current !== null) {
-          // The save was refused — a conflict, and the banner says so. Renaming on top of that
-          // would move a file whose text is not the one on screen.
-          return;
-        }
+      // draft saved afterwards would be written back to a path that is no longer there. A
+      // refused save is a conflict the banner already reports, and renaming on top of it would
+      // move a file whose text is not the one on screen.
+      if (!(await flush())) {
+        return;
       }
-      // The three lines `remove` has, for the same reason: a pending autosave would write the
+      // The same line `remove` has, for the same reason: a pending autosave would write the
       // note straight back to the path it was just moved away from.
-      if (timer.current !== null) {
-        clearTimeout(timer.current);
-        timer.current = null;
-      }
-      pending.current = null;
+      cancelPending();
 
       const result = await api.renameNote({
         from: preview.from,
         to: preview.to,
         // The hash of the file as it stands now, which is not the preview's once a draft was
         // just flushed to disk.
-        hash: hashRef.current ?? preview.fromHash,
+        hash: currentHash() ?? preview.fromHash,
         files: filesFor(preview),
       });
       setRenaming(false);
@@ -295,7 +166,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
       // to create the note that was just moved away.
       void navigate(noteHref(result.to), { replace: true });
     },
-    [navigate, refreshVault, save],
+    [cancelPending, currentHash, flush, navigate, refreshVault],
   );
 
   // The form edits the note's own text, so it goes the way an external change goes: into the
@@ -307,7 +178,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
       setExternalContent(next);
       scheduleSave(next);
     },
-    [scheduleSave],
+    [scheduleSave, setDraft, setExternalContent],
   );
 
   // A box ticked in the preview changes the note's own text, so it goes the way the frontmatter
@@ -316,28 +187,24 @@ function NoteView({ path, revisions }: NoteViewProps) {
   // text back unchanged, and nothing happens.
   const toggleTask = useCallback(
     (line: number, done: boolean) => {
-      const source = pending.current ?? draft;
+      const source = currentText(draft);
       const next = setTask(source, line, done);
       if (next !== source) {
         applyFrontmatter(next);
       }
     },
-    [applyFrontmatter, draft],
+    [applyFrontmatter, currentText, draft],
   );
 
   const remove = useCallback(() => {
     setAskDelete(false);
     // A pending autosave would recreate the file right after it was moved away.
-    if (timer.current !== null) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-    pending.current = null;
+    cancelPending();
     void api
       .deleteNote(path)
       .then(() => refreshVault())
       .then(() => navigate('/'));
-  }, [navigate, path, refreshVault]);
+  }, [cancelPending, navigate, path, refreshVault]);
 
   /**
    * The editor has found — or written — the id of the block the cursor stands in. The clipboard
@@ -372,7 +239,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
         },
       );
     },
-    [t],
+    [setNotice, t],
   );
 
   const openTarget = useCallback(
@@ -472,8 +339,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
                 type="button"
                 onClick={() => {
                   // Deliberately without If-Match: the file on disk gets this text.
-                  hashRef.current = null;
-                  void save(pending.current ?? doc.content);
+                  overwrite(doc.content);
                 }}
               >
                 {t('editor.overwrite')}
@@ -582,30 +448,4 @@ function NoteView({ path, revisions }: NoteViewProps) {
       />
     </div>
   );
-}
-
-function SaveStatus({ state, message }: { state: SaveState; message: string }) {
-  const { t } = useTranslation();
-  switch (state) {
-    case 'saving':
-      return <> · {t('editor.saving')}</>;
-    case 'saved':
-      return <> · {t('editor.saved')}</>;
-    case 'conflict':
-      return (
-        <>
-          {' '}
-          · <span className="rz-error">{t('editor.conflict')}</span>
-        </>
-      );
-    case 'error':
-      return (
-        <>
-          {' '}
-          · <span className="rz-error">{t('editor.failed', { message })}</span>
-        </>
-      );
-    default:
-      return null; // nothing to say while the note simply sits there
-  }
 }

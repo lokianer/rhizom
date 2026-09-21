@@ -14,7 +14,7 @@ import { matchesTags } from '../panels/tag-model.js';
 import { useUiStore } from '../store/ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { GraphLayoutSelect } from './GraphLayoutSelect.js';
-import { noteHref } from './paths.js';
+import { noteHref } from '../routing/paths.js';
 
 const DEPTHS = [0, 1, 2, 3];
 

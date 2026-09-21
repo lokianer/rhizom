@@ -8,8 +8,8 @@ import { Link, useOutletContext } from 'react-router';
 
 import { api, isAbortError } from '../api/client.js';
 import { groupByLetter } from './glossary-model.js';
-import type { OutletContext } from './outlet.js';
-import { noteHref } from './paths.js';
+import type { OutletContext } from '../app/outlet.js';
+import { noteHref } from '../routing/paths.js';
 
 export function GlossaryPage() {
   const { t } = useTranslation();

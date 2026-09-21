@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 
 import { useVaultStore } from '../store/vault.js';
-import { noteHref } from './paths.js';
+import { noteHref } from '../routing/paths.js';
 
 /** Shown when no note is open: what this vault holds and the most recently changed notes. */
 export function HomePage() {

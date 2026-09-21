@@ -25,7 +25,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import { PNG_SCALE } from '../graph/export.js';
 import { resolvePalette, watchPalette, type Palette } from '../graph/palette.js';
 import {

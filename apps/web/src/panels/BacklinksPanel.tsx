@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { Backlink, NoteLink } from '@rhizom/core';
 
 import { api, isAbortError, SETTLE_MS } from '../api/client.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import { groupBacklinks, outgoingLinks } from './backlink-model.js';
 import './panels.css';
 

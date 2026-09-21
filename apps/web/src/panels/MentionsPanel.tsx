@@ -9,7 +9,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { api, isAbortError, SETTLE_MS } from '../api/client.js';
-import { noteHref } from '../app/paths.js';
+import { noteHref } from '../routing/paths.js';
 import {
   countMentions,
   keepSelection,

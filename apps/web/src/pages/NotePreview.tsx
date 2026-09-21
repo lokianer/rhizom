@@ -22,9 +22,14 @@ import { api, SETTLE_MS } from '../api/client.js';
 import { useNoteSources } from '../store/notes.js';
 import { useQueryResults } from '../store/queries.js';
 import { useVaultStore } from '../store/vault.js';
-import { createAssetResolver, createResolver } from './links.js';
-import { drawDiagrams, forgetDiagrams, watchTheme, type DiagramLabels } from './mermaid.js';
-import { noteHref } from './paths.js';
+import { createAssetResolver, createResolver } from '../routing/links.js';
+import {
+  drawDiagrams,
+  forgetDiagrams,
+  watchTheme,
+  type DiagramLabels,
+} from '../mermaid/mermaid.js';
+import { noteHref } from '../routing/paths.js';
 
 /**
  * The slug a fragment names. A browser percent-encodes a fragment holding anything but ASCII,
