@@ -154,10 +154,13 @@ apps/server/src/
 
 `VaultIndex` keeps all 30 public methods with their current names and signatures, so no route
 file changes. Each method becomes a single line delegating to a function in `store/index/`,
-which receives the Drizzle handle. Free functions rather than sub-classes: that is what the rest
-of the codebase does, and `erasableSyntaxOnly` rules out parameter properties anyway.
+which receives an `IndexContext`: the raw `better-sqlite3` connection, the Drizzle handle and the
+link resolver. All three are needed — `search` and `stats` prepare raw statements against the
+connection because that is what FTS5 wants, and the resolution pass reads the resolver. Free
+functions rather than sub-classes: that is what the rest of the codebase does, and
+`erasableSyntaxOnly` rules out parameter properties anyway.
 
-The private constructor, the `sqlite`/`db`/`resolver` fields and the transaction handling stay
+The private constructor, the context the constructor builds, and the transaction handling stay
 in the facade. A helper that today reads from several tables stays one function; it is moved,
 not decomposed.
 
@@ -229,9 +232,9 @@ Five commits. Each one leaves the tree runnable and has `pnpm typecheck`, `pnpm 
 4. `refactor(web): separate pages from the application frame`
 5. `refactor(web): cut the two collected stylesheets`
 
-`DECISIONS.md` records the layer axis and why a feature-shaped grouping was rejected.
-`CHANGELOG.md` gets one entry under _Changed_. The full CI sequence runs locally before the
-push.
+A sixth commit follows the five: `DECISIONS.md` records the layer axis and why a feature-shaped
+grouping was rejected, `CHANGELOG.md` gets one entry under _Changed_, and this document is
+marked implemented. The full CI sequence runs locally before the push.
 
 ## Verification
 
