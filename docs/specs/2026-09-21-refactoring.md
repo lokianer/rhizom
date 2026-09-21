@@ -1,7 +1,7 @@
 # Structural refactoring before Phase 3
 
 Date: 2026-09-21
-Status: accepted, not yet implemented
+Status: implemented 2026-09-21
 
 ## Why
 

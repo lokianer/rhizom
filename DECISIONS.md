@@ -941,3 +941,41 @@ refuses to write over one that moved on, and what is missing is reading the `.sy
 files those tools leave behind as a second version of a note — shown side by side, merged by a
 person. Sync of Rhizom's own is worth building only after that conflict model has been proved
 against somebody else's.
+
+## 2026-09-21 — The tree is grouped by layer, and the index keeps one face
+
+Phase 3 makes the vault index vault-aware, and it was going to land in a tree that made the
+change harder than it is. `packages/core` held 24 modules in one flat folder, `VaultIndex` was a
+single class of 540 lines with 30 methods, and two stylesheets collected rules for areas with
+nothing to do with each other. So the tree was reshaped first, strictly without changing
+behaviour, and Phase 3 gets to be a diff about several vaults and nothing else.
+
+`packages/core` is grouped along the axis its imports already followed: `text` ← `syntax` ←
+`vault` ← `query` ← `render`, every edge pointing left. The alternative, grouping by feature —
+`links`, `tags`, `notes` — was measured against the actual imports and rejected: `parse` imports
+`tagrefs` while `linkrefs` imports `remark-wikilink`, so two feature folders would each need the
+other. A layer axis is checkable, which is the point. Anybody adding a module can ask one
+question — what does this import? — and the answer says where it goes. The barrel is unchanged,
+so nothing outside the package can tell.
+
+`VaultIndex` stays one class with one facade rather than becoming several classes the routes
+would have to know about. Every method keeps its name and signature and delegates in a line to a
+free function under `store/index/`; a route file did not change at all. Those functions take an
+`IndexContext` — the raw connection, the Drizzle handle, the link resolver — because the raw
+connection is what the FTS5 statements are prepared on, and the resolution pass reads the
+resolver. Free functions rather than sub-classes, which is what the rest of the codebase does
+and what `erasableSyntaxOnly` leaves room for. When Phase 3 gives a server several vaults, one
+`IndexContext` per vault is the shape that change wants.
+
+Two things the refactoring itself taught, worth keeping:
+
+A hook that hands out its refs has not encapsulated anything. `useNoteDocument` first returned
+the three refs the note page mutates; it compiled and the tests passed, and React's compiler
+rules refused it — a ref may only be written by the hook that owns it. The fix was to hand out
+verbs instead: `flush`, `cancelPending`, `currentText`, `currentHash`, `overwrite`. The rule was
+right about the design, not merely strict about the code.
+
+A split stylesheet can stay one cascade. `base.css` and `panels.css` are now barrels of
+`@import` in the original order; Vite inlines them at build time, so the emitted asset keeps the
+content hash it had before the cut. That hash is the proof — no test sees the cascade, and the
+same trick gives the OpenAPI document, which is tracked, the same role for the API.

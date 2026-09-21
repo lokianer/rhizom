@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The tree was restructured before Phase 3, without any change in behaviour. `packages/core` is
+  grouped into `text`, `syntax`, `vault`, `query` and `render`; `render`, `query` and
+  `frontmatter` are cut into their parts; `VaultIndex` becomes a facade over `store/index/` with
+  every method keeping its name and signature; the server's schemas split by part of the API and
+  `app.ts` hands swagger, static serving and the not-found fallback to plugins; the web app
+  separates `pages/` from the application frame; and the two collected stylesheets become
+  `@import` barrels over one file per subject. The published OpenAPI document and the emitted
+  CSS are byte for byte what they were.
+
 ### Fixed
 
 - A block id is read by walking the end of the line backwards rather than with a regular
