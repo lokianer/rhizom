@@ -18,7 +18,8 @@ import { unified } from 'unified';
 
 import type { LinkKind, QueryResult, QueryRow } from '../api.js';
 import { BUILT_IN_COLUMNS } from '../query/language.js';
-import { noteLinkProperties, type RenderedLink } from './note.js';
+import { noteLinkProperties } from './links.js';
+import type { RenderedLink } from './note.js';
 
 /** A column a result can show without asking the note for anything; `BUILT_IN_COLUMNS` in full. */
 export type BuiltInColumn = 'title' | 'path' | 'folder' | 'tags' | 'modified' | 'size';

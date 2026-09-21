@@ -8,7 +8,11 @@
 // typed it — its comments, its blank lines, the order it puts its keys in, the way it quotes them
 // — so a save rewrites the fields it was given and nothing else. Re-serialising the whole block
 // would be a line of code and would throw all of that away the first time anybody pressed save.
-import { Document, isMap, isNode, isScalar, isSeq, parseDocument } from 'yaml';
+import { isMap, isNode, isScalar, parseDocument } from 'yaml';
+
+import { endsWithBreak, lineAt, lineEndAt, lineStartAt, needsSpace } from '../text/breaks.js';
+import { openBlock, pairText, valueSuffix, withIndent } from './frontmatter-write.js';
+import { dateOf, isPlainValue } from './values.js';
 
 /** What a note is, when it is more than prose. */
 export type NoteType = 'definition' | 'template' | 'query' | 'axes';
@@ -66,18 +70,6 @@ export interface FrontmatterField {
 // index and the editor have to see the same block or a save would land in the wrong place.
 const OPEN_FENCE = /^---[ \t]*(\r\n|\n|\r)/;
 const CLOSE_FENCE = /^---[ \t]*(?:\r\n|\n|\r|$)/gm;
-
-/** A date as a form and a vault write one: `2024-05-01`, no time, no zone. */
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
-/**
- * How long a rewritten line may get before a list is easier to read one item per line. It is the
- * line in somebody's note that this measures, not our source, so it is not the printer's width.
- */
-const FLOW_WIDTH = 80;
-
-/** A stand-in key, so a rewritten value can be cut off a pair whose key we already know. */
-const SAMPLE_KEY = 'k';
 
 /** The block, or nothing when the note has none. */
 export function findFrontmatter(markdown: string): FrontmatterBlock | undefined {
@@ -199,12 +191,6 @@ interface KeyRange {
   valueEnd: number;
 }
 
-interface Edit {
-  start: number;
-  end: number;
-  text: string;
-}
-
 interface Located {
   block: FrontmatterBlock;
   /** Offset of the first character of the YAML in the note. */
@@ -295,49 +281,6 @@ function indentOf(body: string, ranges: ReadonlyMap<string, KeyRange>): string {
   return first === undefined ? '' : ' '.repeat(first.keyStart - lineStartAt(body, first.keyStart));
 }
 
-/** Written text moved into that column: every line after the first carries the indent too. */
-function withIndent(text: string, indent: string, eol: string): string {
-  return indent === '' ? text : text.split(eol).join(eol + indent);
-}
-
-/** The edit that puts a new value on an existing key's line, or under it. */
-function rewrite(body: string, range: KeyRange, suffix: string, eol: string): Edit {
-  let text = suffix;
-  if (endsWithBreak(body.slice(range.keyEnd, range.valueEnd))) {
-    // The old value ran to the end of its last line and the span takes that line break with it.
-    // Without one back the next key lands on this key's line.
-    text += eol;
-  } else if (needsSpace(body[range.valueEnd])) {
-    // `title: # why` has no value to replace, only the point between the colon and the comment.
-    // Written straight in, the new value would disappear into that comment.
-    text += ' ';
-  }
-  return { start: range.keyEnd, end: range.valueEnd, text };
-}
-
-/** A note that had no frontmatter, with a block in front of it. */
-function openBlock(markdown: string, entries: readonly (readonly [string, unknown])[]): string {
-  const eol = lineBreakOf(markdown);
-  const lines: string[] = [];
-  for (const [key, value] of entries) {
-    if (value === undefined) {
-      // Nothing to remove from a block that does not exist.
-      continue;
-    }
-    const line = pairText(key, value, eol);
-    if (line !== undefined) {
-      lines.push(line);
-    }
-  }
-  if (lines.length === 0) {
-    return markdown;
-  }
-  // A blank line between the block and the prose, the way a hand-written note has it — unless the
-  // note opens with one already, or there is no prose for it to stand between.
-  const gap = markdown === '' || startsWithBreak(markdown) ? '' : eol;
-  return `---${eol}${lines.join(eol)}${eol}---${eol}${gap}${markdown}`;
-}
-
 /** What a form should show for a value, from the value alone. */
 function kindOf(value: unknown): FieldKind {
   if (value === null || value === undefined) {
@@ -365,167 +308,23 @@ function kindOf(value: unknown): FieldKind {
   return 'unsupported';
 }
 
-function isPlainValue(value: unknown): boolean {
-  return (
-    value === null ||
-    value instanceof Date ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  );
+export interface Edit {
+  start: number;
+  end: number;
+  text: string;
 }
 
-/** `key: value` as YAML writes it, without its line break; nothing when YAML cannot write it. */
-function pairText(key: string, value: unknown, eol: string): string | undefined {
-  return write(key, value, useFlow(key, value))?.replaceAll('\n', eol);
-}
-
-/**
- * The `: value` half of a pair. A rewrite replaces only this much of a line, so the key keeps the
- * spelling the file gave it and a comment behind the value is left where its author put it.
- */
-function valueSuffix(key: string, value: unknown, eol: string): string | undefined {
-  return write(SAMPLE_KEY, value, useFlow(key, value))
-    ?.slice(SAMPLE_KEY.length)
-    .replaceAll('\n', eol);
-}
-
-/** Whether the value belongs on the key's line as `[a, b]` rather than one item per line. */
-function useFlow(key: string, value: unknown): boolean {
-  if (Array.isArray(value)) {
-    if (!value.every(isPlainValue)) {
-      return false;
-    }
-    const line = write(key, value, true);
-    return line !== undefined && line.length <= FLOW_WIDTH;
+/** The edit that puts a new value on an existing key's line, or under it. */
+export function rewrite(body: string, range: KeyRange, suffix: string, eol: string): Edit {
+  let text = suffix;
+  if (endsWithBreak(body.slice(range.keyEnd, range.valueEnd))) {
+    // The old value ran to the end of its last line and the span takes that line break with it.
+    // Without one back the next key lands on this key's line.
+    text += eol;
+  } else if (needsSpace(body[range.valueEnd])) {
+    // `title: # why` has no value to replace, only the point between the colon and the comment.
+    // Written straight in, the new value would disappear into that comment.
+    text += ' ';
   }
-  // An empty collection is `{}` or `[]` on the key's line; nothing else can be written under a
-  // key without inventing an entry for it.
-  return isEmptyMapping(value);
-}
-
-function isEmptyMapping(value: unknown): boolean {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    !(value instanceof Date) &&
-    Object.keys(value).length === 0
-  );
-}
-
-/**
- * One pair, serialised.
- *
- * It is written as YAML 1.1 although Rhizom reads YAML 1.2: 1.1 is the dialect of Obsidian's and
- * Python's readers, and it is the stricter one about what a bare word means — `yes`, `no`, `on`,
- * `1:30` are all values there, not text. Quoting what 1.1 would misread keeps a string a string
- * in every reader a vault might meet. Nothing else is touched: line folding is off, so a long
- * title stays on its line, and non-ASCII is never escaped, so `Über 🌱` stays `Über 🌱`.
- */
-function write(key: string, value: unknown, flow: boolean): string | undefined {
-  try {
-    const document = new Document({ [key]: forYaml(value) }, null, { version: '1.1' });
-    if (flow) {
-      const contents = document.contents;
-      const node: unknown = isMap(contents) ? contents.items[0]?.value : undefined;
-      if (isSeq(node) || isMap(node)) {
-        node.flow = true;
-      }
-    }
-    return document.toString({ lineWidth: 0, flowCollectionPadding: false }).replace(/\n$/, '');
-  } catch {
-    // A value YAML has no tag for — a function, a symbol, whatever a caller passed by mistake.
-    // Guessing at it would write nonsense into somebody's note; the key keeps what it had.
-    return undefined;
-  }
-}
-
-/**
- * The value as the writer should see it. A date arrives from a form as the text `2024-05-01`, and
- * YAML 1.1 reads that bare text as a date, so the writer would quote it to keep it a string —
- * which would put quotes into the file on every save of a date field, and take the date away from
- * every other reader. Handing the writer a real date writes it the way a date is written.
- */
-function forYaml(value: unknown): unknown {
-  if (typeof value === 'string') {
-    return dateOf(value) ?? value;
-  }
-  if (Array.isArray(value)) {
-    return value.map(forYaml);
-  }
-  return value;
-}
-
-/**
- * The date a text spells, or nothing when it is not one. The round trip is the whole test:
- * `Date.parse` rolls `2024-02-30` forward into March rather than refusing it, and a date field
- * that silently moved a day is worse than a text field that kept what somebody typed.
- */
-function dateOf(text: string): Date | undefined {
-  if (!ISO_DATE.test(text)) {
-    return undefined;
-  }
-  const time = Date.parse(text);
-  if (Number.isNaN(time)) {
-    return undefined;
-  }
-  const date = new Date(time);
-  return date.toISOString().startsWith(text) ? date : undefined;
-}
-
-/** The 1-based line an offset falls on. */
-function lineAt(text: string, offset: number): number {
-  return (text.slice(0, offset).match(/\r\n|\n|\r/g)?.length ?? 0) + 1;
-}
-
-/** The first character of the line an offset falls on. */
-function lineStartAt(text: string, offset: number): number {
-  for (let index = offset - 1; index >= 0; index -= 1) {
-    if (isBreak(text[index])) {
-      return index + 1;
-    }
-  }
-  return 0;
-}
-
-/**
- * Just past the line an offset ends on, its line break included. A value that already ended with
- * its break — a block scalar, a nested mapping — ends where it ends.
- */
-function lineEndAt(text: string, offset: number): number {
-  if (offset === 0 || isBreak(text[offset - 1])) {
-    return offset;
-  }
-  for (let index = offset; index < text.length; index += 1) {
-    if (text[index] === '\r') {
-      return text[index + 1] === '\n' ? index + 2 : index + 1;
-    }
-    if (text[index] === '\n') {
-      return index + 1;
-    }
-  }
-  return text.length;
-}
-
-function isBreak(character: string | undefined): boolean {
-  return character === '\n' || character === '\r';
-}
-
-function endsWithBreak(text: string): boolean {
-  return isBreak(text[text.length - 1]);
-}
-
-function startsWithBreak(text: string): boolean {
-  return isBreak(text[0]);
-}
-
-/** Whether a new value would run into whatever the file has after it. */
-function needsSpace(character: string | undefined): boolean {
-  return character !== undefined && character !== ' ' && character !== '\t' && !isBreak(character);
-}
-
-/** The line ending a text is written with; a new file gets the one this repository writes. */
-function lineBreakOf(text: string): string {
-  return /\r\n|\n|\r/.exec(text)?.[0] ?? '\n';
+  return { start: range.keyEnd, end: range.valueEnd, text };
 }
