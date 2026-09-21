@@ -79,9 +79,22 @@ pnpm --filter @rhizom/web run build
 ls apps/web/dist/assets/*.css
 ```
 
-Write down the file name (it carries a hash of the content) and copy the file somewhere outside
-the repo. Vite names the file after a hash of its content, so an unchanged name after Task 5 is
-itself the proof that the cascade did not move.
+There are **three** CSS assets, not one: Vite splits the stylesheet along the lazy route
+boundaries, so the graph and the editor each carry their own. Measured on the clean tree before
+any refactoring:
+
+```
+apps/web/dist/assets/index-slGU6nJc.css      everything the frame loads, panels.css included
+apps/web/dist/assets/GraphPage-pNXBEyl8.css  graph.css, behind the graph route's lazy import
+apps/web/dist/assets/NotePage-tVxGNHb1.css   editor.css, behind the note route's lazy import
+```
+
+Copy all three outside the repo. Each name carries a hash of the file's content, so three
+unchanged names after Task 5 are the proof that the cascade did not move.
+
+The split also means Task 4 has a second thing to watch: a chunk is named after the module that
+pulls it in, so moving `app/GraphPage.tsx` to `pages/GraphPage.tsx` must leave the chunk called
+`GraphPage`. A renamed chunk is a sign that a lazy boundary moved.
 
 - [ ] **Step 4: No commit**
 
@@ -1048,10 +1061,12 @@ pnpm --filter @rhizom/web run build
 ls apps/web/dist/assets/*.css
 ```
 
-Expected: the same file name as Task 0 Step 3. Vite inlines `@import` at build time and names the
-file after a hash of its content, so an identical name means identical bytes. If the name
-changed, diff the file against the copy from Task 0 — a reordered rule or a lost declaration is
-what you are looking for.
+Expected: all three names from Task 0 Step 3, unchanged —
+`index-slGU6nJc.css`, `GraphPage-pNXBEyl8.css`, `NotePage-tVxGNHb1.css`. Vite inlines `@import`
+at build time and names each file after a hash of its content, so identical names mean identical
+bytes. `index-*.css` is the one this task can move, because `base.css` and `panels.css` both land
+in it; if its name changed, diff it against the copy from Task 0 — a reordered rule or a lost
+declaration is what you are looking for.
 
 - [ ] **Step 5: Full verification**
 
