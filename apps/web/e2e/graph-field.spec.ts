@@ -236,16 +236,19 @@ function unescapeXml(value: string): string {
     .replaceAll('&amp;', '&');
 }
 
-/** The words of every `<text>` in an SVG; a label wrapped into lines is joined back up. */
+/**
+ * The words of every `<text>` in an SVG; a label wrapped into lines is joined back up. The
+ * character data between the tags is collected rather than the tags deleted, so no pattern has to
+ * be trusted to remove every one of them.
+ */
 function textsOf(svg: string): string[] {
-  return [...svg.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map((match) =>
-    unescapeXml(
-      (match[1] ?? '')
-        .replaceAll(/<\/tspan>\s*<tspan\b[^>]*>/g, ' ')
-        .replaceAll(/<[^>]+>/g, '')
-        .trim(),
-    ),
-  );
+  return [...svg.matchAll(/<text\b[^>]*>([\s\S]*?)<\/text>/g)].map((match) => {
+    const pieces = (match[1] ?? '')
+      .split(/<[^>]*>/)
+      .map((piece) => piece.trim())
+      .filter((piece) => piece !== '');
+    return unescapeXml(pieces.join(' '));
+  });
 }
 
 interface ViewTransform {
