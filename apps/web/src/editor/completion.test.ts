@@ -4,7 +4,8 @@ import { createTermMatcher, type NoteSummary } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
 import { wikilinkCompletion } from './completion.js';
-import { buildNoteIndex, editorContext, wikilinkExists } from './context.js';
+import { buildNoteIndex } from '../routing/links.js';
+import { editorContext, wikilinkExists } from './context.js';
 
 function note(path: string, title: string, folder: string, aliases: string[] = []): NoteSummary {
   return {

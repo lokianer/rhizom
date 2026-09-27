@@ -3,7 +3,6 @@
 // mutable box instead, so a parent re-render never has to rebuild the editor.
 import { Facet, type EditorState } from '@codemirror/state';
 import {
-  createNoteIndex,
   parseWikilink,
   resolveLinkTarget,
   type NoteIndex,
@@ -85,15 +84,6 @@ export interface EditorContextValue {
 export const editorContext = Facet.define<EditorContextValue, EditorContextValue | undefined>({
   combine: (values) => values[0],
 });
-
-export function buildNoteIndex(notes: readonly NoteSummary[]): NoteIndex {
-  // One by one, because createNoteIndex(paths) drops the aliases a link may also use.
-  const index = createNoteIndex();
-  for (const note of notes) {
-    index.add(note.path, note.aliases);
-  }
-  return index;
-}
 
 /**
  * Whether a wikilink target as written (subpath included) points at a note that exists. Without

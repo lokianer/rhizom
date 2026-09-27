@@ -1,7 +1,9 @@
 import type { NoteSummary } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
-import { createAssetResolver, createResolver } from './links.js';
+import { buildNoteIndex, createAssetResolver, createResolver } from './links.js';
+
+const resolverOf = (notes: readonly NoteSummary[]) => createResolver(buildNoteIndex(notes));
 
 const assets = [
   { path: 'assets/tavern.png' },
@@ -51,10 +53,7 @@ function summary(path: string, aliases: string[] = []): NoteSummary {
 
 describe('createResolver', () => {
   it('resolves a note by name and reports one that does not exist', () => {
-    const resolver = createResolver([
-      summary('Campaign/Places/Silverstadt.md'),
-      summary('Home.md'),
-    ]);
+    const resolver = resolverOf([summary('Campaign/Places/Silverstadt.md'), summary('Home.md')]);
 
     const found = resolver.resolve('Silverstadt', 'Home.md');
     expect(found.resolved && found.path).toBe('Campaign/Places/Silverstadt.md');
@@ -64,7 +63,7 @@ describe('createResolver', () => {
   });
 
   it("resolves a note by an alias from its frontmatter, as the server's index does", () => {
-    const resolver = createResolver([
+    const resolver = resolverOf([
       summary("Campaign/NPCs/Mira's Ledger.md", ['Mira Voss', 'Mira']),
       summary('Home.md'),
     ]);
@@ -80,13 +79,10 @@ describe('createResolver', () => {
       summary('Campaign/Places/Archive.md'),
       summary('Campaign/Places/Sunken Archive.md'),
     ];
-    const fromCampaign = createResolver(notes).resolve('Archive', 'Campaign/Places/Home.md');
+    const fromCampaign = resolverOf(notes).resolve('Archive', 'Campaign/Places/Home.md');
     expect(fromCampaign.resolved && fromCampaign.path).toBe('Campaign/Places/Archive.md');
 
-    const reversed = createResolver([...notes].reverse()).resolve(
-      'Archive',
-      'Campaign/Places/Home.md',
-    );
+    const reversed = resolverOf([...notes].reverse()).resolve('Archive', 'Campaign/Places/Home.md');
     expect(reversed.resolved && reversed.path).toBe('Campaign/Places/Archive.md');
   });
 });

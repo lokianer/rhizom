@@ -12,6 +12,9 @@ import { openVault, type Vault } from './files.js';
 import { readDailySettings, readTemplateSettings } from './templates.js';
 import { watchVault, type VaultWatcher } from './watcher.js';
 
+/** How many listeners the index events may have before Node warns about a leak. */
+export const MAX_EVENT_LISTENERS = 1_000;
+
 export interface VaultContextOptions {
   /** Absolute path of the vault folder. */
   dir: string;
@@ -54,6 +57,10 @@ export async function openVaultContext(options: VaultContextOptions): Promise<Va
   }
   const index = VaultIndex.open(indexFile);
   const events = new EventEmitter<{ index: [IndexEvent] }>();
+  // Every open tab holds one listener through its event stream, so Node's default of ten
+  // reported a leak at the eleventh tab. Raised rather than switched off, so that a real leak
+  // is still reported once it passes a number no browser opens.
+  events.setMaxListeners(MAX_EVENT_LISTENERS);
 
   const context: VaultContext = {
     vault,

@@ -17,9 +17,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separates `pages/` from the application frame; and the two collected stylesheets become
   `@import` barrels over one file per subject. The published OpenAPI document and the emitted
   CSS are byte for byte what they were.
+- The server builds the whole-vault graph once per clustering and keeps it until the index
+  changes — a save, a rename, a delete, a renamed tag, a watcher batch or a rebuild — and sends
+  the body it serialised then. On a generated vault of 2,000 notes and 17,000 links (Node 24),
+  `GET /api/graph` answers in 3 ms instead of 51 ms and allocates 0.1 MB instead of 33 MB, and
+  the server holds 155 MB after 40 graph requests instead of 364 MB. `GET /api/graph/local` cuts
+  its neighbourhood from the same graph: 4.4 ms instead of 39 ms, 3.8 MB instead of 24 MB. The
+  responses and the OpenAPI document are byte for byte what they were.
+- Index writes run on statements prepared once per connection rather than a native statement
+  per query, and the graph reads its links without Drizzle's row mapping. The index they write is
+  identical table by table; a first build of the same vault takes 5.3 s instead of 8.7 s.
+- The native start — `pnpm --filter @rhizom/server start`, the packaged build and the README —
+  runs Node with `--max-semi-space-size=16`, which keeps Node 24 from growing its young heap to
+  128 MB. With the changes above, the peak of a first build falls from about 290–320 MB to about
+  180–210 MB, while the settled memory stays at about 122–126 MB. The Docker image runs Node 22,
+  whose default is already that, and is unchanged.
+- An autosave reloads the vault once instead of twice, and the app keeps one link index instead
+  of every page building its own after each save. Per save that is half the JSON (0.66 MB instead
+  of 1.33 MB), 5.0 MB of allocation in the tab instead of 14.8 MB, 71 ms of script instead of
+  168 ms, and 46 MB allocated on the server instead of 82 MB.
+- `GET /api/assets` builds a file-system path only for the files it lists: 1.6 MB allocated per
+  call instead of 13.8 MB, nearly all of it for notes it then skipped.
 
 ### Fixed
 
+- A note with more than about 3,640 links could not be indexed: all its links went into one
+  statement, past SQLite's limit on parameters, and a vault holding such a note failed to open.
+  Links are now written one row at a time.
+- An eleventh open tab no longer makes the server warn about a possible memory leak: every tab
+  holds one listener on the index events, and the limit is now 1,000 instead of Node's 10.
 - A note whose frontmatter contains itself through a YAML alias (`meta: &x` with `self: *x`
   inside it) no longer stops the server: the index could not store such a value, so saving the
   note failed and the vault did not open again. Nor do aliases that expand past the YAML

@@ -10,7 +10,7 @@ import type { NoteDocument } from '@rhizom/core';
 import { api, ApiRequestError, isAbortError } from '../../api/client.js';
 import type { IndexRevisions } from '../../app/outlet.js';
 import { revisionOf } from '../../app/useIndexEvents.js';
-import { useVaultStore } from '../../store/vault.js';
+import { refreshCount, useVaultStore } from '../../store/vault.js';
 
 export type LoadState = 'loading' | 'ready' | 'missing' | 'error';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
@@ -83,13 +83,19 @@ export function useNoteDocument(path: string, revisions: IndexRevisions, t: TFun
     async (content: string) => {
       setSaveState('saving');
       try {
+        const refreshesBefore = refreshCount();
         const saved = await api.saveNote(path, { content }, hashRef.current ?? undefined);
         hashRef.current = saved.hash;
         pending.current = null;
         setDoc(saved);
         setSaveState('saved');
         setMessage('');
-        void refreshVault();
+        // The server announces the save on the event stream before it answers, and that event
+        // reloads the store — usually while this request is still on its way back. A second
+        // reload would fetch the same vault again. Without the event stream, this is the one.
+        if (refreshCount() === refreshesBefore) {
+          void refreshVault();
+        }
       } catch (error) {
         if (error instanceof ApiRequestError && error.isConflict) {
           setSaveState('conflict');

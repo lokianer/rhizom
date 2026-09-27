@@ -79,12 +79,16 @@ WHAT YOU NEED
 
 RUN IT, ON THE EXAMPLE VAULT
   cd server
-  RHIZOM_VAULT_DIR=../example-vault node dist/server.js
+  RHIZOM_VAULT_DIR=../example-vault node --max-semi-space-size=16 dist/server.js
   ...and open http://localhost:3737
 
   On Windows, in PowerShell:
   cd server
-  $env:RHIZOM_VAULT_DIR = "../example-vault"; node dist/server.js
+  $env:RHIZOM_VAULT_DIR = "../example-vault"; node --max-semi-space-size=16 dist/server.js
+
+  The flag is optional. It keeps Node 24 from growing its young heap to 128 MB, which is about
+  100 MB of the server's peak memory at start, whatever the size of the vault; Rhizom runs the
+  same without it.
 
 RUN IT ON YOUR OWN NOTES
   Point RHIZOM_VAULT_DIR at a folder of Markdown files. An Obsidian vault works as it is:

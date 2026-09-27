@@ -73,8 +73,12 @@ Every run of CI attaches a ready-to-run package to its summary page: the
 
 ```
 cd server
-RHIZOM_VAULT_DIR=../example-vault node dist/server.js
+RHIZOM_VAULT_DIR=../example-vault node --max-semi-space-size=16 dist/server.js
 ```
+
+The flag is optional: it keeps Node 24 from growing its young heap to 128 MB, which is about 100 MB
+of the server's peak memory at start, whatever the size of the vault.
+`pnpm --filter @rhizom/server start` passes it too.
 
 ### From source
 

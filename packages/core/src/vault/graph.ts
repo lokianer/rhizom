@@ -79,7 +79,9 @@ export function buildGraph(
     if (link.target === null || link.target === link.source) {
       continue;
     }
-    if (!nodes.has(link.source) || !nodes.has(link.target)) {
+    const source = nodes.get(link.source);
+    const target = nodes.get(link.target);
+    if (source === undefined || target === undefined) {
       continue;
     }
     const key = `${link.source} -> ${link.target}`;
@@ -90,7 +92,10 @@ export function buildGraph(
         existing.embeds = (existing.embeds ?? 0) + 1;
       }
     } else {
-      const edge: GraphEdge = { source: link.source, target: link.target, count: 1 };
+      // The nodes' own path strings rather than the link's. They are equal, but every link read
+      // from a database arrives with copies of its own, and a graph that is kept would keep all
+      // of them: half its size, on a vault of 2,000 notes and 17,000 links.
+      const edge: GraphEdge = { source: source.path, target: target.path, count: 1 };
       if (link.kind === 'embed') {
         edge.embeds = 1;
       }

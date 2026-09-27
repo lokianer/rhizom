@@ -979,3 +979,113 @@ A split stylesheet can stay one cascade. `base.css` and `panels.css` are now bar
 `@import` in the original order; Vite inlines them at build time, so the emitted asset keeps the
 content hash it had before the cut. That hash is the proof — no test sees the cascade, and the
 same trick gives the OpenAPI document, which is tracked, the same role for the API.
+
+## 2026-09-27 — Memory: the graph is built once, and a native start caps the young heap
+
+An audit measured the server on a generated vault of 2,000 notes and 17,000 links (Windows,
+Node 24). It found no leak, but peaks of about 300 MB at start and 340–390 MB after the graph had
+been viewed a few times, against a settled 125 MB. Nearly all of it was garbage waiting for a
+collector, and it came from four places: the whole graph rebuilt for every request, a native
+statement prepared for every write, the V8 young generation growing to 128 MB, and a browser that
+reloaded the vault twice after every save. Each was measured before it was changed and again
+after, with the same scripts.
+
+**The graph is cached in the index, and emptied by every write.** `VaultIndex` keeps one
+`GraphData` per clustering and drops them before any write. Every change reaches the index through
+`upsertNote`, `removeNote` or `resolveAll` — a save, a rename, a delete, a renamed tag, a watcher
+batch and a rebuild alike — so there is no second path to forget. They are dropped before the write
+rather than after it, so a write that throws half-way costs one needless rebuild and never a stale
+answer. `/api/graph/local` cuts its neighbourhood from the cached graph instead of building the
+whole vault for one note, which is why the cache holds the objects and not only the bytes.
+`/api/graph` also keeps its serialised body, keyed by the `GraphData` it was made from, so the
+body disappears with the graph it belongs to. The choice was measured on the same vault:
+
+- A cached `GraphData` held 2.85 MB of heap as `buildGraph` used to make it, because every edge
+  kept its own copies of the two path strings from the link rows. The edges now point at the
+  nodes' own strings, which halves it to 1.33 MB. The shape of `GraphData` is unchanged.
+- Serialising a cached `GraphData` on every hit would still allocate 9.1 MB per request. The body
+  costs 1.74 MB off the heap, once, so the two clusterings together hold about 6 MB, growing with
+  the vault.
+- A miss is serialised by the route's own schema serializer rather than by `JSON.stringify`. Both
+  took about 5 ms and produced the same bytes; the serializer allocates 7.4 MB more on the way,
+  once per miss, and in return the body is by construction what the route always sent, and a
+  field added to `GraphNode` later cannot slip past the schema. The graph page does not refetch
+  on index events, so a miss is the first view after an edit, not every save.
+
+No `ETag`: a counter that starts again at zero in every process would hand a browser a 304 for a
+different vault after a restart, and a content hash is work nobody has measured a need for. The
+compact edge encoding the audit also proposed is left open: it would change the API, and the
+WebGL2 renderer builds its own index buffer from the JSON response as it is.
+
+**Index writes use statements prepared once.** Drizzle prepared a native statement for every query
+it ran, 22,490 of them for a first build of the 2,000-note vault. The writes now run on raw
+better-sqlite3 statements prepared when the connection opens. The SQL is what Drizzle generated,
+and the JSON columns go in through `JSON.stringify` and the boolean as 0 or 1, as its column types
+wrote them. A fresh index of that vault and of `examples/vault`, and the same index after a run of
+single-note writes and removals, came out identical table by table, rowids and the FTS5 shadow
+tables included. The first build took 5.3 s instead of 8.7 s. One row per insert also removes a
+limit nobody had hit yet: all of a note's links went into one statement, nine parameters each, so
+a note with more than about 3,640 links exceeded SQLite's 32,766 — and a vault holding one could
+not be opened at all. Reads stay on Drizzle, except the graph input, which reads its 17,000 rows
+through the same SQL without Drizzle's row mapping.
+
+**A native start passes `--max-semi-space-size=16`.** Node 24 lets the young generation grow to
+128 MB on a machine with a few gigabytes of memory, and on this server that growth is most of a
+peak: importing the module graph alone reaches 277 MB. Medians of three interleaved runs per
+column, on the 2,000-note vault:
+
+| Node 24, fresh index            | before | flag only | code only | both   |
+| ------------------------------- | ------ | --------- | --------- | ------ |
+| Peak RSS until ready + 2 s ¹    | 292 MB | 221 MB    | 300 MB    | 181 MB |
+| Settled RSS after 30 s idle     | 126 MB | 125 MB    | 122 MB    | 122 MB |
+| RSS after 40 × `GET /api/graph` | 364 MB | 321 MB    | 156 MB    | 155 MB |
+| `GET /api/graph`, median        | 51 ms  | 54 ms     | 3.3 ms    | 3.2 ms |
+| `GET /api/graph/local`, depth 2 | 39 ms  | 43 ms     | 4.6 ms    | 4.4 ms |
+
+¹ The peak moves by ±30 MB from run to run: an independent re-run of the same script measured
+210 MB for "both" and 291–319 MB for "before". Read it as about 300 MB against about 180–210 MB.
+
+The flag takes 70–120 MB off the peak of a first build and nothing off the settled memory; the
+graph cache takes the growth under repeated graph views. 16 rather than 8, because 8 cost the
+graph 14–47 ms a request in the audit while 16 stayed within noise. The flag is in
+`pnpm --filter @rhizom/server start`, in the packaged build's start lines, in the README and in
+the CI smoke test of the package. It only takes effect on the command line or in `NODE_OPTIONS`;
+`v8.setFlagsFromString` at run time does nothing. **Not in the Dockerfile:** the image runs
+Node 22, whose default is already 16 MB, so it would save nothing. V8 also sizes the young
+generation from a container's memory limit, and a fixed 16 would raise it on the smallest boxes,
+where it matters most. That is worth deciding again when the image moves to Node 24.
+
+**The browser reloads the vault once per save.** A save used to reload everything twice: once for
+its own index event, once when the request came back. The save now skips its reload when the
+store started one while the request was out. It has whenever the event stream is up, because the
+server announces the save before it answers; without the stream, the save's own reload is the one
+that remains. The app also keeps one `NoteIndex`, in the vault store, rebuilt only when a path or
+an alias changed, where the note page, the preview and the editor each built their own after every
+save. Typing five autosaves into a note of the 2,000-note vault, the tab allocated 5.0 MB of
+JavaScript per save instead of 14.8 MB and spent 71 ms in script instead of 168 ms. Dropping the
+save's reload outright was the simpler alternative, and it would have left a tab whose event
+stream is down with no reload at all.
+
+**The watcher stays chokidar, for now.** chokidar 5 opens one `fs.watch` per note as well as per
+folder — 2,009 handles for the 2,000-note vault. The audit measured that at 18–30 MB of settled
+memory on Windows, about 9 KB a note, and 2.5–3 s of start-up; nothing at the peak, which is the
+first build, before the watcher exists. It was evaluated and deliberately not replaced:
+
+- One recursive `fs.watch`, the obvious replacement, loses changes on Windows in two ways the audit
+  reproduced. A folder rename reports the folder and none of the notes inside, so the old paths
+  stay in the index and the new ones are never read. A burst — a `git checkout`, a sync client —
+  overflows the change buffer and arrives as one event without a file name: 200 notes written by a
+  loop came through as a single nameless event.
+- On Linux, the Docker path, it saves nothing: Node's recursive watch there is itself one watcher
+  per file, and on Node 22 it walks `.git`, `.obsidian` and `.trash` as well. macOS was not
+  measured.
+- A replacement that is safe on all three systems is a component of its own: one non-recursive
+  watch per visible folder, folders watched and closed as they come and go, a full incremental
+  sync on a nameless event or an error, a rescan of any path that turns out to be a folder, the
+  macOS start-up gap handled the way `watcher.test.ts` already probes for it, and tests for a
+  folder rename and a burst of more than a hundred files on every CI leg. It would take the place
+  of a component in the binding stack, which wants a justification before it is built, and only
+  one of the three systems could be tested where this was written.
+
+Rhizom's own writes echo back through the watcher either way, and stay harmless: `indexPaths`
+compares content hashes, so a file the API has just indexed changes nothing downstream.

@@ -2,9 +2,9 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { glossaryTerms, parseNote } from '@rhizom/core';
+import { buildGraph, glossaryTerms, parseNote, type GraphData } from '@rhizom/core';
 import Database from 'better-sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { INDEX_SCHEMA_VERSION, VaultIndex } from './vault-index.js';
 
@@ -364,6 +364,136 @@ describe('tags, tree and graph', () => {
       .graphInput()
       .links.find((link) => link.source === 'Campaign/Places/Quay.md');
     expect(fileEmbed?.target).toBeNull();
+  });
+});
+
+describe('writes', () => {
+  it('stores the JSON columns as JSON text, encoded once', () => {
+    const row = index.rawDatabase
+      .prepare('select frontmatter, headings, aliases from notes where path = ?')
+      .get('Campaign/NPCs/Mira the Ledger-Keeper.md') as {
+      frontmatter: string;
+      headings: string;
+      aliases: string;
+    };
+    expect(JSON.parse(row.aliases)).toEqual(['Mira']);
+    expect(JSON.parse(row.frontmatter)).toEqual({
+      aliases: ['Mira'],
+      tags: ['campaign', 'npcs'],
+    });
+    expect(JSON.parse(row.headings)).toEqual([
+      expect.objectContaining({ text: 'Mira the Ledger-Keeper' }),
+    ]);
+    expect(index.getNote('Campaign/NPCs/Mira the Ledger-Keeper.md')?.aliases).toEqual(['Mira']);
+  });
+
+  it('stores whether a term is an alias as an integer, the way the boolean column reads it', () => {
+    const rows = index.rawDatabase
+      .prepare('select surface, alias, typeof(alias) as type from terms order by surface')
+      .all();
+    expect(rows).toEqual([
+      { surface: 'Ledger', alias: 0, type: 'integer' },
+      { surface: 'account book', alias: 1, type: 'integer' },
+      { surface: 'ledgers', alias: 1, type: 'integer' },
+    ]);
+  });
+
+  it('keeps the links of a note in the order it wrote them', () => {
+    expect(index.linksFrom('Home.md').map((link) => link.raw)).toEqual([
+      'Silverstadt',
+      'Mira',
+      'The Ashen Codex',
+    ]);
+  });
+
+  it('indexes a note with more links than one statement could carry parameters for', () => {
+    // Nine parameters a link: a single insert for all of them would pass SQLite's limit of
+    // 32,766 parameters somewhere past 3,640 links.
+    const body = Array.from({ length: 4_000 }, (_, i) => `[[Target ${String(i)}]]`).join(' ');
+    index.upsertNote(note('Index of everything.md', `# Everything\n\n${body}\n`));
+    expect(index.linksFrom('Index of everything.md')).toHaveLength(4_000);
+  });
+
+  it('writes the same rows again when a note is written twice', () => {
+    const before = index.rawDatabase.prepare('select * from links order by id').all();
+    const home = note(
+      'Home.md',
+      '# Home\n\nStart with [[Silverstadt]] and [[Mira]]. Missing: [[The Ashen Codex]].\n\n#index',
+    );
+    index.upsertNote(home);
+    const after = index.rawDatabase.prepare('select * from links order by id').all();
+    const strip = (rows: unknown[]) =>
+      rows.map((row) => ({ ...(row as Record<string, unknown>), id: undefined }));
+    expect(strip(after)).toEqual(expect.arrayContaining(strip(before)));
+    expect(after).toHaveLength(before.length);
+  });
+});
+
+describe('the cached graph', () => {
+  const fresh = (clusterBy: 'folder' | 'tag'): GraphData => {
+    const input = index.graphInput();
+    return buildGraph(input.notes, input.links, { clusterBy });
+  };
+
+  it('is the graph buildGraph makes from the index, once per clustering', () => {
+    expect(index.graph('folder')).toEqual(fresh('folder'));
+    expect(index.graph('tag')).toEqual(fresh('tag'));
+    expect(index.graph('folder')).not.toBe(index.graph('tag'));
+  });
+
+  it('is built once and handed out again while nothing is written', () => {
+    const build = vi.spyOn(index, 'graphInput');
+    const first = index.graph('folder');
+    expect(index.graph('folder')).toBe(first);
+    index.search('harbour', 10);
+    index.listNotes();
+    expect(index.graph('folder')).toBe(first);
+    expect(build).toHaveBeenCalledTimes(1);
+  });
+
+  it('is built again after a note is written', () => {
+    const before = index.graph('folder');
+    index.upsertNote(note('Home.md', '# Home\n\nOnly [[Glossary/Ledger]] now.'));
+    const after = index.graph('folder');
+    expect(after).not.toBe(before);
+    expect(after).toEqual(fresh('folder'));
+    expect(after.edges).toContainEqual({
+      source: 'Home.md',
+      target: 'Glossary/Ledger.md',
+      count: 1,
+    });
+    expect(
+      after.edges.some((edge) => edge.source === 'Home.md' && edge.target !== 'Glossary/Ledger.md'),
+    ).toBe(false);
+  });
+
+  it('is built again after a note is removed', () => {
+    const before = index.graph('tag');
+    index.removeNote('Campaign/Places/Silverstadt.md');
+    const after = index.graph('tag');
+    expect(after).not.toBe(before);
+    expect(after.nodes.map((node) => node.path)).not.toContain('Campaign/Places/Silverstadt.md');
+    expect(after).toEqual(fresh('tag'));
+  });
+
+  it('is built again after a bulk sync resolves its links', () => {
+    // A bulk sync writes with resolution deferred: the link to the new note is unresolved until
+    // resolveAll runs, and a graph built in between must not outlive it.
+    index.upsertNote(note('Campaign/Quay.md', '# Quay\n\nSee [[Harbourmaster]].'), {
+      deferResolution: true,
+    });
+    index.upsertNote(note('Campaign/Harbourmaster.md', '# Harbourmaster\n'), {
+      deferResolution: true,
+    });
+    const before = index.graph('folder');
+    expect(before.edges.some((edge) => edge.source === 'Campaign/Quay.md')).toBe(false);
+    index.resolveAll();
+    const after = index.graph('folder');
+    expect(after.edges).toContainEqual({
+      source: 'Campaign/Quay.md',
+      target: 'Campaign/Harbourmaster.md',
+      count: 1,
+    });
   });
 });
 

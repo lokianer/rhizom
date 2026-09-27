@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -b",
-    "start": "node dist/server.js",
+    "start": "node --max-semi-space-size=16 dist/server.js",
     "openapi": "tsx src/bin/export-openapi.ts && prettier --write openapi.json",
     "test": "vitest run"
   },

@@ -1,9 +1,11 @@
 // What a store function needs from the index it belongs to. The modules beside this one are
-// free functions rather than methods, so the three handles a method used to reach through
-// `this` travel as one argument instead.
+// free functions rather than methods, so the handles a method used to reach through `this`
+// travel as one argument instead.
 import type { NoteIndex } from '@rhizom/core';
 import type Database from 'better-sqlite3';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+
+import type { WriteStatements } from './statements.js';
 
 export interface IndexContext {
   /**
@@ -16,4 +18,9 @@ export interface IndexContext {
   readonly db: BetterSQLite3Database;
   /** Turns a link target as written into the path it resolves to, against the whole vault. */
   readonly resolver: NoteIndex;
+  /**
+   * Every statement a write runs, prepared once for this connection. Closing the connection
+   * finalises them, and the index never reopens one, so they live exactly as long as it does.
+   */
+  readonly statements: WriteStatements;
 }

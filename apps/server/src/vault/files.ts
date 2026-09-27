@@ -132,11 +132,13 @@ async function walk(
       continue;
     }
     const vaultPath = toVaultPath(prefix === '' ? entry.name : `${prefix}/${entry.name}`);
-    const absolute = join(directory, entry.name);
+    // The absolute path only where it is used. Listing the assets walks past every note, and
+    // joining a path for each of them — a normalisation over the whole root, long on Windows —
+    // was most of what an empty asset list cost.
     if (entry.isDirectory()) {
-      files.push(...(await walk(root, absolute, vaultPath, include)));
+      files.push(...(await walk(root, join(directory, entry.name), vaultPath, include)));
     } else if (entry.isFile() && include(vaultPath)) {
-      const info = await stat(absolute);
+      const info = await stat(join(directory, entry.name));
       files.push({ path: vaultPath, size: info.size, modifiedAt: info.mtime });
     }
   }
