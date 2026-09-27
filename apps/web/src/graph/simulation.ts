@@ -14,7 +14,7 @@ import {
 } from 'd3-force';
 
 import { linkDistance } from './layout-model.js';
-import { clusterSlot } from './palette.js';
+import { clusterSlot, clusterSlots } from './palette.js';
 
 export interface SimNode extends SimulationNodeDatum {
   /** Note path — the identity that survives a data refresh. */
@@ -43,6 +43,8 @@ export function radiusOf(degree: number): number {
 export interface FieldSimulation {
   nodes: () => readonly SimNode[];
   links: () => readonly SimLink[];
+  /** Positions by node index, [x0, y0, x1, y1, …], current as of the last tick. */
+  positions: () => Float32Array;
   setData: (data: GraphData) => void;
   reheat: (alpha?: number) => void;
   /** Keeps the layout warm while a bubble is held. */
@@ -75,13 +77,14 @@ function seedNear(node: SimNode, anchor: SimNode): void {
 export function buildField(previousNodes: readonly SimNode[], data: GraphData): Field {
   const previous = new Map(previousNodes.map((node) => [node.id, node]));
   const byId = new Map<string, SimNode>();
+  const slots = clusterSlots(data.nodes.map((node) => node.cluster));
   const nodes = data.nodes.map((node) => {
     const patch = {
       label: node.name,
       cluster: node.cluster,
       degree: node.degree,
       r: radiusOf(node.degree),
-      colorIndex: clusterSlot(node.cluster),
+      colorIndex: slots.get(node.cluster) ?? clusterSlot(node.cluster),
     };
     const before = previous.get(node.path);
     const merged: SimNode = before ? Object.assign(before, patch) : { id: node.path, ...patch };
@@ -117,6 +120,16 @@ export interface SimulationEvents {
 export function createFieldSimulation(events: SimulationEvents): FieldSimulation {
   let nodes: SimNode[] = [];
   let links: SimLink[] = [];
+  let positions: Float32Array = new Float32Array(0);
+  const copyPositions = (): void => {
+    if (positions.length !== nodes.length * 2) {
+      positions = new Float32Array(nodes.length * 2);
+    }
+    nodes.forEach((node, index) => {
+      positions[index * 2] = node.x ?? Number.NaN;
+      positions[index * 2 + 1] = node.y ?? Number.NaN;
+    });
+  };
 
   // Force accessors are evaluated once per initialize, after the endpoints are node objects.
   const link: ForceLink<SimNode, SimLink> = forceLink<SimNode, SimLink>().distance((edge) =>
@@ -138,7 +151,10 @@ export function createFieldSimulation(events: SimulationEvents): FieldSimulation
     // ⌈log(alphaMin) / log(1 − alphaDecay)⌉ ticks until it settles: ~600 instead of d3's 300.
     .alphaDecay(1 - 0.001 ** (1 / 600))
     .velocityDecay(0.5)
-    .on('tick', events.onTick)
+    .on('tick', () => {
+      copyPositions();
+      events.onTick();
+    })
     .on('end', events.onEnd)
     .stop(); // forceSimulation() starts on its own; the first data set starts it for real
 
@@ -148,10 +164,12 @@ export function createFieldSimulation(events: SimulationEvents): FieldSimulation
     links = field.links;
     simulation.nodes(nodes); // re-initialises every force, so the accessors above run again
     link.links(links);
+    copyPositions();
   }
   return {
     nodes: () => nodes,
     links: () => links,
+    positions: () => positions,
     setData,
     reheat: (alpha = 0.3) => {
       simulation.alpha(alpha).restart();

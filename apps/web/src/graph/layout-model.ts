@@ -30,8 +30,21 @@ export function linkDistance(edge: {
 
 /** How hard the layout may work: the per-tick cost has to stay bearable on large vaults. */
 export interface LayoutTuning {
-  /** Collision is the priciest force and only cosmetic, so large fields go without it. */
-  collide: boolean;
+  /**
+   * When the collision force joins, as the alpha below which it is added: 1 from the start, a
+   * lower value only once the field has spread out. Collision is the priciest force, so a large
+   * field adds it after its first third, when the many-body force has done the spreading.
+   */
+  collideBelowAlpha: number;
+  /**
+   * How hard it pushes, and how many passes a tick makes. A dense large field packs its bubbles
+   * so tightly that one pass at 0.7 leaves one bubble in twenty with its centre inside another —
+   * a ball pit once somebody zooms in; full strength and two passes bring that under one in 300.
+   * A tick with it costs about twice one without (7 → 16 ms), in the worker, where the page does
+   * not feel it (measured on 2,000 notes, 17,000 links).
+   */
+  collideStrength: number;
+  collideIterations: number;
   /** Barnes–Hut approximation: coarser for large fields. */
   theta: number;
   /** Charges beyond this distance are ignored. */
@@ -43,11 +56,43 @@ export interface LayoutTuning {
 export function layoutTuning(nodeCount: number): LayoutTuning {
   const large = nodeCount > 1200;
   return {
-    collide: !large,
+    // Alpha falls from 1 to 0.001 geometrically over the ticks: 0.1 is a third of the way.
+    collideBelowAlpha: large ? 0.1 : 1,
+    collideStrength: large ? 1 : 0.7,
+    collideIterations: large ? 2 : 1,
     theta: large ? 1.2 : 0.9,
     distanceMax: large ? 300 : 500,
     ticks: large ? 300 : 600,
   };
+}
+
+/**
+ * Whether a payload continues a layout rather than starting one: more than half of its nodes
+ * already have a place. A refresh keeps the positions of every note that survives it and seeds
+ * new ones next to a neighbour, so only a first layout is mostly unplaced.
+ */
+export function continuesLayout(positions: Float32Array): boolean {
+  const count = Math.floor(positions.length / 2);
+  let placed = 0;
+  for (let index = 0; index < count; index += 1) {
+    if (Number.isFinite(positions[index * 2]) && Number.isFinite(positions[index * 2 + 1])) {
+      placed += 1;
+    }
+  }
+  return placed * 2 > count;
+}
+
+/**
+ * The alpha below which the worker adds the collision force. A large field holds it back only
+ * for a first layout: its nodes start on d3's tight spiral, and collision would pay its full
+ * price while the many-body force does the spreading anyway. A field that is already laid out —
+ * refreshed by a colour switch, a tag filter or a changed local graph, or sent to a worker woken
+ * from its sleep — has its bubbles apart already; without collision from the first tick they
+ * would sink into each other and be pushed apart again a third of the way through, a visible
+ * pulse across the whole field.
+ */
+export function collideBelowAlpha(tuning: LayoutTuning, positions: Float32Array): number {
+  return continuesLayout(positions) ? 1 : tuning.collideBelowAlpha;
 }
 
 /** ⌈log(alphaMin) / log(1 − decay)⌉ ticks until a simulation settles; this is the inverse. */

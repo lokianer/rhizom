@@ -67,8 +67,9 @@ vault → search < 100 ms, graph smooth at 2,000 nodes, editor latency impercept
 - TypeScript strict everywhere (currently 6.0; see `DECISIONS.md` for why not 7), Node ≥ 22.22.
 - Server: Fastify 5, better-sqlite3 + Drizzle ORM, SQLite FTS5, chokidar, REST API with an
   OpenAPI schema.
-- Web: React 19 + Vite 8, CodeMirror 6, d3-force with Canvas rendering, Zustand, theming via
-  CSS custom properties (`apps/web/src/styles/tokens.css`), i18next.
+- Web: React 19 + Vite 8, CodeMirror 6, d3-force with WebGL2 rendering (Canvas 2D fallback, words
+  on a 2D overlay), Zustand, theming via CSS custom properties (`apps/web/src/styles/tokens.css`),
+  i18next.
 - Markdown pipeline: unified/remark with own plugins for `[[wikilinks]]`, `![[transclusion]]`,
   callouts, tasks, Mermaid.
 - Tests: Vitest (coverage ≥ 80 % in `packages/core`), Playwright for every core user flow.

@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Territories in the bubble field: each cluster large enough to read as a place — three notes
+  and 3 % of the vault at least — lies on a soft wash of its colour over the density of its notes,
+  with one faint shore line, and the wash follows the layout while it moves. The washes are kept
+  per colour, so past eight clusters two of the same colour share one. Seen whole, the field
+  carries the cluster names in letter-spaced capitals tinted from the cluster colour — for
+  clusters of five notes and 3 % at least, and never for the vault root or the untagged notes,
+  which have no name to give. The names give way to a hovered note's focus and fade as the reader
+  zooms in, which is where the note names take over; the washes recede to a quarter of their
+  strength there, so they do not stain the space between large bubbles.
+- Focus: hovering a note sinks everything outside its neighbourhood back into the soil — the
+  ground colour drawn over it, not a grey veil — while its links draw themselves outward with a
+  spark at each tip and each neighbour lights as its link arrives; then everything rests. The open
+  note keeps an ochre ring with four ticks and its own links in the accent colour, so it can still
+  be traced when the pointer is elsewhere.
+- A legend on the field: one row per folder or tag with its colour and how many notes it holds.
+  Hovering a row, or reaching it with the keyboard, focuses that whole cluster the way hovering a
+  note focuses its neighbourhood, and clicking it flies there. It folds away, and starts folded
+  on a small field. A row is announced by its name and count, a long name shows in full on hover,
+  and the swatches keep their colours under Windows' high-contrast themes.
+- A zoom control: zoom in, zoom out, show the whole field, and the zoom as a percentage of the
+  view that fits it. The legend and the control count as obstacles, both for the labels and for
+  fitting the view, so neither sits on top of a note. The zoom reaches further both ways than it
+  did (a scale of 0.05 to 12, where it was 0.1 to 8), and a double click on empty ground zooms in
+  by two around the pointer. The percentage is written the way the language writes one, and on a
+  small field the control lies in a row.
+- A click on empty ground lets go of the open note: its ring and its links go, and the field
+  shows the whole vault again, the way it does when the graph is opened without a note. It waits
+  the length of a double click first, so a double click only zooms; a drag from empty ground
+  stays a pan, and a tap that only stops a gliding pan keeps the note.
+- An info bar under the field: the note under the pointer — else the open note — with its
+  folder, its backlinks and outgoing links, and where it ranks among the notes by links. It sits
+  under the field rather than beside the bubble, because a card over the field covers exactly the
+  neighbours a hover is meant to show. Coloured by tag, it names the note's tag instead of its
+  folder; on a narrow field the folder gives way first, then the ratio bar, and below 40rem the
+  figures move to a second line, so the note's name stays readable.
+- Motion that comes to rest. A wheel zoom eases towards where it is going, in log scale because
+  zooming is multiplicative; a pan that is let go carries on and slows; showing the whole field
+  and flying to a cluster travel along a smooth zoom-and-pan path — out, across and in — rather
+  than jumping; and on first show the field grows in from the centre. Once a movement ends no
+  frame is drawn at all, and nothing breathes, drifts or pulses while nobody touches it, because
+  the graph sits beside the editor. Under `prefers-reduced-motion: reduce` every movement lands at
+  its end at once, and a pan stops where it is let go.
+
 ### Changed
 
 - The tree was restructured before Phase 3, without any change in behaviour. `packages/core` is
@@ -17,6 +62,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separates `pages/` from the application frame; and the two collected stylesheets become
   `@import` barrels over one file per subject. The published OpenAPI document and the emitted
   CSS are byte for byte what they were.
+- The bubble field is drawn with WebGL2. A vault of 2,000 notes lagged, and measuring it said
+  why: on the maintainer's machine, with Chrome rasterising in software and the camera zooming
+  over 2,000 notes and 17,000 links, the renderer of Phase 1 took 100 ms a frame at the median
+  and 200 ms at the 95th percentile, and a WebGL2 prototype of the same picture 42 and 67 ms. The
+  JavaScript of a frame cost under a millisecond; the time was rasterisation, which a GPU does
+  and a 2D context does not hand it. The shipped field, measured against the old renderer in one
+  harness (Chrome, 1920 × 937, the same vault and camera path): on the software adapter 37 frames
+  a second against 16, and on a GPU 60 against 31, where the display's refresh is the limit and a
+  frame costs under 2 ms. The positions live in a texture and the links in a buffer that never
+  changes, so a layout tick touches no link and nothing on the render path allocates — the old
+  renderer rebuilt a path of 17,000 segments on every tick, and its `Path2D` objects held about
+  100 MB of native memory after a layout settled. Where WebGL2 is missing, or a lost context does
+  not come back, the field falls back to a Canvas 2D renderer behind the same interface — a
+  plainer picture, with a flat ground, straight links and no territories — so the page never
+  goes blank. No dependency is added: WebGL2 is a browser API and the renderer is Rhizom's own.
+- Where the browser draws WebGL2 in software — SwiftShader, llvmpipe, softpipe — the field uses
+  the Canvas 2D renderer instead, which measured 5 to 13 times faster there: every WebGL frame on
+  SwiftShader was a long task on the page. Windows' software adapter, WARP, keeps WebGL2, which
+  outran the old renderer on it. `rhizom.renderer` in local storage, set to `webgl2` or
+  `canvas2d`, overrides the choice, and a WebGL2 field that fails to build now says why in the
+  browser console instead of falling back without a trace.
+- Clusters get colours of their own as far as the eight go. Hashed from the name alone, two of
+  five folders shared a colour more often than not, and with a legend and a territory per cluster
+  that no longer told them apart. A cluster keeps its hash colour unless another took it first,
+  in which case it takes the next free one; the milieu field keeps the plain hash for now.
+- The field has a look of its own. A note is a matte spore lit from the upper left — glowing
+  softly from within on Humus, a wash of pigment pooling at the rim with a sepia contact shadow
+  on Kalk — and the ground is soil or chalk paper with a faint grain and nothing else: no
+  vignette, no graticule, no mark that stands for no data. Links are mycelium white on Humus and
+  ink on Kalk, gently curved and always to the same side for the same pair, and never tinted by
+  cluster, because colour on a link is kept for the typed relationships of Phase 3. How strongly
+  they show follows how many are on screen, and a long link is fainter than a short one, so a
+  large vault reads as a web rather than as felt. In a vault of 300 notes or more the bubbles are
+  drawn at 0.6 of their size when the vault is seen whole and grow back to true size by three
+  times that zoom, the way a map scales its symbols.
+- The note names are placed rather than painted wherever they fall. The best-linked go first, in
+  three sizes of 13, 14 and 16 px, and a name with no room left is not drawn; where they go
+  depends on the zoom and not on the pan, so panning never reshuffles them. A name longer than 22
+  characters wraps onto a second line, a large bubble carries its name inside in dark or light ink,
+  whichever keeps 4.5:1 against the colour the bubble is actually painted at its centre, and the
+  hovered and the open note are named on a plate that carries a dot of the cluster's colour — the
+  open note's with an ochre border. Nothing on the canvas is smaller
+  than 13 px. The glyphs come from a cache rather than from `strokeText` on every frame, which at
+  mid zoom — about 560 names — had tripled the time of a frame by itself.
+- The layout worker is ended two seconds after the layout settles, and started again from the
+  current positions when a drag or new data needs it. d3 rebuilds a quadtree on every tick, so
+  the worker's heap grew to 65–80 MB for 2,000 notes, and V8 keeps that heap for as long as the
+  worker lives.
+- A field of more than 1,200 notes used to go without the collision force; it now gets it once
+  the layout has spread out, at full strength and in two passes a tick. On 2,000 notes, bubbles
+  with their centre inside another fall from seven in ten to one in 300, which is the difference
+  between notes and a ball pit once somebody zooms in; a tick costs about twice as much (7 → 16 ms),
+  in the worker, where the page does not feel it.
+- The layout worker runs as many ticks as fit in 8 ms before it lets the next message in, rather
+  than one tick per timer. Browsers hold a chain of zero-delay timers to about 5 ms a link, so a
+  layout of 600 ticks took about three seconds however small the vault was.
+- The SVG and PNG exports carry the look. The PNG is the renderer itself drawn once at twice the
+  size, with the names on top at the same scale; the SVG is written from the same geometry — a
+  radial gradient per colour, the curve the screen draws for a link (one formula, which the
+  tests hold the shader's copy to), blurred shapes for the territories and the names as text. A
+  PNG larger than the GPU can draw is drawn smaller and scaled up evenly, so it keeps its
+  proportions and its names stay on their bubbles.
 - The server builds the whole-vault graph once per clustering and keeps it until the index
   changes — a save, a rename, a delete, a renamed tag, a watcher batch or a rebuild — and sends
   the body it serialised then. On a generated vault of 2,000 notes and 17,000 links (Node 24),
@@ -39,19 +146,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /api/assets` builds a file-system path only for the files it lists: 1.6 MB allocated per
   call instead of 13.8 MB, nearly all of it for notes it then skipped.
 
+### Removed
+
+- The "Reset the view" button in the graph's header; showing the whole field is the zoom
+  control's job now.
+
 ### Fixed
 
-- A note with more than about 3,640 links could not be indexed: all its links went into one
-  statement, past SQLite's limit on parameters, and a vault holding such a note failed to open.
-  Links are now written one row at a time.
-- An eleventh open tab no longer makes the server warn about a possible memory leak: every tab
-  holds one listener on the index events, and the limit is now 1,000 instead of Node's 10.
 - A note whose frontmatter contains itself through a YAML alias (`meta: &x` with `self: *x`
   inside it) no longer stops the server: the index could not store such a value, so saving the
   note failed and the vault did not open again. Nor do aliases that expand past the YAML
   parser's limit break the note: the properties panel threw on them, so the note would not open
   in the editor, and a rename of any tag the note carried failed. Both are now read like any
   frontmatter the parser rejects, with the complaint kept and no values.
+- The field no longer stays empty when the layout worker's script does not load — a failed fetch
+  when a sleeping worker is started again, a proxy's 404, a policy that forbids workers. The
+  layout then runs on the page, as it does where workers are missing altogether.
+- A note with more than about 3,640 links could not be indexed: all its links went into one
+  statement, past SQLite's limit on parameters, and a vault holding such a note failed to open.
+  Links are now written one row at a time.
+- An eleventh open tab no longer makes the server warn about a possible memory leak: every tab
+  holds one listener on the index events, and the limit is now 1,000 instead of Node's 10.
 - A block id is read by walking the end of the line backwards rather than with a regular
   expression anchored at the end. The pattern was quadratic on a line made of nothing but spaces
   and tabs — the engine starts again at every one of them — and a note is somebody else's file.

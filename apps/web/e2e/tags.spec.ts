@@ -27,12 +27,13 @@ test('the tag panel nests a hierarchy and every level can be pressed', async ({ 
 
 test('asking for a parent tag finds the notes that only wrote a child', async ({ page }) => {
   await page.goto('/graph');
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Graph of the vault' })).toBeVisible();
 
   await page.getByRole('tab', { name: 'Tags' }).click();
   const tags = page.getByRole('list', { name: /tags/i });
   await tags.getByRole('button', { name: 'Filter the graph by npc', exact: true }).click();
 
-  // The graph says how many notes are left; a parent that matched nothing would leave none.
-  await expect(page.getByText(/\b[1-9]\d* notes?\b/)).toBeVisible();
+  // The graph says how many notes are left; a parent that matched nothing would leave none. The
+  // count in the header, not the legend's, which says the same thing.
+  await expect(page.locator('.rz-graph-controls').getByText(/\b[1-9]\d* notes?\b/)).toBeVisible();
 });

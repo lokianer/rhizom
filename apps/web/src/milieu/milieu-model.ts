@@ -52,7 +52,10 @@ export const DRAG_THRESHOLD = 4;
 export interface FieldNote {
   path: string;
   title: string;
-  /** Palette slot, from the same hash the bubble field colours its clusters by. */
+  /**
+   * Palette slot: the plain hash of the note's cluster. The bubble field starts from the same hash
+   * but moves a cluster whose slot is taken to the next free one, so the two can differ.
+   */
   slot: number;
 }
 

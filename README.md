@@ -117,7 +117,7 @@ Phases 1 and 2 are what you can run today; the later phases are planned. The
 | Area             | Highlights                                                                                             | Phase |
 | ---------------- | ------------------------------------------------------------------------------------------------------ | ----- |
 | Editor           | CodeMirror 6 with live preview, `[[` autocomplete with fuzzy search, create notes from missing links   | 1 ✓   |
-| Bubble graph     | Size by link degree, clusters by folder or tag, local graph, tag filters, SVG/PNG export               | 1 ✓   |
+| Bubble graph     | WebGL2, size by links, folder/tag clusters as territories, legend, local graph, tag filters, SVG/PNG   | 1 ✓   |
 | Wiki mode        | Read-only view of the whole vault with rendered links, navigation and full-text search                 | 1 ✓   |
 | Knowledge        | Definitions with glossary and hover tooltips, unlinked mentions, transclusion, templates, query blocks | 2 ✓   |
 | Editor, further  | Outline, callouts, Mermaid, task ticks, zen and Vim modes, find and replace, block references          | 2 ✓   |

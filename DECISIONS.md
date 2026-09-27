@@ -299,7 +299,7 @@ Playwright starts an actual Rhizom server on a throwaway copy of `examples/vault
 rather than a mock. In CI that server also serves the built web app, which covers the
 production bundle and the history fallback; locally the Vite dev server proxies `/api` to it.
 
-## 2026-09-18 — Phase 1: the graph layout runs in a worker
+## 2026-09-18 — Phase 1: the graph layout runs in a worker (collision superseded 2026-09-27)
 
 One force tick over a few thousand notes costs tens of milliseconds, and on the main thread
 that froze the canvas for the whole time the layout took to settle. The simulation therefore
@@ -979,6 +979,94 @@ A split stylesheet can stay one cascade. `base.css` and `panels.css` are now bar
 `@import` in the original order; Vite inlines them at build time, so the emitted asset keeps the
 content hash it had before the cut. That hash is the proof — no test sees the cascade, and the
 same trick gives the OpenAPI document, which is tracked, the same role for the API.
+
+## 2026-09-27 — The bubble field is drawn with WebGL2, the words with a 2D canvas
+
+The graph was the part of Rhizom its maintainer cared most about and the part that was slowest:
+a vault of 2,000 notes lagged. Measured on the maintainer's machine before anything was designed
+(2,000 notes, 17,000 links, the camera zooming and panning, Chrome rasterising in software):
+the renderer of Phase 1 — every edge in one cached `Path2D` in graph units — took 100 ms per
+frame at the median and 200 ms at the 95th percentile; the same picture drawn with Canvas 2D in
+screen space took 202 ms; the same picture drawn with WebGL2, edges as instanced quads and
+bubbles as shaded discs computed in a fragment shader, took 42 ms. In the live app a wheel zoom
+ran at 13–15 fps with long tasks of up to 650 ms, and at mid zoom about 560 labels were drawn per
+frame with `strokeText`, which alone tripled the frame. The JavaScript of a frame cost under a
+millisecond; the time was rasterisation, which is what a GPU does and a 2D context does not
+hand it.
+
+So the stack line "d3-force with Canvas rendering" now reads "d3-force with WebGL2 rendering
+(Canvas 2D fallback, words on a 2D overlay)": the layout stays in its worker; the field — ground,
+territories, edges, bubbles — is one WebGL2 context; everything that is text lives on a
+transparent 2D canvas stacked above it.
+No library: WebGL2 is a browser API, and the renderer is our own code, so no dependency is added.
+Where WebGL2 is unavailable, or a lost context does not come back, the field falls back to a
+Canvas 2D renderer behind the same interface (`FieldRenderer` in `apps/web/src/graph/types.ts`),
+so the page never goes blank. The maintainer chose this on the numbers above.
+
+The fallback is also taken where WebGL2 is offered but drawn on the CPU — SwiftShader, llvmpipe,
+softpipe, recognised by the renderer's name. The numbers above were taken on WARP, Windows'
+software adapter, where WebGL2 still won (37 frames a second against 16), but SwiftShader, which
+every headless CI browser uses, turned it around: a WebGL frame of the example vault took 50 to
+217 ms depending on the cores it got, and a Canvas 2D frame 17 ms; on 2,000 notes 317 ms
+against 33. WARP is therefore left out of the list. `rhizom.renderer` in local storage overrides
+the choice either way, which is how the end-to-end suite still draws with WebGL2 on SwiftShader,
+so a shader that no driver compiles fails CI instead of falling back unnoticed.
+
+What the choice bought besides speed:
+
+- **A layout tick touches no edge.** Node positions live in a float texture uploaded straight
+  from the worker's `Float32Array`; edges are a static buffer of index pairs, and the vertex
+  shader fetches their endpoints. The old renderer rebuilt a 17,000-segment path on every tick.
+- **No path garbage.** The old renderer's `Path2D` objects held about 100 MB of native memory
+  five seconds after a layout settled and several hundred MB while it ran, until a main-thread
+  GC happened to collect them. Nothing on the new render path allocates per frame.
+- **Shading costs pixels, not notes.** Light, rim, halo, the soil drawn back over what is out of
+  focus, the territories: each is arithmetic in a shader rather than another pass per bubble.
+
+Two neighbouring decisions came out of the same measurements. The layout worker is terminated a
+moment after the layout settles and started again from the current positions when it is needed —
+d3's many-body force rebuilds a quadtree every tick, so a worker's heap grows to 65–80 MB for a
+live set of 2 MB and V8 keeps that heap as long as the worker lives; a worker whose script then
+fails to load hands the layout to the page for good rather than leaving the field empty. Each
+turn of the worker runs as many ticks as fit in 8 ms, because a chain of zero-delay timers is
+clamped to about 5 ms a link, which put three seconds under a layout of 600 ticks however small.
+And a large field adds the collision force from a third of its settling on — at once when the
+layout starts from positions it already has — at full strength and in two passes a tick, rather
+than not at all; this supersedes the collision sentence of "2026-09-18 — Phase 1: the graph
+layout runs in a worker". Measured on the generated 2,000 notes and 17,000 links: without it,
+seven bubbles in ten had their centre inside another; one pass at 0.7 left one in twenty; full
+strength and two passes leave one in 300, at about twice the cost of a tick (7 → 16 ms, in the
+worker, where the page does not feel it). That is the difference between notes and a ball pit
+once somebody zooms in.
+
+Two details of the look are worth the reason. The territories are resolved rather than splatted
+straight into the ground: every bubble of a large enough cluster is splatted into two low-resolution
+density textures (four palette colours each), and a resolve pass turns them into one wash and
+one shore distance per colour, once per change of the positions, the focus or the palette — so
+past eight clusters, two of one colour share a territory. Computing eight
+milieus per pixel in the ground pass gave each its own shore too, but cost 10 ms a frame on the
+software path against under 5; the resolve pass pays that once, not per frame. And the numbers the
+three renderers share live in `look.ts`, with one exception kept on purpose: the WebGL field sinks
+a covered bubble deeper (0.9 of the ground on soil, 0.8 on paper, against 0.8 and 0.7), because it
+also flattens the bubble's relief, which Canvas 2D and SVG cannot; at the shallower depth a shaded
+bubble still reads as a muddy disc.
+
+The cluster colours stopped being a bare hash. Eight colours hashed from the folder or tag name
+gave two of five folders the same colour more often than not, and with a legend and a territory per
+cluster that no longer tells them apart. So the field takes the clusters of its data set in name
+order, gives each its hash colour if it is free and the next free one if not, and only past eight
+lets them share. A folder therefore keeps its colour from view to view unless another collides
+with it — but a local graph or a tag filter holds fewer clusters, so it may give a colliding
+folder its own hash colour back. The milieu field keeps the plain hash for now: it draws the
+notes of one query, and making its colours agree with the bubble field's would mean a vault-wide
+assignment both read, which is worth doing once somebody keeps both layouts side by side.
+
+The look was chosen by building four prototypes on the real example vault and a 2,000-note
+synthetic one and having each judged from three sides — visual impact and brand, engineering,
+readability. What was taken from which, and what was rejected (edges tinted by cluster, which
+would pre-empt Phase 3's typed relationships; hue shifts by importance, which is Phase 4's heatmap
+in disguise; anything that moves while nobody touches it), is in
+`docs/specs/2026-09-27-graph-renderer.md`.
 
 ## 2026-09-27 — Memory: the graph is built once, and a native start caps the young heap
 
