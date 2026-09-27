@@ -117,7 +117,33 @@ describe('localGraph', () => {
   it('returns an empty graph for an unknown centre', () => {
     expect(localGraph(graph, 'Nope.md', 2)).toEqual({ nodes: [], edges: [], clusters: [] });
   });
+
+  it('never changes the graph it cuts from', () => {
+    // The server cuts every neighbourhood from the one whole graph it keeps: a change to it would
+    // show up in every answer after. Frozen, so a write throws; compared, so nothing slips by.
+    const kept = buildGraph(notes, links, { clusterBy: 'folder' });
+    const before = structuredClone(kept);
+    deepFreeze(kept);
+    for (const depth of [0, 1, 2, 3]) {
+      for (const node of before.nodes) {
+        localGraph(kept, node.path, depth);
+      }
+      localGraph(kept, 'Nope.md', depth);
+    }
+    expect(kept).toEqual(before);
+  });
 });
+
+/** Freezes an object and everything it holds, so that any write to it throws. */
+function deepFreeze(value: unknown): void {
+  if (typeof value !== 'object' || value === null || Object.isFrozen(value)) {
+    return;
+  }
+  Object.freeze(value);
+  for (const child of Object.values(value) as unknown[]) {
+    deepFreeze(child);
+  }
+}
 
 describe('clusterColorIndex', () => {
   it('is deterministic and stays within the palette size', () => {

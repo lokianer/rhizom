@@ -90,7 +90,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         run: |
           cd dist/package/server
-          RHIZOM_VAULT_DIR=../example-vault RHIZOM_DATA_DIR=../data PORT=3838 node dist/server.js &
+          RHIZOM_VAULT_DIR=../example-vault RHIZOM_DATA_DIR=../data PORT=3838 node --max-semi-space-size=16 dist/server.js &
           for _ in $(seq 1 30); do
             curl -sf http://127.0.0.1:3838/api/health && break
             sleep 1

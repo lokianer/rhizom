@@ -2,6 +2,7 @@
 // store for the whole app, reloaded when the index reports a change.
 import type {
   AssetSummary,
+  NoteIndex,
   NoteSummary,
   TagCount,
   TreeEntry,
@@ -12,6 +13,7 @@ import { glossaryTerms } from '@rhizom/core';
 import { create } from 'zustand';
 
 import { api, ApiRequestError, isAbortError } from '../api/client.js';
+import { buildNoteIndex } from '../routing/links.js';
 
 export type VaultStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -22,6 +24,13 @@ export interface VaultState {
   noVault: boolean;
   info: VaultInfo | null;
   notes: NoteSummary[];
+  /**
+   * The notes as a link resolver needs them: every path and the aliases it answers to. One for
+   * the whole app, and a new one only when a path or an alias changed. A save changes neither —
+   * only times, sizes and link counts — and every page that resolves links used to build its
+   * own from `notes` after each save, which on a large vault was the costly part of a reload.
+   */
+  noteIndex: NoteIndex;
   tree: TreeEntry[];
   tags: TagCount[];
   /** Everything in the vault that is not a note, so embeds can find their file. */
@@ -69,12 +78,52 @@ function signatureOf(terms: readonly VaultTerm[]): string {
     .join(RECORD);
 }
 
+/**
+ * Everything a NoteIndex is built from, and nothing else: paths and aliases, in order. JSON
+ * rather than the separators above, because an alias is whatever the frontmatter says and YAML
+ * can spell any character, those two included.
+ */
+function namesOf(notes: readonly NoteSummary[]): string {
+  return JSON.stringify(notes.map((note) => [note.path, note.aliases]));
+}
+
+/** The names each index was built from, so a refresh serialises the new list only. */
+const indexedNames = new WeakMap<NoteIndex, string>();
+
+/** The previous index while the names it was built from are the same; a new one otherwise. */
+function keepNoteIndex(
+  previous: { noteIndex: NoteIndex },
+  next: readonly NoteSummary[],
+): NoteIndex {
+  const names = namesOf(next);
+  if (indexedNames.get(previous.noteIndex) === names) {
+    return previous.noteIndex;
+  }
+  const index = buildNoteIndex(next);
+  indexedNames.set(index, names);
+  return index;
+}
+
+let refreshesStarted = 0;
+/** The newest reload whose result is in the store; an older one that finishes later is dropped. */
+let refreshApplied = 0;
+
+/**
+ * How many background reloads have begun so far. A caller that notes the number before a
+ * request can tell afterwards whether the store has started reloading in the meantime — which
+ * after a save it usually has, because the save's own index event arrives before its answer.
+ */
+export function refreshCount(): number {
+  return refreshesStarted;
+}
+
 export const useVaultStore = create<VaultState>()((set, get) => ({
   status: 'idle',
   error: null,
   noVault: false,
   info: null,
   notes: [],
+  noteIndex: buildNoteIndex([]),
   tree: [],
   tags: [],
   assets: [],
@@ -85,7 +134,14 @@ export const useVaultStore = create<VaultState>()((set, get) => ({
     }
     set({ status: 'loading', error: null, noVault: false });
     try {
-      set({ ...(await fetchAll()), status: 'ready', error: null, noVault: false });
+      const loaded = await fetchAll();
+      set((state) => ({
+        ...loaded,
+        noteIndex: keepNoteIndex(state, loaded.notes),
+        status: 'ready',
+        error: null,
+        noVault: false,
+      }));
     } catch (error) {
       if (!isAbortError(error)) {
         set({
@@ -97,10 +153,20 @@ export const useVaultStore = create<VaultState>()((set, get) => ({
     }
   },
   refresh: async () => {
+    refreshesStarted += 1;
+    const started = refreshesStarted;
     try {
       const loaded = await fetchAll();
+      // Reloads can overlap, and they finish in whatever order the network allows. A save no
+      // longer runs a reload of its own after the answer, which used to paper over that, so the
+      // newest one started wins and an older one arriving late is dropped.
+      if (started < refreshApplied) {
+        return;
+      }
+      refreshApplied = started;
       set((state) => ({
         ...loaded,
+        noteIndex: keepNoteIndex(state, loaded.notes),
         terms: keepTerms(state.terms, loaded.terms),
         status: 'ready',
         error: null,

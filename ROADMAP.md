@@ -92,6 +92,16 @@ changes only with a documented migration.
       Dropping a note is the one gesture in Rhizom that changes a file by itself, so it writes
       with the hash the note was loaded at and swallows the echo the watcher sends back
 
+_Between Phases 2 and 3 the bubble field of Phase 1 was redrawn at the maintainer's request: a
+vault of 2,000 notes lagged, and the field is the core of Rhizom and ought to be worth looking at.
+It is drawn with WebGL2 now, with a Canvas 2D fallback, and gained cluster territories with their
+names, note labels that keep clear of each other, a legend, a zoom control, an info bar and
+motion that comes to rest. It is not a phase and pulls nothing forward: the time-lapse, the
+heatmap, the orphan view and pinned bubbles stay in Phase 4, coloured and typed links and blocs in
+Phase 3, a keyboard reading of the field and meta-bubbles in Phase 6. The design and the
+measurements behind it are in `docs/specs/2026-09-27-graph-renderer.md`, the decision in
+`DECISIONS.md`._
+
 ## Phase 3 — D&D mode (a module, enabled per vault)
 
 _The module is a vocabulary, not a second programme: templates, a handful of frontmatter keys,
@@ -274,7 +284,7 @@ in may still move._
       can, the native module is gone, no machine needs a compiler and both shells get simpler;
       and whether the app runs correctly under **WebKitGTK**, which is what Tauri uses on Linux
       (Windows gets Chromium either way, macOS WKWebView). `<dialog>` with `showModal()`,
-      `light-dark()`, the Canvas field, `CSS.escape`, EventSource and the clipboard are the
+      `light-dark()`, the WebGL2 field, `CSS.escape`, EventSource and the clipboard are the
       things to try there. The size argument is weaker than it is usually told, and the roadmap
       should say so: Rhizom ships a Node runtime whichever shell it wears, so Tauri saves
       Chromium, not everything — call it half the download rather than a tenth

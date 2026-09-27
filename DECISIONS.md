@@ -299,7 +299,7 @@ Playwright starts an actual Rhizom server on a throwaway copy of `examples/vault
 rather than a mock. In CI that server also serves the built web app, which covers the
 production bundle and the history fallback; locally the Vite dev server proxies `/api` to it.
 
-## 2026-09-18 — Phase 1: the graph layout runs in a worker
+## 2026-09-18 — Phase 1: the graph layout runs in a worker (collision superseded 2026-09-27)
 
 One force tick over a few thousand notes costs tens of milliseconds, and on the main thread
 that froze the canvas for the whole time the layout took to settle. The simulation therefore
@@ -979,3 +979,201 @@ A split stylesheet can stay one cascade. `base.css` and `panels.css` are now bar
 `@import` in the original order; Vite inlines them at build time, so the emitted asset keeps the
 content hash it had before the cut. That hash is the proof — no test sees the cascade, and the
 same trick gives the OpenAPI document, which is tracked, the same role for the API.
+
+## 2026-09-27 — The bubble field is drawn with WebGL2, the words with a 2D canvas
+
+The graph was the part of Rhizom its maintainer cared most about and the part that was slowest:
+a vault of 2,000 notes lagged. Measured on the maintainer's machine before anything was designed
+(2,000 notes, 17,000 links, the camera zooming and panning, Chrome rasterising in software):
+the renderer of Phase 1 — every edge in one cached `Path2D` in graph units — took 100 ms per
+frame at the median and 200 ms at the 95th percentile; the same picture drawn with Canvas 2D in
+screen space took 202 ms; the same picture drawn with WebGL2, edges as instanced quads and
+bubbles as shaded discs computed in a fragment shader, took 42 ms. In the live app a wheel zoom
+ran at 13–15 fps with long tasks of up to 650 ms, and at mid zoom about 560 labels were drawn per
+frame with `strokeText`, which alone tripled the frame. The JavaScript of a frame cost under a
+millisecond; the time was rasterisation, which is what a GPU does and a 2D context does not
+hand it.
+
+So the stack line "d3-force with Canvas rendering" now reads "d3-force with WebGL2 rendering
+(Canvas 2D fallback, words on a 2D overlay)": the layout stays in its worker; the field — ground,
+territories, edges, bubbles — is one WebGL2 context; everything that is text lives on a
+transparent 2D canvas stacked above it.
+No library: WebGL2 is a browser API, and the renderer is our own code, so no dependency is added.
+Where WebGL2 is unavailable, or a lost context does not come back, the field falls back to a
+Canvas 2D renderer behind the same interface (`FieldRenderer` in `apps/web/src/graph/types.ts`),
+so the page never goes blank. The maintainer chose this on the numbers above.
+
+The fallback is also taken where WebGL2 is offered but drawn on the CPU — SwiftShader, llvmpipe,
+softpipe, recognised by the renderer's name. The numbers above were taken on WARP, Windows'
+software adapter, where WebGL2 still won (37 frames a second against 16), but SwiftShader, which
+every headless CI browser uses, turned it around: a WebGL frame of the example vault took 50 to
+217 ms depending on the cores it got, and a Canvas 2D frame 17 ms; on 2,000 notes 317 ms
+against 33. WARP is therefore left out of the list. `rhizom.renderer` in local storage overrides
+the choice either way, which is how the end-to-end suite still draws with WebGL2 on SwiftShader,
+so a shader that no driver compiles fails CI instead of falling back unnoticed.
+
+What the choice bought besides speed:
+
+- **A layout tick touches no edge.** Node positions live in a float texture uploaded straight
+  from the worker's `Float32Array`; edges are a static buffer of index pairs, and the vertex
+  shader fetches their endpoints. The old renderer rebuilt a 17,000-segment path on every tick.
+- **No path garbage.** The old renderer's `Path2D` objects held about 100 MB of native memory
+  five seconds after a layout settled and several hundred MB while it ran, until a main-thread
+  GC happened to collect them. Nothing on the new render path allocates per frame.
+- **Shading costs pixels, not notes.** Light, rim, halo, the soil drawn back over what is out of
+  focus, the territories: each is arithmetic in a shader rather than another pass per bubble.
+
+Two neighbouring decisions came out of the same measurements. The layout worker is terminated a
+moment after the layout settles and started again from the current positions when it is needed —
+d3's many-body force rebuilds a quadtree every tick, so a worker's heap grows to 65–80 MB for a
+live set of 2 MB and V8 keeps that heap as long as the worker lives; a worker whose script then
+fails to load hands the layout to the page for good rather than leaving the field empty. Each
+turn of the worker runs as many ticks as fit in 8 ms, because a chain of zero-delay timers is
+clamped to about 5 ms a link, which put three seconds under a layout of 600 ticks however small.
+And a large field adds the collision force from a third of its settling on — at once when the
+layout starts from positions it already has — at full strength and in two passes a tick, rather
+than not at all; this supersedes the collision sentence of "2026-09-18 — Phase 1: the graph
+layout runs in a worker". Measured on the generated 2,000 notes and 17,000 links: without it,
+seven bubbles in ten had their centre inside another; one pass at 0.7 left one in twenty; full
+strength and two passes leave one in 300, at about twice the cost of a tick (7 → 16 ms, in the
+worker, where the page does not feel it). That is the difference between notes and a ball pit
+once somebody zooms in.
+
+Two details of the look are worth the reason. The territories are resolved rather than splatted
+straight into the ground: every bubble of a large enough cluster is splatted into two low-resolution
+density textures (four palette colours each), and a resolve pass turns them into one wash and
+one shore distance per colour, once per change of the positions, the focus or the palette — so
+past eight clusters, two of one colour share a territory. Computing eight
+milieus per pixel in the ground pass gave each its own shore too, but cost 10 ms a frame on the
+software path against under 5; the resolve pass pays that once, not per frame. And the numbers the
+three renderers share live in `look.ts`, with one exception kept on purpose: the WebGL field sinks
+a covered bubble deeper (0.9 of the ground on soil, 0.8 on paper, against 0.8 and 0.7), because it
+also flattens the bubble's relief, which Canvas 2D and SVG cannot; at the shallower depth a shaded
+bubble still reads as a muddy disc.
+
+The cluster colours stopped being a bare hash. Eight colours hashed from the folder or tag name
+gave two of five folders the same colour more often than not, and with a legend and a territory per
+cluster that no longer tells them apart. So the field takes the clusters of its data set in name
+order, gives each its hash colour if it is free and the next free one if not, and only past eight
+lets them share. A folder therefore keeps its colour from view to view unless another collides
+with it — but a local graph or a tag filter holds fewer clusters, so it may give a colliding
+folder its own hash colour back. The milieu field keeps the plain hash for now: it draws the
+notes of one query, and making its colours agree with the bubble field's would mean a vault-wide
+assignment both read, which is worth doing once somebody keeps both layouts side by side.
+
+The look was chosen by building four prototypes on the real example vault and a 2,000-note
+synthetic one and having each judged from three sides — visual impact and brand, engineering,
+readability. What was taken from which, and what was rejected (edges tinted by cluster, which
+would pre-empt Phase 3's typed relationships; hue shifts by importance, which is Phase 4's heatmap
+in disguise; anything that moves while nobody touches it), is in
+`docs/specs/2026-09-27-graph-renderer.md`.
+
+## 2026-09-27 — Memory: the graph is built once, and a native start caps the young heap
+
+An audit measured the server on a generated vault of 2,000 notes and 17,000 links (Windows,
+Node 24). It found no leak, but peaks of about 300 MB at start and 340–390 MB after the graph had
+been viewed a few times, against a settled 125 MB. Nearly all of it was garbage waiting for a
+collector, and it came from four places: the whole graph rebuilt for every request, a native
+statement prepared for every write, the V8 young generation growing to 128 MB, and a browser that
+reloaded the vault twice after every save. Each was measured before it was changed and again
+after, with the same scripts.
+
+**The graph is cached in the index, and emptied by every write.** `VaultIndex` keeps one
+`GraphData` per clustering and drops them before any write. Every change reaches the index through
+`upsertNote`, `removeNote` or `resolveAll` — a save, a rename, a delete, a renamed tag, a watcher
+batch and a rebuild alike — so there is no second path to forget. They are dropped before the write
+rather than after it, so a write that throws half-way costs one needless rebuild and never a stale
+answer. `/api/graph/local` cuts its neighbourhood from the cached graph instead of building the
+whole vault for one note, which is why the cache holds the objects and not only the bytes.
+`/api/graph` also keeps its serialised body, keyed by the `GraphData` it was made from, so the
+body disappears with the graph it belongs to. The choice was measured on the same vault:
+
+- A cached `GraphData` held 2.85 MB of heap as `buildGraph` used to make it, because every edge
+  kept its own copies of the two path strings from the link rows. The edges now point at the
+  nodes' own strings, which halves it to 1.33 MB. The shape of `GraphData` is unchanged.
+- Serialising a cached `GraphData` on every hit would still allocate 9.1 MB per request. The body
+  costs 1.74 MB off the heap, once, so the two clusterings together hold about 6 MB, growing with
+  the vault.
+- A miss is serialised by the route's own schema serializer rather than by `JSON.stringify`. Both
+  took about 5 ms and produced the same bytes; the serializer allocates 7.4 MB more on the way,
+  once per miss, and in return the body is by construction what the route always sent, and a
+  field added to `GraphNode` later cannot slip past the schema. The graph page does not refetch
+  on index events, so a miss is the first view after an edit, not every save.
+
+No `ETag`: a counter that starts again at zero in every process would hand a browser a 304 for a
+different vault after a restart, and a content hash is work nobody has measured a need for. The
+compact edge encoding the audit also proposed is left open: it would change the API, and the
+WebGL2 renderer builds its own index buffer from the JSON response as it is.
+
+**Index writes use statements prepared once.** Drizzle prepared a native statement for every query
+it ran, 22,490 of them for a first build of the 2,000-note vault. The writes now run on raw
+better-sqlite3 statements prepared when the connection opens. The SQL is what Drizzle generated,
+and the JSON columns go in through `JSON.stringify` and the boolean as 0 or 1, as its column types
+wrote them. A fresh index of that vault and of `examples/vault`, and the same index after a run of
+single-note writes and removals, came out identical table by table, rowids and the FTS5 shadow
+tables included. The first build took 5.3 s instead of 8.7 s. One row per insert also removes a
+limit nobody had hit yet: all of a note's links went into one statement, nine parameters each, so
+a note with more than about 3,640 links exceeded SQLite's 32,766 — and a vault holding one could
+not be opened at all. Reads stay on Drizzle, except the graph input, which reads its 17,000 rows
+through the same SQL without Drizzle's row mapping.
+
+**A native start passes `--max-semi-space-size=16`.** Node 24 lets the young generation grow to
+128 MB on a machine with a few gigabytes of memory, and on this server that growth is most of a
+peak: importing the module graph alone reaches 277 MB. Medians of three interleaved runs per
+column, on the 2,000-note vault:
+
+| Node 24, fresh index            | before | flag only | code only | both   |
+| ------------------------------- | ------ | --------- | --------- | ------ |
+| Peak RSS until ready + 2 s ¹    | 292 MB | 221 MB    | 300 MB    | 181 MB |
+| Settled RSS after 30 s idle     | 126 MB | 125 MB    | 122 MB    | 122 MB |
+| RSS after 40 × `GET /api/graph` | 364 MB | 321 MB    | 156 MB    | 155 MB |
+| `GET /api/graph`, median        | 51 ms  | 54 ms     | 3.3 ms    | 3.2 ms |
+| `GET /api/graph/local`, depth 2 | 39 ms  | 43 ms     | 4.6 ms    | 4.4 ms |
+
+¹ The peak moves by ±30 MB from run to run: an independent re-run of the same script measured
+210 MB for "both" and 291–319 MB for "before". Read it as about 300 MB against about 180–210 MB.
+
+The flag takes 70–120 MB off the peak of a first build and nothing off the settled memory; the
+graph cache takes the growth under repeated graph views. 16 rather than 8, because 8 cost the
+graph 14–47 ms a request in the audit while 16 stayed within noise. The flag is in
+`pnpm --filter @rhizom/server start`, in the packaged build's start lines, in the README and in
+the CI smoke test of the package. It only takes effect on the command line or in `NODE_OPTIONS`;
+`v8.setFlagsFromString` at run time does nothing. **Not in the Dockerfile:** the image runs
+Node 22, whose default is already 16 MB, so it would save nothing. V8 also sizes the young
+generation from a container's memory limit, and a fixed 16 would raise it on the smallest boxes,
+where it matters most. That is worth deciding again when the image moves to Node 24.
+
+**The browser reloads the vault once per save.** A save used to reload everything twice: once for
+its own index event, once when the request came back. The save now skips its reload when the
+store started one while the request was out. It has whenever the event stream is up, because the
+server announces the save before it answers; without the stream, the save's own reload is the one
+that remains. The app also keeps one `NoteIndex`, in the vault store, rebuilt only when a path or
+an alias changed, where the note page, the preview and the editor each built their own after every
+save. Typing five autosaves into a note of the 2,000-note vault, the tab allocated 5.0 MB of
+JavaScript per save instead of 14.8 MB and spent 71 ms in script instead of 168 ms. Dropping the
+save's reload outright was the simpler alternative, and it would have left a tab whose event
+stream is down with no reload at all.
+
+**The watcher stays chokidar, for now.** chokidar 5 opens one `fs.watch` per note as well as per
+folder — 2,009 handles for the 2,000-note vault. The audit measured that at 18–30 MB of settled
+memory on Windows, about 9 KB a note, and 2.5–3 s of start-up; nothing at the peak, which is the
+first build, before the watcher exists. It was evaluated and deliberately not replaced:
+
+- One recursive `fs.watch`, the obvious replacement, loses changes on Windows in two ways the audit
+  reproduced. A folder rename reports the folder and none of the notes inside, so the old paths
+  stay in the index and the new ones are never read. A burst — a `git checkout`, a sync client —
+  overflows the change buffer and arrives as one event without a file name: 200 notes written by a
+  loop came through as a single nameless event.
+- On Linux, the Docker path, it saves nothing: Node's recursive watch there is itself one watcher
+  per file, and on Node 22 it walks `.git`, `.obsidian` and `.trash` as well. macOS was not
+  measured.
+- A replacement that is safe on all three systems is a component of its own: one non-recursive
+  watch per visible folder, folders watched and closed as they come and go, a full incremental
+  sync on a nameless event or an error, a rescan of any path that turns out to be a folder, the
+  macOS start-up gap handled the way `watcher.test.ts` already probes for it, and tests for a
+  folder rename and a burst of more than a hundred files on every CI leg. It would take the place
+  of a component in the binding stack, which wants a justification before it is built, and only
+  one of the three systems could be tested where this was written.
+
+Rhizom's own writes echo back through the watcher either way, and stay harmless: `indexPaths`
+compares content hashes, so a file the API has just indexed changes nothing downstream.

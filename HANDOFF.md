@@ -1,61 +1,71 @@
-# Handoff — 24 September 2026, 22:40
+# Handoff — 27 September 2026, evening
 
 Working notes for whoever picks this up next, on whichever machine. Rewrite it at the end of a
 session and commit it with the rest of the work.
 
 ## Where it stands
 
-`main` is pushed at `176f7b2`, working tree clean, no open pull requests. **Phases 0 to 2 are
-complete, and so is the structural refactoring planned before phase 3.** CI was green 7/7 on
-the last run (ubuntu/macos/windows × Node 22/24, plus the Docker build). **Phase 3 (D&D mode,
-`ROADMAP.md`) is next and not begun** — wait for the maintainer's go before starting it.
+**0.2.1 is released**: pull request #5 (branch `lokianer/feat-graph-fancier`) is merged into
+`main` with a merge commit and tagged `v0.2.1`, with a GitHub release. Its commits: `e4f7a2c`
+fix(core) (frontmatter that contains itself or expands too far), `9ed7810` perf(server) (the
+memory slice), `59c7051` feat(graph) (the WebGL2 field), `efe458e` the release commit, `034b108`
+test(e2e) (a CodeQL finding in a test helper) and this handoff. CI was green 11/11 on the pull
+request (three systems × Node 22/24, Docker, CodeQL, dependency review), the local sequence
+before every push, and the perf commit on its own in a separate worktree. **Phase 3 (D&D mode)
+is next and not begun** — wait for the maintainer's go.
 
-## The pre-phase-3 restructuring (21 September)
+## What this session did
 
-Spec and plan: `docs/specs/2026-09-21-refactoring.md`, `docs/plans/`. The reasons are in
-`DECISIONS.md`, the summary in `CHANGELOG.md` under Changed. Behaviour did not change: the
-tracked OpenAPI document and the content hashes of the emitted CSS assets were the proof.
+Between Phases 2 and 3, at the maintainer's request: a vault of 2,000 notes lagged, and the
+bubble field was to become much more worth looking at. Spec with the measurements and the
+prototype judging: `docs/specs/2026-09-27-graph-renderer.md`; reasons in `DECISIONS.md`
+(2026-09-27, WebGL2 and Memory); the user-facing list in `CHANGELOG.md` under 0.2.1.
 
-- `packages/core/src` is grouped **by layer**, not by feature: `text`, `syntax`, `vault`,
-  `query`, `render` (plus `api.ts` and the `index.ts` barrel). A feature grouping would have put
-  two folders in an import cycle. Paths in older notes are stale, e.g. `section.ts` is now
-  `syntax/section.ts`.
-- `render/note.ts` was cut into `blocks`, `classes`, `links`, `sanitize` and `transform` beside
-  it, the query module into `query/reader.ts` and `query/clauses.ts`; line-break helpers moved
-  to `text/`.
-- Server: `apps/server/src/store/` holds the index — one `IndexContext` per vault
-  (`vault/context.ts`), the stores under `store/index/`, and **`VaultIndex` as the single facade**
-  the routes talk to. Multi-vault in phase 3 builds on that: routes never see the stores.
-- Web: pages are separated from the application frame (`apps/web/src/pages`, `app`), and the
-  two collected stylesheets were cut into per-area files that still form one cascade.
-- Lesson recorded in `DECISIONS.md`: a hook that hands out its refs encapsulates nothing —
-  React's rules rejected `useNoteDocument` doing that, rightly.
-
-After the merge, `e2e/milieu.spec.ts` flaked once on ubuntu/Node 22: two assertions on the same
-field had different timeouts. `176f7b2` gives them one `FIELD_READY` allowance. Green since —
-but one green run is not proof; watch for it.
+- **Renderer** (`apps/web/src/graph/`): `controller.ts` drives everything; `gl/` is the WebGL2
+  field, `canvas2d-renderer.ts` the fallback behind the same `FieldRenderer` interface
+  (`types.ts`), `overlay.ts` + `labels.ts` + `label-sprites.ts` the words on a 2D canvas,
+  `GraphLegend.tsx` / `GraphInfo.tsx` the DOM panels. `look.ts` holds the numbers all three
+  renderers (WebGL, Canvas 2D, SVG export) share.
+- **Renderer choice:** WebGL2 unless it is missing, lost for good, or drawn in software
+  (SwiftShader, llvmpipe, softpipe — not WARP). `localStorage['rhizom.renderer']` = `webgl2` or
+  `canvas2d` overrides it; the e2e suite forces WebGL2 once so CI still compiles the shaders.
+- **Layout worker:** sleeps 2 s after settling, ticks in 8 ms slices, falls back to the page when
+  its script does not load (`worker-layout.ts`, `layout.worker.ts`).
+- **Server memory:** graph cached per clustering in the index and dropped by every write;
+  prepared statements (`store/index/statements.ts`); `--max-semi-space-size=16` on native starts.
+- **Reviews:** two review waves with adversarial verification (code, docs, a11y, environment,
+  GL, tests, security). Everything confirmed was fixed; the security pass found the two
+  frontmatter crashes, which were already on `main` and got their own commit.
 
 ## Open, in the order I would take them
 
 1. **Start phase 3** once the maintainer says so.
-2. **Two block-reference gaps** recorded in `ROADMAP.md`: a marker on a _heading_ embeds but a
-   link to it lands on the note, and Obsidian sometimes writes an id on its own line after a
-   table or list, which Rhizom does not read. Check against a real Obsidian vault.
-3. **Two small features named but not built:** a hint on how to leave zen mode, and a
-   confirmation after a finished rename / tag rename.
-4. **`NotePage` chunk ~612 kB** trips the 500 kB warning (CodeMirror's fenced-code grammars);
-   `yaml` sits in the shared `queries` chunk. Lazy, not urgent; would need `advancedChunks`.
+2. **Watch CI on `main`** after the merge, and the e2e suite on CI in general: the field tests
+   wait for the layout to come to rest and were tuned for SwiftShader runners.
+3. **An error boundary around the note page.** The router's default error screen is what catches
+   a render error today; the frontmatter fix removed the one known trigger.
+4. **The milieu field still hashes its colours**, so a folder can have another colour there than
+   in the bubble field. Worth a vault-wide assignment once somebody uses both side by side.
+5. Older items still open: the two block-reference gaps in `ROADMAP.md`, the zen-mode hint and
+   the rename confirmation, and the `NotePage` chunk over 500 kB.
 
 ## Traps, so the next session does not walk into them
 
 - **Heredocs eat backslashes.** `\n`, `\t`, `\r` in a bash/python heredoc become real control
-  characters. Use Write/Edit for anything with a backslash.
+  characters. Use Write/Edit for anything with a backslash; backticks inside `node -e` strings
+  get eaten by bash too.
 - **`netstat` answers in German.** Never grep for `LISTENING`; match `":3737"`, take the last
   column, verify the port is free afterwards. A surviving dev server gets reused by Playwright
   and the e2e run tests the wrong vault.
-- **The file tree shows titles, not file names.** Tests should ask the API for a note's path.
-- **Run the whole CI sequence locally before pushing**, not just the tests: typecheck, lint,
-  format:check, test:coverage, build, site:build, e2e.
+- **Agents that are stopped leave servers behind.** After stopping a workflow, look for node
+  processes on 39xx/51xx ports and for a stale `.git/worktrees/*/index.lock`.
+- **A Chrome tab driven by automation may be hidden:** `requestAnimationFrame` then only runs on
+  screenshots, and the field's entry growth looks five times slower than it is.
+- **Headless Chromium draws WebGL2 through SwiftShader**, so CI gets the Canvas 2D field unless
+  a test sets `rhizom.renderer`.
+- **Run the whole CI sequence locally before pushing**, not just the tests: format:check, lint,
+  typecheck, test:coverage, build, site:build, `CI=1 pnpm e2e` (with `RHIZOM_E2E_API_PORT` when
+  a dev server holds 3737).
 
 ## How to run it
 

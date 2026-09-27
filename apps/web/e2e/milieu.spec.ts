@@ -56,7 +56,7 @@ async function centreOf(page: Page, title: string): Promise<Point> {
 async function openMilieu(page: Page): Promise<void> {
   await page.goto('/graph');
   await page.getByLabel('Layout').selectOption('milieu');
-  await expect(page.getByLabel('Field')).toHaveValue(FIELD, FIELD_READY);
+  await expect(page.getByLabel('Field', { exact: true })).toHaveValue(FIELD, FIELD_READY);
   await expect(bubble(page, 'Aldric Thane')).toBeVisible(FIELD_READY);
 }
 

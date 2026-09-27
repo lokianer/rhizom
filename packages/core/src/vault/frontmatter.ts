@@ -10,6 +10,7 @@
 // would be a line of code and would throw all of that away the first time anybody pressed save.
 import { isMap, isNode, isScalar, parseDocument } from 'yaml';
 
+import { CIRCULAR_FRONTMATTER, refersToItself } from '../syntax/circular.js';
 import { endsWithBreak, lineAt, lineEndAt, lineStartAt, needsSpace } from '../text/breaks.js';
 import { openBlock, pairText, valueSuffix, withIndent } from './frontmatter-write.js';
 import { dateOf, isPlainValue } from './values.js';
@@ -222,14 +223,36 @@ function locate(markdown: string): Located | undefined {
   const document = parseDocument(body);
   const failure = document.errors[0];
   if (failure === undefined) {
-    const parsed: unknown = document.toJS();
-    if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      block.values = parsed as Record<string, unknown>;
+    const read = readValues(document);
+    if (typeof read === 'string') {
+      block.error = read;
+    } else {
+      block.values = read;
     }
   } else {
     block.error = failure.message;
   }
   return { block, bodyStart, eol: open[1] ?? '\n' };
+}
+
+/**
+ * The block's values, or the complaint about them. Resolving aliases can throw — yaml refuses
+ * aliases that expand past its limit, a resource-exhaustion guard — and a note is somebody
+ * else's file, so that is a complaint like any other rather than an exception for the caller.
+ */
+function readValues(document: ReturnType<typeof parseDocument>): Record<string, unknown> | string {
+  let parsed: unknown;
+  try {
+    parsed = document.toJS();
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  if (refersToItself(parsed)) {
+    return CIRCULAR_FRONTMATTER;
+  }
+  return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : {};
 }
 
 /**

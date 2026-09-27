@@ -1,17 +1,330 @@
 /*
- * The canvas fills its container, which owns the size. Padding or a border would shift
- * pointer offsetX/offsetY against the drawing surface, so both stay at zero; the colours
- * come from the tokens and are read back through the palette probe, not from here.
+ * The field, the panels over it and the info bar under it. The two canvases fill the host,
+ * which owns the size and receives the pointer: the canvases take no events, so offsetX/offsetY
+ * are always relative to the host, and the host has neither padding nor border for the same
+ * reason. The colours of the drawing come from the tokens through the palette probe, not from
+ * here.
  */
 
-.rz-graph {
-  display: block;
+.rz-graph-view {
+  /* The info bar lays itself out by the width it gets, not by the window's. */
+  container: rz-graph-view / inline-size;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   width: 100%;
   height: 100%;
+}
+
+.rz-graph-stage-field {
+  /* The panels over the field make room for it by the field's own size. Its content is laid out
+     absolutely, so containing its size changes nothing about how large it is. */
+  container: rz-graph-field / size;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rz-graph {
+  position: absolute;
+  inset: 0;
   padding: 0;
   border: 0;
   background: var(--rz-graph-bg);
-  /* The canvas pans and zooms itself; without this, touch drags scroll the page instead. */
+  /* The field pans and zooms itself; without this, touch drags scroll the page instead. */
   touch-action: none;
   cursor: grab;
+}
+
+.rz-graph-field,
+.rz-graph-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* --- panels -------------------------------------------------------------------------------- */
+
+.rz-graph-legend,
+.rz-graph-zoom {
+  position: absolute;
+  border: 1px solid var(--rz-border);
+  border-radius: var(--rz-radius-lg);
+  /* No backdrop blur: blurring a canvas that redraws is paid for on every frame of a zoom. */
+  background: color-mix(in srgb, var(--rz-surface-raised) 92%, transparent);
+  box-shadow: var(--rz-shadow-floating);
+  color: var(--rz-text);
+  font-size: var(--rz-text-md);
+}
+
+.rz-graph-swatch {
+  display: inline-block;
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--rz-radius-full);
+  box-shadow:
+    inset -2px -2px 3px var(--rz-graph-swatch-shade),
+    inset 1px 1px 2px var(--rz-graph-swatch-light);
+  /* Forced colours (Windows High Contrast) would paint every swatch in one system colour while
+     the canvas keeps its cluster colours, and the legend would stop being a key to it. */
+  forced-color-adjust: none;
+}
+
+.rz-graph-legend {
+  top: var(--rz-space-4);
+  left: var(--rz-space-4);
+  min-width: 13rem;
+  max-width: min(18rem, calc(100% - 2 * var(--rz-space-4)));
+  max-height: calc(100% - 2 * var(--rz-space-4));
+  overflow: auto;
+}
+
+.rz-graph-legend-head,
+.rz-graph-legend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rz-graph-legend-head {
+  justify-content: space-between;
+  padding: var(--rz-space-3) var(--rz-space-4);
+  font-weight: 600;
+}
+
+.rz-graph-legend-list {
+  margin: 0;
+  padding: 0 0 var(--rz-space-2);
+  border-top: 1px solid var(--rz-border);
+  list-style: none;
+}
+
+.rz-graph-legend-row {
+  padding: var(--rz-space-1) var(--rz-space-4);
+  line-height: var(--rz-leading-normal);
+}
+
+.rz-graph-legend-row:hover {
+  background: var(--rz-selection);
+}
+
+.rz-graph-legend-head:focus-visible,
+.rz-graph-legend-row:focus-visible,
+.rz-graph-zoom button:focus-visible {
+  outline: var(--rz-focus-outline);
+  outline-offset: calc(-1 * var(--rz-focus-offset));
+}
+
+.rz-graph-legend-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rz-graph-legend-count {
+  color: var(--rz-text-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.rz-graph-zoom {
+  right: var(--rz-space-4);
+  bottom: var(--rz-space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.rz-graph-zoom-level {
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border-bottom: 1px solid var(--rz-border);
+  color: var(--rz-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.rz-graph-zoom button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.5rem;
+  border: 0;
+  border-bottom: 1px solid var(--rz-border);
+  background: transparent;
+  color: inherit;
+  font-size: var(--rz-text-lg);
+  cursor: pointer;
+}
+
+.rz-graph-zoom button:last-child {
+  border-bottom: 0;
+}
+
+.rz-graph-zoom button:hover {
+  background: var(--rz-selection);
+}
+
+/* On a small field, a phone's or a short pane's, the column of the zoom control would be taller
+   than the field itself: it lies down in a row instead. The legend starts folded under the same
+   sizes (GraphLegend.tsx). */
+@container rz-graph-field (width < 36rem) or (height < 20rem) {
+  .rz-graph-zoom {
+    flex-direction: row;
+  }
+
+  .rz-graph-zoom-level {
+    display: grid;
+    place-items: center;
+    border-right: 1px solid var(--rz-border);
+    border-bottom: 0;
+  }
+
+  .rz-graph-zoom button {
+    border-right: 1px solid var(--rz-border);
+    border-bottom: 0;
+  }
+
+  .rz-graph-zoom button:last-child {
+    border-right: 0;
+  }
+}
+
+/* --- info bar ------------------------------------------------------------------------------ */
+
+/*
+ * Under the field, never over it: describing one note must not cover its neighbours. Its height
+ * never depends on the note it names, or the field would resize under the pointer as it moves
+ * from bubble to bubble; what does not fit gives way in order — the folder first, then the ratio
+ * bar, and on a narrow field the figures take a second line of their own.
+ */
+.rz-graph-info {
+  display: flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  min-height: 3rem;
+  padding: var(--rz-space-2) var(--rz-space-4);
+  border-top: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  color: var(--rz-text);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.rz-graph-info-hint,
+.rz-graph-info-folder,
+.rz-graph-info-cluster,
+.rz-graph-info-figures dt,
+.rz-graph-info-of {
+  color: var(--rz-text-muted);
+}
+
+.rz-graph-info-hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The name is what the bar is for: it keeps its room while the folder beside it gives way. */
+.rz-graph-info-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.rz-graph-info-folder,
+.rz-graph-info-cluster {
+  flex-shrink: 1000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rz-graph-info-figures {
+  display: flex;
+  flex: none;
+  gap: var(--rz-space-5);
+  margin: 0 0 0 auto;
+}
+
+.rz-graph-info-figures div {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rz-space-2);
+}
+
+.rz-graph-info-figures dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.rz-graph-info-of {
+  font-weight: 400;
+}
+
+.rz-graph-info-bar {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  width: 6rem;
+  height: 4px;
+}
+
+.rz-graph-info-bar span {
+  border-radius: var(--rz-radius-full);
+  background: var(--rz-border-strong);
+  /* Forced colours would erase the two segments, as they would the swatches. */
+  forced-color-adjust: none;
+}
+
+.rz-graph-info-bar span:first-child {
+  background: var(--rz-accent);
+}
+
+/* The ratio bar says again what the figures say: it goes first. */
+@container rz-graph-view (width < 48rem) {
+  .rz-graph-info-bar {
+    display: none;
+  }
+}
+
+/*
+ * Too narrow for the name beside the figures: the name, and the folder or tag, on the first line,
+ * the figures on the second — always, whatever the note, and the hint gets the same two lines, so
+ * the bar keeps its height. A grid rather than a wrapping row, which would push a long name onto
+ * a line of its own.
+ */
+@container rz-graph-view (width < 40rem) {
+  .rz-graph-info {
+    display: grid;
+    grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
+    align-content: center;
+    row-gap: var(--rz-space-1);
+    min-height: calc(
+      2em * var(--rz-leading-normal) + var(--rz-space-1) + 2 * var(--rz-space-2) + 1px
+    );
+  }
+
+  .rz-graph-info-hint {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+
+  .rz-graph-info-figures {
+    grid-column: 1 / -1;
+    gap: var(--rz-space-4);
+    margin: 0;
+  }
 }

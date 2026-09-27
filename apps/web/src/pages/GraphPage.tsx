@@ -26,7 +26,7 @@ export function GraphPage(): JSX.Element {
 function BubbleLayout(): JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const note = searchParams.get('note');
   const notes = useVaultStore((state) => state.notes);
   const clusterBy = useUiStore((state) => state.clusterBy);
@@ -40,12 +40,16 @@ function BubbleLayout(): JSX.Element {
   const canvasRef = useRef<GraphCanvasHandle>(null);
 
   const local = depth > 0 && note !== null;
+  // The response depends on the open note only in a local graph; opening or letting go of a note
+  // in the whole vault must not fetch it again and restart the layout.
+  const localNote = local ? note : null;
 
   useEffect(() => {
     const controller = new AbortController();
-    const request = local
-      ? api.localGraph(note, depth, clusterBy, { signal: controller.signal })
-      : api.graph(clusterBy, { signal: controller.signal });
+    const request =
+      localNote !== null
+        ? api.localGraph(localNote, depth, clusterBy, { signal: controller.signal })
+        : api.graph(clusterBy, { signal: controller.signal });
     request.then(setGraph).catch((cause: unknown) => {
       if (!isAbortError(cause)) {
         setError(cause instanceof Error ? cause.message : String(cause));
@@ -54,7 +58,7 @@ function BubbleLayout(): JSX.Element {
     return () => {
       controller.abort();
     };
-  }, [clusterBy, depth, local, note]);
+  }, [clusterBy, depth, localNote]);
 
   // Tag filtering happens here rather than on the server: the note list is already loaded,
   // and switching filters then costs no round trip.
@@ -80,6 +84,19 @@ function BubbleLayout(): JSX.Element {
     },
     [navigate],
   );
+
+  // A click on empty ground lets go of the open note: the field shows the whole vault again,
+  // the way it does when the graph is opened without one.
+  const deselect = useCallback(() => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('note');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
 
   if (error !== '') {
     return <p className="rz-page rz-error">{t('status.error', { message: error })}</p>;
@@ -130,14 +147,6 @@ function BubbleLayout(): JSX.Element {
         <button
           type="button"
           onClick={() => {
-            canvasRef.current?.resetView();
-          }}
-        >
-          {t('graph.resetView')}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
             const svg = canvasRef.current?.toSvg();
             if (svg !== undefined) {
               downloadBlob(
@@ -171,8 +180,10 @@ function BubbleLayout(): JSX.Element {
             ref={canvasRef}
             data={filtered}
             selected={note}
+            clusterBy={clusterBy}
             label={t('graph.label')}
             onOpenNote={openNote}
+            onDeselect={deselect}
           />
         )}
       </div>

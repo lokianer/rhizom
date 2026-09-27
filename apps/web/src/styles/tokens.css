@@ -57,6 +57,15 @@
   --rz-graph-edge-active: light-dark(rgb(35 32 28 / 60%), rgb(236 229 218 / 75%));
   --rz-graph-label: var(--rz-text);
   --rz-graph-label-halo: var(--rz-bg);
+  --rz-graph-plate: light-dark(rgb(251 249 244 / 94%), rgb(38 33 29 / 92%));
+  /* The light of a lit link: warm spore light on Humus, ochre ink on Kalk */
+  --rz-graph-glow: light-dark(#7d5d16, #f3dfb0);
+  /* Ink of a label inside a bubble — fixed, because the bubble's fill decides, not the theme */
+  --rz-graph-ink-light: #fbf9f4;
+  --rz-graph-ink-dark: #14110f;
+  /* A cluster swatch (legend, info bar) is a small bubble: shade down right, light up left */
+  --rz-graph-swatch-shade: light-dark(rgb(35 32 28 / 28%), rgb(0 0 0 / 28%));
+  --rz-graph-swatch-light: light-dark(rgb(251 249 244 / 25%), rgb(255 255 255 / 25%));
 
   --rz-cluster-1: light-dark(#5c7a45, #7f9d61); /* moss */
   --rz-cluster-2: light-dark(#9a7420, #c9a24b); /* ochre */

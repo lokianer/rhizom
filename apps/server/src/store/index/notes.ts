@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import type { NoteSummary } from '@rhizom/core';
 
-import { links, meta, notes, noteTags, terms } from '../schema.js';
+import { meta, notes, noteTags } from '../schema.js';
 import type { IndexContext } from './context.js';
 import { asc } from 'drizzle-orm';
 
@@ -32,33 +32,28 @@ export function upsertNote(
   const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.(md|markdown)$/i, '');
   const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
   const lines = input.content.split(/\r?\n/);
+  const st = ctx.statements;
 
-  ctx.db.transaction((tx) => {
-    tx.delete(notes).where(eq(notes.path, path)).run();
-    tx.delete(links).where(eq(links.source, path)).run();
-    tx.delete(noteTags).where(eq(noteTags.path, path)).run();
-    tx.delete(terms).where(eq(terms.path, path)).run();
+  ctx.sqlite.transaction(() => {
+    forget(ctx, path);
 
-    tx.insert(notes)
-      .values({
-        path,
-        name,
-        title: parsed.title,
-        folder,
-        modifiedAt: input.modifiedAt.getTime(),
-        size: input.size,
-        hash: input.hash,
-        frontmatter: parsed.frontmatter,
-        headings: parsed.headings,
-        aliases: parsed.aliases,
-        wordCount: parsed.wordCount,
-        body: parsed.text,
-      })
-      .run();
-    if (parsed.tags.length > 0) {
-      tx.insert(noteTags)
-        .values(parsed.tags.map((tag) => ({ path, tag })))
-        .run();
+    // The JSON columns are serialised here, which is what Drizzle's json mode did on the way in.
+    st.insertNote.run({
+      path,
+      name,
+      title: parsed.title,
+      folder,
+      modifiedAt: input.modifiedAt.getTime(),
+      size: input.size,
+      hash: input.hash,
+      frontmatter: JSON.stringify(parsed.frontmatter),
+      headings: JSON.stringify(parsed.headings),
+      aliases: JSON.stringify(parsed.aliases),
+      wordCount: parsed.wordCount,
+      body: parsed.text,
+    });
+    for (const tag of parsed.tags) {
+      st.insertTag.run(path, tag);
     }
 
     // The primary key is (path, folded), so a title and an alias that fold to the same string
@@ -75,59 +70,54 @@ export function upsertNote(
         defined.set(folded, term);
       }
     }
-    if (defined.size > 0) {
-      tx.insert(terms)
-        .values(
-          [...defined].map(([folded, term]) => ({
-            path,
-            surface: term.surface,
-            folded,
-            alias: term.alias,
-          })),
-        )
-        .run();
+    for (const [folded, term] of defined) {
+      // A boolean column, stored as 0 or 1 the way Drizzle's boolean mode stored it.
+      st.insertTerm.run(path, term.surface, folded, term.alias ? 1 : 0);
     }
 
     ctx.resolver.add(path, parsed.aliases);
-    if (parsed.links.length > 0) {
-      tx.insert(links)
-        .values(
-          parsed.links.map((link) => {
-            const resolution = resolveLinkTarget(link.target, path, ctx.resolver);
-            return {
-              source: path,
-              target: resolution.resolved ? resolution.path : null,
-              raw: link.raw,
-              targetKey: link.target,
-              kind: link.kind,
-              alias: link.alias ?? null,
-              heading: link.heading ?? null,
-              line: link.line,
-              context: (lines[link.line - 1] ?? '').trim().slice(0, CONTEXT_LENGTH),
-            };
-          }),
-        )
-        .run();
+    // One row at a time, in the order the note wrote them, which is the order a multi-row insert
+    // numbered them in. It also keeps a note with thousands of links clear of SQLite's limit on
+    // the number of parameters one statement may take.
+    for (const link of parsed.links) {
+      const resolution = resolveLinkTarget(link.target, path, ctx.resolver);
+      st.insertLink.run({
+        source: path,
+        target: resolution.resolved ? resolution.path : null,
+        raw: link.raw,
+        targetKey: link.target,
+        kind: link.kind,
+        alias: link.alias ?? null,
+        heading: link.heading ?? null,
+        line: link.line,
+        context: (lines[link.line - 1] ?? '').trim().slice(0, CONTEXT_LENGTH),
+      });
     }
 
     if (options.deferResolution !== true) {
-      reresolve(ctx, tx, path);
+      reresolve(ctx, path);
     }
-  });
+  })();
 }
 
 export function removeNote(ctx: IndexContext, path: string, options: UpsertOptions = {}): void {
-  ctx.db.transaction((tx) => {
-    tx.delete(notes).where(eq(notes.path, path)).run();
-    tx.delete(links).where(eq(links.source, path)).run();
-    tx.delete(noteTags).where(eq(noteTags.path, path)).run();
-    tx.delete(terms).where(eq(terms.path, path)).run();
+  ctx.sqlite.transaction(() => {
+    forget(ctx, path);
     ctx.resolver.remove(path);
-    tx.update(links).set({ target: null }).where(eq(links.target, path)).run();
+    ctx.statements.unresolveLinksTo.run(path);
     if (options.deferResolution !== true) {
-      reresolve(ctx, tx, path);
+      reresolve(ctx, path);
     }
-  });
+  })();
+}
+
+/** Deletes every row a note owns: the note, the links it writes, its tags and its terms. */
+function forget(ctx: IndexContext, path: string): void {
+  const st = ctx.statements;
+  st.deleteNote.run(path);
+  st.deleteLinksFrom.run(path);
+  st.deleteTags.run(path);
+  st.deleteTerms.run(path);
 }
 
 export function stats(ctx: IndexContext): IndexStats {
@@ -143,11 +133,7 @@ export function getMeta(ctx: IndexContext, key: string): string | undefined {
 }
 
 export function setMeta(ctx: IndexContext, key: string, value: string): void {
-  ctx.db
-    .insert(meta)
-    .values({ key, value })
-    .onConflictDoUpdate({ target: meta.key, set: { value } })
-    .run();
+  ctx.statements.setMeta.run(key, value);
 }
 
 export function fileStates(ctx: IndexContext): Map<string, FileState> {

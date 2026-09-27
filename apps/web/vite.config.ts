@@ -14,7 +14,8 @@ export default defineProject({
       // 127.0.0.1 rather than localhost: Node may resolve localhost to ::1 first while the
       // API server listens on IPv4 only.
       '/api': {
-        target: 'http://127.0.0.1:3737',
+        // The e2e run may start its own API server beside a development server that holds 3737.
+        target: `http://127.0.0.1:${process.env.RHIZOM_E2E_API_PORT ?? '3737'}`,
         changeOrigin: true,
       },
     },

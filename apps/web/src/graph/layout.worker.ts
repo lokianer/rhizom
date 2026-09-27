@@ -13,10 +13,17 @@ import {
   type SimulationNodeDatum,
 } from 'd3-force';
 
-import { alphaDecayFor, layoutTuning, linkDistance, type LayoutPayload } from './layout-model.js';
+import {
+  alphaDecayFor,
+  collideBelowAlpha,
+  layoutTuning,
+  linkDistance,
+  type LayoutPayload,
+} from './layout-model.js';
 
+/** What the page asks of the worker; a data set carries an `epoch` the worker echoes back. */
 export type LayoutRequest =
-  | ({ type: 'data'; alpha: number } & LayoutPayload)
+  | ({ type: 'data'; alpha: number; epoch: number } & LayoutPayload)
   | { type: 'alpha'; alpha: number }
   | { type: 'target'; alphaTarget: number }
   | { type: 'pin'; index: number; x: number; y: number }
@@ -28,6 +35,14 @@ export interface LayoutResponse {
   positions: Float32Array;
   /** True once the layout has settled and no further messages follow. */
   settled: boolean;
+  /**
+   * How many requests the worker had handled when it posted this. Messages cross in flight: a
+   * settle posted just before a hold, a pin or new data arrived says nothing about the layout
+   * after them, and the page can only tell by comparing this with the number it has sent.
+   */
+  handled: number;
+  /** The epoch of the data set these positions belong to; older ones index other nodes. */
+  epoch: number;
 }
 
 interface Node extends SimulationNodeDatum {
@@ -47,6 +62,11 @@ let simulation: Simulation<Node, Link> | null = null;
 let nodes: Node[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 let lastPost = 0;
+/** When and how the collision force joins; see LayoutTuning. */
+let collide = { belowAlpha: 1, strength: 0.7, iterations: 1 };
+/** Requests handled so far and the data set in hand, echoed in every response. */
+let handled = 0;
+let epoch = 0;
 
 function post(settled: boolean): void {
   const positions = new Float32Array(nodes.length * 2);
@@ -54,23 +74,45 @@ function post(settled: boolean): void {
     positions[index * 2] = node.x ?? 0;
     positions[index * 2 + 1] = node.y ?? 0;
   });
-  const message: LayoutResponse = { type: 'positions', positions, settled };
+  const message: LayoutResponse = { type: 'positions', positions, settled, handled, epoch };
   postMessage(message, [positions.buffer]);
   lastPost = Date.now();
 }
 
+/**
+ * How long one slice of ticks may run before the worker looks at its messages again. One tick
+ * per timer made the settling as slow as the browser's timer clamp rather than as slow as the
+ * field: a small field waited 4 ms between ticks of a tenth of that, and a large one lost a few
+ * seconds of its settling to the waits.
+ */
+const SLICE_MS = 8;
+
 function step(): void {
   timer = null;
-  if (!simulation) {
+  const current = simulation;
+  if (!current) {
     return;
   }
-  simulation.tick();
-  const settled = simulation.alpha() < simulation.alphaMin();
+  const until = performance.now() + SLICE_MS;
+  let settled: boolean;
+  do {
+    if (current.alpha() <= collide.belowAlpha && !current.force('collide')) {
+      current.force(
+        'collide',
+        forceCollide<Node>((node) => node.r + 1.5)
+          .strength(collide.strength)
+          .iterations(collide.iterations),
+      );
+    }
+    current.tick();
+    settled = current.alpha() < current.alphaMin();
+  } while (!settled && performance.now() < until);
   if (settled || Date.now() - lastPost >= MIN_POST_INTERVAL_MS) {
     post(settled);
   }
   if (!settled) {
-    // setTimeout rather than a tight loop: incoming messages (a drag, new data) get their turn.
+    // A timer between slices rather than a tight loop: incoming messages (a drag, new data) get
+    // their turn.
     timer = setTimeout(step, 0);
   }
 }
@@ -125,15 +167,25 @@ function build(request: Extract<LayoutRequest, { type: 'data' }>): void {
     .alphaDecay(alphaDecayFor(tuning.ticks))
     .velocityDecay(0.5)
     .stop();
-  if (tuning.collide) {
-    next.force('collide', forceCollide<Node>((node) => node.r + 1.5).strength(0.7));
-  }
+  // The collision force is added by step() once the alpha falls below this — at once for a
+  // small field or one already laid out, a third of the way through a large first layout.
+  collide = {
+    belowAlpha: collideBelowAlpha(tuning, request.positions),
+    strength: tuning.collideStrength,
+    iterations: tuning.collideIterations,
+  };
+  epoch = request.epoch;
   next.alpha(request.alpha);
   simulation = next;
   run();
 }
 
+// Every request but 'stop' runs at least one step, so every request gets an answer — also one
+// that leaves the layout at rest: the page lets the worker sleep only on a settle that has seen
+// all its requests, and would otherwise wait for it forever.
 onmessage = (event: MessageEvent<LayoutRequest>): void => {
+  // Counted first, so a request that fails is still counted and the page is not left waiting.
+  handled += 1;
   const request = event.data;
   switch (request.type) {
     case 'data':
@@ -162,6 +214,7 @@ onmessage = (event: MessageEvent<LayoutRequest>): void => {
         node.fx = null;
         node.fy = null;
       }
+      run();
       return;
     }
     case 'stop':

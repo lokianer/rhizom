@@ -77,14 +77,14 @@ export function NotePreview({
   const { hash } = useLocation();
   const container = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
-  const notes = useVaultStore((state) => state.notes);
+  const noteIndex = useVaultStore((state) => state.noteIndex);
   const assets = useVaultStore((state) => state.assets);
   const sources = useNoteSources((state) => state.sources);
   const request = useNoteSources((state) => state.request);
   const answers = useQueryResults((state) => state.results);
   const requestQuery = useQueryResults((state) => state.request);
   const terms = useVaultStore((state) => state.terms);
-  const resolver = useMemo(() => createResolver(notes), [notes]);
+  const resolver = useMemo(() => createResolver(noteIndex), [noteIndex]);
   const assetResolver = useMemo(() => createAssetResolver(assets), [assets]);
   // Memoised on the term list alone: the vault store replaces every array after each save, and
   // rebuilding the matcher for a keystroke would be the expensive part of this render.

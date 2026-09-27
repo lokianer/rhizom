@@ -3,7 +3,8 @@ import { EditorState } from '@codemirror/state';
 import { createTermMatcher, type NoteSummary } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
-import { buildNoteIndex, editorContext, type EditorContextValue } from './context.js';
+import { buildNoteIndex } from '../routing/links.js';
+import { editorContext, type EditorContextValue } from './context.js';
 import { baseExtensions } from './extensions.js';
 import { commandChange, definitionChange, slashCompletion } from './slash.js';
 

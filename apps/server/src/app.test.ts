@@ -7,6 +7,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
+import { EventEmitter } from 'node:events';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -28,9 +29,10 @@ import type {
   VaultInfo,
 } from '@rhizom/core';
 import type { FastifyInstance } from 'fastify';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { buildApp } from './app.js';
+import { MAX_EVENT_LISTENERS } from './vault/context.js';
 
 const pkg = createRequire(import.meta.url)('../package.json') as { version: string };
 
@@ -568,6 +570,58 @@ describe('vault API', () => {
       expect(received).toContain('"Streamed.md"');
     } finally {
       controller.abort();
+    }
+  });
+});
+
+describe('GET /api/events', () => {
+  it('takes the index listener of every stream away again once the stream closes', async () => {
+    // The app does not hand out the context's emitter; it is caught as the one whose listener
+    // limit the context raises.
+    const limits = vi.spyOn(EventEmitter.prototype, 'setMaxListeners');
+    const root = makeVault();
+    const app = await buildApp({
+      webDist: false,
+      vault: { dir: root, dataDir: ':memory:', watch: false },
+    });
+    const call = limits.mock.calls.findIndex(([limit]) => limit === MAX_EVENT_LISTENERS);
+    const events = limits.mock.contexts[call];
+    limits.mockRestore();
+    const streams = [new AbortController(), new AbortController(), new AbortController()];
+    try {
+      if (!(events instanceof EventEmitter)) {
+        throw new Error('the vault context raised no emitter to its listener limit');
+      }
+      const address = await app.listen({ port: 0, host: '127.0.0.1' });
+      const start = events.listenerCount('index');
+      const decoder = new TextDecoder();
+      for (const stream of streams) {
+        const response = await fetch(`${address}/api/events`, { signal: stream.signal });
+        const reader = response.body?.getReader();
+        if (reader === undefined) {
+          throw new Error('the event stream has no body');
+        }
+        // The greeting is written in the same turn the listener is added.
+        const first = await reader.read();
+        expect(decoder.decode(first.value as Uint8Array)).toContain(': connected');
+      }
+      expect(events.listenerCount('index')).toBe(start + streams.length);
+
+      for (const stream of streams) {
+        stream.abort();
+      }
+      await vi.waitFor(
+        () => {
+          expect(events.listenerCount('index')).toBe(start);
+        },
+        { timeout: 5_000, interval: 25 },
+      );
+    } finally {
+      for (const stream of streams) {
+        stream.abort();
+      }
+      await app.close();
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });

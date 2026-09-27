@@ -73,8 +73,12 @@ Every run of CI attaches a ready-to-run package to its summary page: the
 
 ```
 cd server
-RHIZOM_VAULT_DIR=../example-vault node dist/server.js
+RHIZOM_VAULT_DIR=../example-vault node --max-semi-space-size=16 dist/server.js
 ```
+
+The flag is optional: it keeps Node 24 from growing its young heap to 128 MB, which is about 100 MB
+of the server's peak memory at start, whatever the size of the vault.
+`pnpm --filter @rhizom/server start` passes it too.
 
 ### From source
 
@@ -113,7 +117,7 @@ Phases 1 and 2 are what you can run today; the later phases are planned. The
 | Area             | Highlights                                                                                             | Phase |
 | ---------------- | ------------------------------------------------------------------------------------------------------ | ----- |
 | Editor           | CodeMirror 6 with live preview, `[[` autocomplete with fuzzy search, create notes from missing links   | 1 ✓   |
-| Bubble graph     | Size by link degree, clusters by folder or tag, local graph, tag filters, SVG/PNG export               | 1 ✓   |
+| Bubble graph     | WebGL2, size by links, folder/tag clusters as territories, legend, local graph, tag filters, SVG/PNG   | 1 ✓   |
 | Wiki mode        | Read-only view of the whole vault with rendered links, navigation and full-text search                 | 1 ✓   |
 | Knowledge        | Definitions with glossary and hover tooltips, unlinked mentions, transclusion, templates, query blocks | 2 ✓   |
 | Editor, further  | Outline, callouts, Mermaid, task ticks, zen and Vim modes, find and replace, block references          | 2 ✓   |

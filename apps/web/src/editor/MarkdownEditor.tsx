@@ -1,16 +1,11 @@
 import { Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import type { NoteSummary, TemplateSettings, TermMatcher } from '@rhizom/core';
+import type { NoteIndex, NoteSummary, TemplateSettings, TermMatcher } from '@rhizom/core';
 import { useCallback, useEffect, useMemo, useRef, type JSX } from 'react';
 
 import { useUiStore } from '../store/ui.js';
 import { copyBlockLink, type BlockLinkResult } from './block-link.js';
-import {
-  buildNoteIndex,
-  editorContext,
-  type EditorContextValue,
-  type EditorHandlers,
-} from './context.js';
+import { editorContext, type EditorContextValue, type EditorHandlers } from './context.js';
 import './editor.css';
 import { baseExtensions, readOnlyExtension } from './extensions.js';
 
@@ -24,6 +19,8 @@ export interface MarkdownEditorProps {
   readOnly?: boolean | undefined;
   /** Every note in the vault, for `[[` autocompletion. */
   notes: readonly NoteSummary[];
+  /** The same notes as a link resolver's index, for telling a link to nowhere apart. */
+  index: NoteIndex;
   /** The terms the vault defines, for marking them and explaining them on hover. */
   terms: TermMatcher;
   /** Where the vault keeps its templates, and what its placeholders default to. */
@@ -107,6 +104,7 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
     externalContent,
     readOnly = false,
     notes,
+    index,
     terms,
     templates,
     commandLabels,
@@ -140,7 +138,6 @@ export function MarkdownEditor(props: MarkdownEditorProps): JSX.Element {
   /** The content last handed to `onChange`, so the flush on unmount knows what is pending. */
   const reportedRef = useRef(content);
 
-  const index = useMemo(() => buildNoteIndex(notes), [notes]);
   const context = useMemo<EditorContextValue>(
     () => ({ path, notes, index, terms, templates, commandLabels, locale, handlers: handlersRef }),
     [path, notes, index, terms, templates, commandLabels, locale],

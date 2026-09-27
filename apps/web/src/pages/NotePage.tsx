@@ -82,6 +82,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const notes = useVaultStore((state) => state.notes);
+  const noteIndex = useVaultStore((state) => state.noteIndex);
   const terms = useVaultStore((state) => state.terms);
   const templates = useVaultStore((state) => state.info?.templates) ?? NO_TEMPLATES;
   const refreshVault = useVaultStore((state) => state.refresh);
@@ -118,7 +119,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
   // Rendering the preview yields to typing: the editor never waits for it.
   const previewContent = useDeferredValue(draft);
 
-  const resolver = useMemo(() => createResolver(notes), [notes]);
+  const resolver = useMemo(() => createResolver(noteIndex), [noteIndex]);
   // Memoised on the term list, not on the context: the vault store replaces every array after
   // each save, and rebuilding the matcher would rebuild every decoration layer with it.
   const matcher = useMemo(() => createTermMatcher(terms), [terms]);
@@ -363,6 +364,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
           content={doc.content}
           externalContent={externalContent}
           notes={notes}
+          index={noteIndex}
           terms={matcher}
           templates={templates}
           commandLabels={commandLabels}

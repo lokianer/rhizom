@@ -11,6 +11,7 @@ import { unified } from 'unified';
 import { parse as parseYaml } from 'yaml';
 
 import type { Heading, LinkKind } from '../api.js';
+import { CIRCULAR_FRONTMATTER, refersToItself } from './circular.js';
 import { remarkWikilink } from './remark-wikilink.js';
 import { normaliseTag } from './tagrefs.js';
 import { PLACEHOLDER } from './template.js';
@@ -289,6 +290,9 @@ function readFrontmatter(tree: Root): { frontmatter: Record<string, unknown>; er
   }
   try {
     const parsed: unknown = parseYaml(first.value);
+    if (refersToItself(parsed)) {
+      return { frontmatter: {}, error: CIRCULAR_FRONTMATTER };
+    }
     if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return { frontmatter: parsed as Record<string, unknown> };
     }

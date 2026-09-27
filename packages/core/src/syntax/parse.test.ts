@@ -160,6 +160,13 @@ describe('parseNote edge cases', () => {
     expect(note.title).toBe('Fallback Heading');
   });
 
+  it('reports frontmatter that refers to itself instead of keeping a value JSON cannot hold', () => {
+    const note = parseNote('---\nmeta: &x\n  self: *x\n---\n# Loop\n', { fallbackTitle: 'F' });
+    expect(note.frontmatter).toEqual({});
+    expect(note.frontmatterError).toContain('refers to itself');
+    expect(() => JSON.stringify(note)).not.toThrow();
+  });
+
   it('ignores frontmatter that is not a mapping', () => {
     expect(parseNote('---\n- a\n- b\n---\ntext', { fallbackTitle: 'F' }).frontmatter).toEqual({});
   });

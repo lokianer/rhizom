@@ -1,11 +1,14 @@
 // The derived index of one vault: notes, links, tags and full-text search on top of SQLite.
 // Everything in here can be rebuilt from the Markdown files; nothing here is a source of truth.
 import {
+  buildGraph,
   createNoteIndex,
   type Backlink,
   type GlossaryEntry,
+  type GraphData,
   type GraphLink,
   type GraphNote,
+  type GraphOptions,
   type NoteLink,
   type NoteSummary,
   type Query,
@@ -26,6 +29,7 @@ import * as notesStore from './index/notes.js';
 import * as queryStore from './index/query.js';
 import * as resolutionStore from './index/resolution.js';
 import * as searchStore from './index/search.js';
+import { prepareWriteStatements } from './index/statements.js';
 import * as tagsStore from './index/tags.js';
 import * as treeStore from './index/tree.js';
 import type {
@@ -49,13 +53,23 @@ export type {
 export class VaultIndex {
   private readonly ctx: IndexContext;
 
+  /**
+   * The whole-vault graph, built once per clustering and kept until the index changes. The
+   * graph view asks for all of it, and building it reads every link in the vault: at 2,000 notes
+   * and 17,000 links that was 33 MB of garbage and 50-100 ms per request, for an answer that
+   * stays the same until something is written. Every write goes through `upsertNote`,
+   * `removeNote` or `resolveAll` — a save, a rename, a delete, a watcher batch and a rebuild
+   * alike — and each of them empties this before it writes.
+   */
+  private readonly graphs = new Map<GraphOptions['clusterBy'], GraphData>();
+
   private constructor(sqlite: Database.Database) {
     const db = drizzle(sqlite);
     const resolver = createNoteIndex();
     for (const row of db.select({ path: notes.path, aliases: notes.aliases }).from(notes).all()) {
       resolver.add(row.path, row.aliases);
     }
-    this.ctx = { sqlite, db, resolver };
+    this.ctx = { sqlite, db, resolver, statements: prepareWriteStatements(sqlite) };
   }
 
   static open(file: string): VaultIndex {
@@ -71,11 +85,16 @@ export class VaultIndex {
     this.ctx.sqlite.close();
   }
 
+  // The cache is emptied before the write rather than after it: a write that throws half-way
+  // has rolled its transaction back, and a graph built again from the unchanged rows is merely
+  // the same graph once more, while one kept across a write that did land would be wrong.
   upsertNote(input: IndexNoteInput, options: UpsertOptions = {}): void {
+    this.graphs.clear();
     notesStore.upsertNote(this.ctx, input, options);
   }
 
   removeNote(path: string, options: UpsertOptions = {}): void {
+    this.graphs.clear();
     notesStore.removeNote(this.ctx, path, options);
   }
 
@@ -88,6 +107,7 @@ export class VaultIndex {
    * end gives the same answer, because a link is resolved against the finished note index.
    */
   resolveAll(): void {
+    this.graphs.clear();
     resolutionStore.resolveAll(this.ctx);
   }
 
@@ -227,5 +247,21 @@ export class VaultIndex {
 
   graphInput(): { notes: GraphNote[]; links: GraphLink[] } {
     return graphStore.graphInput(this.ctx);
+  }
+
+  /**
+   * The whole vault as a graph, from the cache while nothing has been written since it was
+   * built. The same object is handed to every caller, so nobody may change it: `localGraph`
+   * builds its answer from new arrays and leaves its input alone.
+   */
+  graph(clusterBy: GraphOptions['clusterBy']): GraphData {
+    const cached = this.graphs.get(clusterBy);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const input = this.graphInput();
+    const graph = buildGraph(input.notes, input.links, { clusterBy });
+    this.graphs.set(clusterBy, graph);
+    return graph;
   }
 }

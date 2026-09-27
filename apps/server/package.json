@@ -1,6 +1,6 @@
 {
   "name": "@rhizom/server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Rhizom REST API (Fastify) that also serves the built web app",
   "license": "AGPL-3.0-only",
@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -b",
-    "start": "node dist/server.js",
+    "start": "node --max-semi-space-size=16 dist/server.js",
     "openapi": "tsx src/bin/export-openapi.ts && prettier --write openapi.json",
     "test": "vitest run"
   },
