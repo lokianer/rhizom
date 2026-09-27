@@ -5,13 +5,14 @@ session and commit it with the rest of the work.
 
 ## Where it stands
 
-Branch `lokianer/feat-graph-fancier`, **not pushed yet**: four commits on top of `main` —
-`e4f7a2c` fix(core) (frontmatter that contains itself or expands too far), `9ed7810`
-perf(server) (the memory slice), `59c7051` feat(graph) (the WebGL2 field) and the 0.2.1 release
-commit, which carries this handoff. The whole local CI sequence was green before the commits
-(85/85 e2e), and the perf commit was checked on its own in a separate worktree. **Next: push,
-open the pull request, watch CI on all three systems, merge, tag `v0.2.1`.** Phase 3 (D&D mode) is
-still not begun — wait for the maintainer's go.
+**0.2.1 is released**: pull request #5 (branch `lokianer/feat-graph-fancier`) is merged into
+`main` with a merge commit and tagged `v0.2.1`, with a GitHub release. Its commits: `e4f7a2c`
+fix(core) (frontmatter that contains itself or expands too far), `9ed7810` perf(server) (the
+memory slice), `59c7051` feat(graph) (the WebGL2 field), `efe458e` the release commit, `034b108`
+test(e2e) (a CodeQL finding in a test helper) and this handoff. CI was green 11/11 on the pull
+request (three systems × Node 22/24, Docker, CodeQL, dependency review), the local sequence
+before every push, and the perf commit on its own in a separate worktree. **Phase 3 (D&D mode)
+is next and not begun** — wait for the maintainer's go.
 
 ## What this session did
 
@@ -38,8 +39,9 @@ prototype judging: `docs/specs/2026-09-27-graph-renderer.md`; reasons in `DECISI
 
 ## Open, in the order I would take them
 
-1. **Push, pull request, CI, merge, tag `v0.2.1`** — only with the maintainer's go.
-2. **Start phase 3** once the maintainer says so.
+1. **Start phase 3** once the maintainer says so.
+2. **Watch CI on `main`** after the merge, and the e2e suite on CI in general: the field tests
+   wait for the layout to come to rest and were tuned for SwiftShader runners.
 3. **An error boundary around the note page.** The router's default error screen is what catches
    a render error today; the frontmatter fix removed the one known trigger.
 4. **The milieu field still hashes its colours**, so a folder can have another colour there than
