@@ -117,6 +117,32 @@ describe('findFrontmatter', () => {
     expect(block?.body).toBe('a: [1, 2\nb: 3\n');
   });
 
+  it('refuses a block that refers to itself, and keeps an alias that only repeats a value', () => {
+    const circular = findFrontmatter('---\nmeta: &x\n  self: *x\n---\n# Loop\n');
+    expect(circular?.error).toContain('refers to itself');
+    expect(circular?.values).toEqual({});
+    expect(() => JSON.stringify(circular)).not.toThrow();
+
+    const repeated = findFrontmatter('---\nbase: &b { a: 1 }\ncopy: *b\n---\n');
+    expect(repeated?.error).toBeUndefined();
+    expect(repeated?.values).toEqual({ base: { a: 1 }, copy: { a: 1 } });
+  });
+
+  it('keeps the complaint about aliases that expand past the parser limit rather than throwing', () => {
+    // Ten wide and nine deep: a billion entries if it were expanded.
+    const levels = ['a: &a [x, x, x, x, x, x, x, x, x, x]'];
+    for (const [previous, current] of ['ab', 'bc', 'cd', 'de', 'ef', 'fg', 'gh', 'hi']) {
+      levels.push(
+        `${String(current)}: &${String(current)} [${Array(10)
+          .fill(`*${String(previous)}`)
+          .join(', ')}]`,
+      );
+    }
+    const block = findFrontmatter(`---\n${levels.join('\n')}\n---\n# Bomb\n`);
+    expect(block?.error).toContain('alias');
+    expect(block?.values).toEqual({});
+  });
+
   it('has no values when the fences hold something other than a mapping', () => {
     const block = findFrontmatter('---\n- a\n- b\n---\n');
 

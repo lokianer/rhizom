@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A note whose frontmatter contains itself through a YAML alias (`meta: &x` with `self: *x`
+  inside it) no longer stops the server: the index could not store such a value, so saving the
+  note failed and the vault did not open again. Nor do aliases that expand past the YAML
+  parser's limit break the note: the properties panel threw on them, so the note would not open
+  in the editor, and a rename of any tag the note carried failed. Both are now read like any
+  frontmatter the parser rejects, with the complaint kept and no values.
 - A block id is read by walking the end of the line backwards rather than with a regular
   expression anchored at the end. The pattern was quadratic on a line made of nothing but spaces
   and tabs — the engine starts again at every one of them — and a note is somebody else's file.
