@@ -3,13 +3,13 @@
 // vault; the browser expands an entry into the names it answers to with `glossaryTerms`.
 import { Type } from '@sinclair/typebox';
 
-import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { ErrorSchema, GlossaryEntrySchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
-export function registerTermRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerTermRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/glossary',
+    '/glossary',
     {
       schema: {
         tags: ['terms'],
@@ -17,6 +17,6 @@ export function registerTermRoutes(app: TypedApp, context: () => VaultContext): 
         response: { 200: Type.Array(GlossaryEntrySchema), 503: ErrorSchema },
       },
     },
-    () => context().index.glossary(),
+    (request) => context(request).index.glossary(),
   );
 }

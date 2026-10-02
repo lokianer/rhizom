@@ -15,16 +15,18 @@ describe('isImagePath', () => {
 
 describe('imageUrl', () => {
   it('serves vault paths through the asset route', () => {
-    expect(imageUrl('assets/map.png', NOTE)).toBe('/api/assets/assets/map.png');
+    expect(imageUrl('assets/map.png', NOTE)).toBe('/api/v/default/assets/assets/map.png');
   });
 
   it('encodes each segment but keeps the separators', () => {
-    expect(imageUrl('assets/a b/c&d.png', NOTE)).toBe('/api/assets/assets/a%20b/c%26d.png');
+    expect(imageUrl('assets/a b/c&d.png', NOTE)).toBe(
+      '/api/v/default/assets/assets/a%20b/c%26d.png',
+    );
   });
 
   it('resolves explicitly relative paths against the note folder', () => {
-    expect(imageUrl('./map.png', NOTE)).toBe('/api/assets/Campaign/NPCs/map.png');
-    expect(imageUrl('../map.png', NOTE)).toBe('/api/assets/Campaign/map.png');
+    expect(imageUrl('./map.png', NOTE)).toBe('/api/v/default/assets/Campaign/NPCs/map.png');
+    expect(imageUrl('../map.png', NOTE)).toBe('/api/v/default/assets/Campaign/map.png');
   });
 
   it('leaves external and site-absolute URLs alone', () => {

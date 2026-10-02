@@ -1,7 +1,7 @@
-// The two palette commands that have something to decide: which note "a random note" lands on,
-// and what a copy of a note is called. Kept apart from Layout because the web unit tests run
+// The palette commands that have something to decide: which note "a random note" lands on,
+// what a copy of a note is called, and which vaults there are to switch to. Kept apart from Layout because the web unit tests run
 // without a DOM, so anything worth asserting has to be a plain function.
-import { folderOf, noteNameOf, type NoteSummary } from '@rhizom/core';
+import { folderOf, noteNameOf, type NoteSummary, type VaultSummary } from '@rhizom/core';
 
 /**
  * A note to stumble into. A Zettelkasten is worth walking through without a destination, and the
@@ -47,4 +47,17 @@ export function copyPath(path: string, taken: ReadonlySet<string>): string {
       return candidate;
     }
   }
+}
+
+/**
+ * Whether there is a vault to switch to at all. With one registered, the setup looks exactly as
+ * it did before vaults were in the URL: no switcher, no command.
+ */
+export function showsVaultSwitcher(vaults: readonly VaultSummary[]): boolean {
+  return vaults.length > 1;
+}
+
+/** The vaults the palette offers to switch to: all but the one this tab is in. */
+export function otherVaults(vaults: readonly VaultSummary[], current: string): VaultSummary[] {
+  return vaults.filter((vault) => vault.id !== current);
 }

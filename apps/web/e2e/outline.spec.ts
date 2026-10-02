@@ -37,10 +37,13 @@ test('the outline lists the open note and follows a heading into it', async ({ p
   // The address of a heading is the note plus its slug — the same one a [[Note#Heading]] link
   // resolves to, so the outline and a link inside a note lead to the same place.
   const district = rows.filter({ hasText: 'Tidewater' });
-  await expect(district).toHaveAttribute('href', '/notes/Campaign/Places/Silverstadt#tidewater');
+  await expect(district).toHaveAttribute(
+    'href',
+    '/v/default/notes/Campaign/Places/Silverstadt#tidewater',
+  );
 
   await district.click();
-  await expect(page).toHaveURL('/notes/Campaign/Places/Silverstadt#tidewater');
+  await expect(page).toHaveURL('/v/default/notes/Campaign/Places/Silverstadt#tidewater');
   // The row stays marked: the address is what says where the reader asked to be.
   await expect(district).toHaveAttribute('aria-current', 'location');
   await expect(page.locator('.cm-content')).toBeVisible();

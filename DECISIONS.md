@@ -183,7 +183,8 @@ the working directory). The Docker image sets `/vault` and docker-compose mounts
 server falls back to the repository's `examples/vault` and logs that it did. There is no folder
 picker in the web UI in Phase 1: choosing arbitrary server paths from a browser without
 authentication (Phase 4) would expose the host file system; the desktop app (Phase 5) gets a
-native picker. Switching vaults means restarting with another path.
+native picker. Switching vaults meant restarting with another path, until 2026-10-02 ("More than
+one vault").
 
 ## 2026-09-18 — Phase 1: note identity and link resolution
 
@@ -1177,3 +1178,47 @@ first build, before the watcher exists. It was evaluated and deliberately not re
 
 Rhizom's own writes echo back through the watcher either way, and stay harmless: `indexPaths`
 compares content hashes, so a file the API has just indexed changes nothing downstream.
+
+## 2026-10-02 — More than one vault
+
+**Registered by the operator, through the environment.** `RHIZOM_VAULTS` lists `id=path` pairs
+separated by `;`; `RHIZOM_VAULT_DIR` stays as the one-vault shorthand with the id `default`, and
+setting both stops the start with a message rather than guessing which one was meant. A list in
+the data directory was the alternative; an environment variable is what Docker, compose files and
+a native start already speak, and it needs no file format of its own. There is no way to register
+a vault from the browser: a browser that may name a path is a browser that may read any folder on
+the machine, which a self-hosted server without a login must never allow. The Docker image sets
+`RHIZOM_VAULTS=default=/vault` instead of `RHIZOM_VAULT_DIR`, so a compose file that names its own
+vaults replaces the default instead of colliding with it.
+
+**One URL space.** The browser always works under `/v/<id>/…` and the API under `/api/v/<id>/…`,
+even with a single vault, so there is one code path rather than two modes. Addresses from before
+(`/notes/…`, `/graph?…`) redirect to the same page in the vault the browser used last, query and
+fragment kept, so bookmarks survive. With one vault there is no switcher and no palette command,
+and the page looks as it did. The old unprefixed API routes were removed rather than aliased: the
+web app was their only client, and Rhizom is `0.x`.
+
+**Opened on first use, closed when idle.** A `VaultPool` opens a vault's index, sync and watcher
+on its first request and closes them after ten minutes without one, so ten registered vaults are
+not ten open databases. An open event stream — a tab looking at the vault — holds it open. Changes
+made while a vault was closed reach the index through the incremental sync every open already
+runs; the files are the truth, and nothing is lost by closing. A request that arrives while its
+vault is closing waits for the close and opens it again.
+
+**One index per vault.** Each vault keeps `<data>/<id>/index.sqlite`. The single-vault file at
+`<data>/index.sqlite` was not migrated: it is derived, so the first start rebuilds it once, and
+the old file can be deleted by hand.
+
+**Assets are served per vault.** `@fastify/static` is registered once per vault under
+`/api/v/<id>/assets/`, because the set of vaults is fixed at start-up and each registration is
+bound to a root. A path in one vault is never resolved against another.
+
+**Links do not cross vaults.** Each index knows only its own notes, so a name resolves inside the
+vault it is written in. A link only Rhizom could follow across vaults would break the promise that
+the files are the truth.
+
+**The web app reads the vault from one place.** `routing/vault.ts` holds the vault of the tab; the
+`/v/:vault` loader sets it, empties the stores of the vault before (a load still on its way for
+that vault is dropped by a generation counter) and points the per-vault interface state —
+open folders, the milieu field, the graph depth — at that vault's own key in `localStorage`. The
+API client, the event stream and `noteHref` read it, so no component threads the id through.

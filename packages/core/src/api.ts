@@ -1,5 +1,6 @@
 // Request and response contracts of the REST API, shared by apps/server and apps/web.
-// Paths are vault paths (see paths.ts). Timestamps are ISO 8601 strings.
+// Paths are vault paths (see paths.ts). Timestamps are ISO 8601 strings. Every route of a vault
+// lives under `/api/v/{vault}`; the comments below leave the `v/{vault}` out.
 
 import type { GraphData } from './vault/graph.js';
 import type { Mention } from './vault/mentions.js';
@@ -10,6 +11,13 @@ export interface HealthResponse {
   status: 'ok';
   /** Version of the running server package. */
   version: string;
+}
+
+/** `GET /api/vaults`: a registered vault as the switcher sees it, never its path on disk. */
+export interface VaultSummary {
+  id: string;
+  /** Folder name of the vault. */
+  name: string;
 }
 
 /** `GET /api/vault` */

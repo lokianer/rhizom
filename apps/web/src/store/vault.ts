@@ -22,6 +22,8 @@ export interface VaultState {
   error: string | null;
   /** The server runs, but no vault is configured. */
   noVault: boolean;
+  /** The vault in the address is not one the server knows. */
+  vaultMissing: boolean;
   info: VaultInfo | null;
   notes: NoteSummary[];
   /**
@@ -104,6 +106,10 @@ function keepNoteIndex(
   return index;
 }
 
+// Which vault the store is filled for. Every switch raises it, and a load or reload that started
+// under an older one belongs to the vault the tab has left: its answer is dropped, not stored.
+let epoch = 0;
+
 let refreshesStarted = 0;
 /** The newest reload whose result is in the store; an older one that finishes later is dropped. */
 let refreshApplied = 0;
@@ -117,37 +123,58 @@ export function refreshCount(): number {
   return refreshesStarted;
 }
 
+type VaultData = Omit<VaultState, 'load' | 'refresh'>;
+
+function emptyVault(): VaultData {
+  return {
+    status: 'idle',
+    error: null,
+    noVault: false,
+    vaultMissing: false,
+    info: null,
+    notes: [],
+    noteIndex: buildNoteIndex([]),
+    tree: [],
+    tags: [],
+    assets: [],
+    terms: [],
+  };
+}
+
+/** Empties the store for another vault; whatever is still on its way for this one is dropped. */
+export function resetVaultStore(): void {
+  epoch += 1;
+  useVaultStore.setState(emptyVault());
+}
+
 export const useVaultStore = create<VaultState>()((set, get) => ({
-  status: 'idle',
-  error: null,
-  noVault: false,
-  info: null,
-  notes: [],
-  noteIndex: buildNoteIndex([]),
-  tree: [],
-  tags: [],
-  assets: [],
-  terms: [],
+  ...emptyVault(),
   load: async () => {
     if (get().status === 'loading') {
       return;
     }
-    set({ status: 'loading', error: null, noVault: false });
+    const started = epoch;
+    set({ status: 'loading', error: null, noVault: false, vaultMissing: false });
     try {
       const loaded = await fetchAll();
+      if (started !== epoch) {
+        return;
+      }
       set((state) => ({
         ...loaded,
         noteIndex: keepNoteIndex(state, loaded.notes),
         status: 'ready',
         error: null,
         noVault: false,
+        vaultMissing: false,
       }));
     } catch (error) {
-      if (!isAbortError(error)) {
+      if (started === epoch && !isAbortError(error)) {
         set({
           status: 'error',
           error: error instanceof Error ? error.message : String(error),
           noVault: error instanceof ApiRequestError && error.status === 503,
+          vaultMissing: error instanceof ApiRequestError && error.status === 404,
         });
       }
     }
@@ -155,8 +182,12 @@ export const useVaultStore = create<VaultState>()((set, get) => ({
   refresh: async () => {
     refreshesStarted += 1;
     const started = refreshesStarted;
+    const startedIn = epoch;
     try {
       const loaded = await fetchAll();
+      if (startedIn !== epoch) {
+        return;
+      }
       // Reloads can overlap, and they finish in whatever order the network allows. A save no
       // longer runs a reload of its own after the answer, which used to paper over that, so the
       // newest one started wins and an older one arriving late is dropped.
@@ -171,6 +202,7 @@ export const useVaultStore = create<VaultState>()((set, get) => ({
         status: 'ready',
         error: null,
         noVault: false,
+        vaultMissing: false,
       }));
     } catch {
       // A failed background refresh keeps the previous data; the next event tries again.

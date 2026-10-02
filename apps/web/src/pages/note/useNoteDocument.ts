@@ -10,6 +10,7 @@ import type { NoteDocument } from '@rhizom/core';
 import { api, ApiRequestError, isAbortError } from '../../api/client.js';
 import type { IndexRevisions } from '../../app/outlet.js';
 import { revisionOf } from '../../app/useIndexEvents.js';
+import { currentVault } from '../../routing/vault.js';
 import { refreshCount, useVaultStore } from '../../store/vault.js';
 
 export type LoadState = 'loading' | 'ready' | 'missing' | 'error';
@@ -40,6 +41,9 @@ export function useNoteDocument(path: string, revisions: IndexRevisions, t: TFun
   const pending = useRef<string | null>(null);
   const hashRef = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The vault this note was opened in. The page is remounted for another vault, but its last
+  // save can still run after the tab has started to switch — and must land where it came from.
+  const [vault] = useState(currentVault);
 
   const applyLoaded = useCallback((loaded: NoteDocument) => {
     hashRef.current = loaded.hash;
@@ -84,7 +88,9 @@ export function useNoteDocument(path: string, revisions: IndexRevisions, t: TFun
       setSaveState('saving');
       try {
         const refreshesBefore = refreshCount();
-        const saved = await api.saveNote(path, { content }, hashRef.current ?? undefined);
+        const saved = await api.saveNote(path, { content }, hashRef.current ?? undefined, {
+          vault,
+        });
         hashRef.current = saved.hash;
         pending.current = null;
         setDoc(saved);
@@ -106,7 +112,7 @@ export function useNoteDocument(path: string, revisions: IndexRevisions, t: TFun
         setMessage(error instanceof Error ? error.message : String(error));
       }
     },
-    [path, refreshVault, t],
+    [path, refreshVault, t, vault],
   );
 
   const scheduleSave = useCallback(
@@ -136,10 +142,10 @@ export function useNoteDocument(path: string, revisions: IndexRevisions, t: TFun
       }
       const unsaved = pending.current;
       if (unsaved !== null) {
-        void api.saveNote(path, { content: unsaved }, hashRef.current ?? undefined);
+        void api.saveNote(path, { content: unsaved }, hashRef.current ?? undefined, { vault });
       }
     };
-  }, [path]);
+  }, [path, vault]);
 
   // The file changed outside Rhizom: take the new text over when nothing is unsaved.
   // Counted rather than signalled: one watcher batch can report two events in a single render,

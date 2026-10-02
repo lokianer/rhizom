@@ -61,7 +61,9 @@ export const useNoteSources = create<NoteSourceState>()((set, get) => ({
         }));
       })
       .catch((error: unknown) => {
-        if (error instanceof ApiRequestError && error.status === 404) {
+        // A 404 that started before a rebuild or a vault switch speaks of a vault that is no
+        // longer the one on screen.
+        if (error instanceof ApiRequestError && error.status === 404 && stampOf(path) === started) {
           gone.add(path);
         }
       })

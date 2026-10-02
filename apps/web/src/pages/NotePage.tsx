@@ -36,6 +36,7 @@ import { useVaultStore } from '../store/vault.js';
 import { createResolver } from '../routing/links.js';
 import type { OutletContext } from '../app/outlet.js';
 import { noteHref, notePathFromParam } from '../routing/paths.js';
+import { vaultHref } from '../routing/vault.js';
 import { revisionElsewhere } from '../app/useIndexEvents.js';
 import { SaveStatus } from './note/SaveStatus.js';
 import { useNoteDocument } from './note/useNoteDocument.js';
@@ -204,7 +205,7 @@ function NoteView({ path, revisions }: NoteViewProps) {
     void api
       .deleteNote(path)
       .then(() => refreshVault())
-      .then(() => navigate('/'));
+      .then(() => navigate(vaultHref('/')));
   }, [cancelPending, navigate, path, refreshVault]);
 
   /**

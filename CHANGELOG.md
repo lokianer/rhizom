@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- More than one vault: `RHIZOM_VAULTS` registers several as `id=path` pairs separated by
+  semicolons (`dnd=/srv/dnd;thesis=/srv/notes`), and each lives at its own address, `/v/<id>/…`,
+  so a link into one is a link, a bookmark works and two tabs can hold two vaults at once. A
+  switcher in the header and a "Switch to vault" command in the palette move between them; with
+  one vault neither is shown. Only registered vaults can be opened — the browser never names a
+  folder — and links never cross from one vault into another. A vault is opened with its first
+  request and closed again after ten minutes without one, unless a tab is still watching it. The
+  open folders, the milieu field and the graph depth are remembered per vault.
+- An address that names a vault the server does not know says so and lists the ones it does.
+
+### Changed
+
+- **Breaking, for anyone scripting the API:** every vault route moved under `/api/v/{vault}/…`
+  (`/api/notes` is now `/api/v/default/notes` on a one-vault setup); `/api/vaults` lists the
+  registered ids. `/api/health` stays where it was.
+- Addresses gained the vault: `/notes/Home` is now `/v/default/notes/Home`. The old addresses
+  redirect, query and fragment included, so bookmarks keep working.
+- The index moved to `<data>/<id>/index.sqlite`, one per vault. The first start after the upgrade
+  rebuilds it once; the old `<data>/index.sqlite` can be deleted.
+- The Docker image sets `RHIZOM_VAULTS=default=/vault` instead of `RHIZOM_VAULT_DIR`. A container
+  started with `RHIZOM_VAULT_DIR` set as well stops with a message saying to set one of the two.
+
 ## [0.2.1] - 2026-09-27
 
 ### Added

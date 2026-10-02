@@ -50,8 +50,11 @@ connections. Every vault doubles as a navigable wiki.
 
 ## Quick start
 
-Rhizom serves one vault: a folder of Markdown files, for example an existing Obsidian vault.
-Notes are read and written as files; the SQLite index next to them can be deleted at any time.
+Rhizom serves a vault: a folder of Markdown files, for example an existing Obsidian vault. Notes
+are read and written as files; the SQLite index next to them can be deleted at any time. One server
+can serve several vaults — one per campaign, one per project — each at its own address
+(`/v/<id>/…`), with a switcher in the header. Only the vaults the operator registers can be
+opened; the browser never names a folder.
 
 ### With Docker
 
@@ -93,18 +96,22 @@ RHIZOM_VAULT_DIR=/path/to/your/vault NODE_ENV=production pnpm --filter @rhizom/s
 <details>
 <summary><b>Settings</b> — every one an environment variable</summary>
 
-On Windows PowerShell, set them with `$env:RHIZOM_VAULT_DIR = 'C:\notes'`.
+On Windows PowerShell, set them with `$env:RHIZOM_VAULT_DIR = 'C:\notes'`. Set `RHIZOM_VAULTS` or
+`RHIZOM_VAULT_DIR`, not both; an id is lower-case letters, digits and dashes. A vault nobody has
+looked at for ten minutes is closed, and opened again with its next request.
 
 | Variable              | Default                             | Meaning                                                             |
 | --------------------- | ----------------------------------- | ------------------------------------------------------------------- |
-| `RHIZOM_VAULT_DIR`    | `examples/vault` outside production | The folder with your notes                                          |
-| `RHIZOM_DATA_DIR`     | `./data`                            | Where the SQLite index lives; it is derived data and safe to delete |
+| `RHIZOM_VAULTS`       | —                                   | Several vaults as `id=path` pairs: `dnd=/srv/dnd;thesis=/srv/notes` |
+| `RHIZOM_VAULT_DIR`    | `examples/vault` outside production | The folder with your notes, when there is one (its id is `default`) |
+| `RHIZOM_DATA_DIR`     | `./data`                            | Where the indexes live, one folder per vault; safe to delete        |
 | `RHIZOM_TEMPLATE_DIR` | the vault's own setting             | The folder templates live in, when the vault does not say           |
 | `PORT`, `HOST`        | `3737`, `localhost`                 | Where to listen                                                     |
 | `LOG_LEVEL`           | `info`                              | pino log level                                                      |
 | `NODE_ENV`            | —                                   | `production` turns off the example-vault fallback and pretty logs   |
 
-The REST API is documented at <http://localhost:3737/api/docs>; the OpenAPI document is served at
+Every route of a vault lives under `/api/v/{vault}/`, and `/api/vaults` lists the ids. The REST API
+is documented at <http://localhost:3737/api/docs>; the OpenAPI document is served at
 `/api/openapi.json` and committed as [`apps/server/openapi.json`](apps/server/openapi.json).
 
 </details>

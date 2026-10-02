@@ -22,9 +22,11 @@ import { api, ApiRequestError, isAbortError } from '../api/client.js';
 import { GraphLayoutSelect } from '../pages/GraphLayoutSelect.js';
 import type { OutletContext } from '../app/outlet.js';
 import { noteHref } from '../routing/paths.js';
+import { currentVault } from '../routing/vault.js';
 import { revisionOf } from '../app/useIndexEvents.js';
 import { downloadBlob } from '../graph/index.js';
 import { useUiStore } from '../store/ui.js';
+import { useVaultUiStore } from '../store/vault-ui.js';
 import { MilieuField, type MilieuFieldHandle } from './MilieuField.js';
 import {
   awaitEcho,
@@ -68,8 +70,8 @@ export function MilieuLayout(): JSX.Element {
   const { revisions } = useOutletContext<OutletContext>();
   const clusterBy = useUiStore((state) => state.clusterBy);
   const setClusterBy = useUiStore((state) => state.setClusterBy);
-  const remembered = useUiStore((state) => state.milieuPath);
-  const setMilieuPath = useUiStore((state) => state.setMilieuPath);
+  const remembered = useVaultUiStore((state) => state.milieuPath);
+  const setMilieuPath = useVaultUiStore((state) => state.setMilieuPath);
   const fieldRef = useRef<MilieuFieldHandle>(null);
 
   const [ledger, setLedger] = useState(NO_ECHOES);
@@ -208,8 +210,10 @@ export function MilieuLayout(): JSX.Element {
       setTrouble(message);
     };
 
+    // Read and written in the vault the drag happened in, whatever the tab does meanwhile.
+    const vault = currentVault();
     api
-      .note(path)
+      .note(path, { vault })
       .then(async (doc) => {
         const content = setFrontmatter(doc.content, changes);
         if (content === doc.content) {
@@ -217,7 +221,7 @@ export function MilieuLayout(): JSX.Element {
           setLedger((previous) => forgetEcho(previous, path));
           return;
         }
-        await api.saveNote(path, { content }, doc.hash);
+        await api.saveNote(path, { content }, doc.hash, { vault });
       })
       .catch((cause: unknown) => {
         abandon(

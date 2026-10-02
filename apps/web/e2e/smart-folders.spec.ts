@@ -30,7 +30,7 @@ test('a saved search stands in the sidebar as a folder and opens the notes it fi
   await expect(folder).toContainText('5 notes');
 
   const href = await notes.first().getAttribute('href');
-  expect(href).toMatch(/^\/notes\/Research\//);
+  expect(href).toMatch(/^\/v\/default\/notes\/Research\//);
 
   await notes.first().click();
   await expect(page).toHaveURL(href ?? '');

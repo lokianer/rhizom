@@ -13,9 +13,9 @@ function unique(name: string, retry: number): string {
  * path comes from where the app went rather than from a guess.
  */
 async function openNote(page: Page): Promise<string> {
-  const path = `${decodeURIComponent(new URL(page.url()).pathname.replace('/notes/', ''))}.md`;
+  const path = `${decodeURIComponent(new URL(page.url()).pathname.replace(/^\/v\/[^/]+\/notes\//, ''))}.md`;
   const res = await page.request.get(
-    `/api/notes/${path.split('/').map(encodeURIComponent).join('/')}`,
+    `/api/v/default/notes/${path.split('/').map(encodeURIComponent).join('/')}`,
   );
   expect(res.ok(), `could not read ${path}`).toBeTruthy();
   return ((await res.json()) as { content: string }).content;

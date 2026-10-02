@@ -46,7 +46,7 @@ afterEach(async () => {
 async function preview(app: FastifyInstance, from: string, to: string): Promise<RenamePreview> {
   const res = await app.inject({
     method: 'GET',
-    url: `/api/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    url: `/api/v/default/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
   });
   expect(res.statusCode).toBe(200);
   return res.json();
@@ -61,7 +61,7 @@ async function rename(
   const dryRun = await preview(app, from, to);
   const res = await app.inject({
     method: 'POST',
-    url: '/api/rename',
+    url: '/api/v/default/rename',
     payload: {
       from,
       to,
@@ -177,7 +177,10 @@ describe('GET /api/rename', () => {
     expect((await preview(app, 'People/Mira.md', 'People/Mira #2.md')).refusal).toBe(
       'unwritableName',
     );
-    const gone = await app.inject({ method: 'GET', url: '/api/rename?from=Nope.md&to=Yes.md' });
+    const gone = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/rename?from=Nope.md&to=Yes.md',
+    });
     expect(gone.statusCode).toBe(404);
   });
 
@@ -212,7 +215,7 @@ describe('POST /api/rename', () => {
     expect(read(root, 'Aside.md')).toBe('Ask [[The Ledger-Keeper]] instead.\n');
 
     const backlinks: Backlink[] = (
-      await app.inject({ method: 'GET', url: '/api/backlinks?path=Garten/Wurzeln.md' })
+      await app.inject({ method: 'GET', url: '/api/v/default/backlinks?path=Garten/Wurzeln.md' })
     ).json();
     // One row per link, and Home.md holds two of them.
     expect(backlinks.map((entry) => entry.source).sort()).toEqual([
@@ -222,18 +225,19 @@ describe('POST /api/rename', () => {
     ]);
 
     const links: NoteLink[] = (
-      await app.inject({ method: 'GET', url: '/api/links?path=Home.md' })
+      await app.inject({ method: 'GET', url: '/api/v/default/links?path=Home.md' })
     ).json();
     expect(links.every((link) => link.target === 'Garten/Wurzeln.md')).toBe(true);
 
     expect(
-      (await app.inject({ method: 'GET', url: '/api/links?path=People/Mira.md' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/links?path=People/Mira.md' }))
+        .statusCode,
     ).toBe(404);
 
     // The full-text row moved with the note: an id kept across a path change would leave the
     // old path searchable and the new one invisible.
     const found: SearchResponse = (
-      await app.inject({ method: 'GET', url: '/api/search?q=Mira' })
+      await app.inject({ method: 'GET', url: '/api/v/default/search?q=Mira' })
     ).json();
     expect(found.hits.map((hit) => hit.path)).toEqual(['Garten/Wurzeln.md']);
   });
@@ -251,7 +255,7 @@ describe('POST /api/rename', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       payload: {
         from: 'People/Mira.md',
         to: 'People/Wurzeln.md',
@@ -280,7 +284,7 @@ describe('POST /api/rename', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       payload: {
         from: 'People/Mira.md',
         to: 'People/Wurzeln.md',
@@ -307,7 +311,7 @@ describe('POST /api/rename', () => {
     // already been rewritten. This is the failure the write order is built around.
     const failed = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       payload: { from: 'People/Mira.md', to: 'People/Wurzeln.md', hash: 'stale', files },
     });
     expect(failed.statusCode).toBe(412);
@@ -331,7 +335,7 @@ describe('POST /api/rename', () => {
     const dryRun = await preview(app, 'People/Mira.md', 'People/Wurzeln.md');
     const res = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       // The same file, but the rename it was previewed for is a different one: nothing in it
       // leads to `Other.md`, so there is nothing to write.
       payload: {
@@ -354,7 +358,7 @@ describe('POST /api/rename', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       payload: { from: 'People/Mira.md', to: 'People/Taken.md', hash: 'x', files: [] },
     });
 

@@ -12,6 +12,11 @@ services:
       - '${RHIZOM_VAULT:-./examples/vault}:/vault'
       # The search index. It is derived from the notes and can be thrown away at any time.
       - rhizom-data:/data
+      # More than one vault: mount each, and name them as id=path pairs separated by semicolons.
+      # - '/srv/notes/dnd:/vaults/dnd'
+      # - '/srv/notes/thesis:/vaults/thesis'
+    # environment:
+    #   RHIZOM_VAULTS: 'dnd=/vaults/dnd;thesis=/vaults/thesis'
     restart: unless-stopped
 
 volumes:

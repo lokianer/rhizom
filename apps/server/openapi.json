@@ -83,10 +83,54 @@
         }
       }
     },
-    "/api/vault": {
+    "/api/vaults": {
+      "get": {
+        "summary": "The registered vaults",
+        "tags": ["vault"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {
+                      "id": {
+                        "description": "The id the vault is registered under",
+                        "type": "string"
+                      },
+                      "name": {
+                        "description": "Folder name of the vault",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v/{vault}/vault": {
       "get": {
         "summary": "Describe the open vault",
         "tags": ["vault"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -202,10 +246,22 @@
         }
       }
     },
-    "/api/tree": {
+    "/api/v/{vault}/tree": {
       "get": {
         "summary": "Folder tree of the vault",
         "tags": ["notes"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -246,10 +302,22 @@
         }
       }
     },
-    "/api/notes": {
+    "/api/v/{vault}/notes": {
       "get": {
         "summary": "List all notes",
         "tags": ["notes"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -366,6 +434,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -518,11 +598,21 @@
         }
       }
     },
-    "/api/notes/{*}": {
+    "/api/v/{vault}/notes/{*}": {
       "get": {
         "summary": "Read a note",
         "tags": ["notes"],
         "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          },
           {
             "schema": {
               "minLength": 1,
@@ -707,6 +797,16 @@
         "parameters": [
           {
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          },
+          {
+            "schema": {
               "minLength": 1,
               "type": "string"
             },
@@ -872,6 +972,16 @@
         "parameters": [
           {
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          },
+          {
+            "schema": {
               "minLength": 1,
               "type": "string"
             },
@@ -933,7 +1043,7 @@
         }
       }
     },
-    "/api/links": {
+    "/api/v/{vault}/links": {
       "get": {
         "summary": "Outgoing links of a note",
         "tags": ["notes"],
@@ -946,6 +1056,16 @@
             "in": "query",
             "name": "path",
             "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -1055,7 +1175,7 @@
         }
       }
     },
-    "/api/backlinks": {
+    "/api/v/{vault}/backlinks": {
       "get": {
         "summary": "Notes that link to a note",
         "tags": ["notes"],
@@ -1068,6 +1188,16 @@
             "in": "query",
             "name": "path",
             "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -1148,7 +1278,7 @@
         }
       }
     },
-    "/api/rename": {
+    "/api/v/{vault}/rename": {
       "get": {
         "summary": "What renaming or moving a note would change, before anything is written",
         "tags": ["notes"],
@@ -1170,6 +1300,16 @@
             "in": "query",
             "name": "to",
             "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -1423,6 +1563,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -1536,7 +1688,7 @@
         }
       }
     },
-    "/api/search": {
+    "/api/v/{vault}/search": {
       "get": {
         "summary": "Full-text search over titles and bodies",
         "tags": ["search"],
@@ -1560,6 +1712,16 @@
             "in": "query",
             "name": "limit",
             "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -1653,10 +1815,22 @@
         }
       }
     },
-    "/api/tags": {
+    "/api/v/{vault}/tags": {
       "get": {
         "summary": "All tags with the number of notes using them",
         "tags": ["search"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -1706,7 +1880,7 @@
         }
       }
     },
-    "/api/tags/rename": {
+    "/api/v/{vault}/tags/rename": {
       "get": {
         "summary": "What renaming a tag would change, before anything is written",
         "tags": ["tags"],
@@ -1730,6 +1904,16 @@
             "in": "query",
             "name": "to",
             "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -1933,6 +2117,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -2046,7 +2242,7 @@
         }
       }
     },
-    "/api/query": {
+    "/api/v/{vault}/query": {
       "post": {
         "summary": "Runs a rhizom-query block against the index",
         "tags": ["search"],
@@ -2077,6 +2273,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -2230,10 +2438,22 @@
         }
       }
     },
-    "/api/glossary": {
+    "/api/v/{vault}/glossary": {
       "get": {
         "summary": "One entry per definition note, sorted by title",
         "tags": ["terms"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -2293,7 +2513,7 @@
         }
       }
     },
-    "/api/mentions": {
+    "/api/v/{vault}/mentions": {
       "get": {
         "summary": "Notes that name this one without linking to it",
         "tags": ["mentions"],
@@ -2306,6 +2526,16 @@
             "in": "query",
             "name": "path",
             "required": true
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -2455,7 +2685,7 @@
         }
       }
     },
-    "/api/mentions/link": {
+    "/api/v/{vault}/mentions/link": {
       "post": {
         "summary": "Writes links around the given mentions",
         "tags": ["mentions"],
@@ -2504,6 +2734,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -2610,7 +2852,7 @@
         }
       }
     },
-    "/api/graph": {
+    "/api/v/{vault}/graph": {
       "get": {
         "summary": "The whole vault as nodes and edges",
         "tags": ["graph"],
@@ -2632,6 +2874,16 @@
             "in": "query",
             "name": "clusterBy",
             "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -2763,7 +3015,7 @@
         }
       }
     },
-    "/api/graph/local": {
+    "/api/v/{vault}/graph/local": {
       "get": {
         "summary": "The neighbourhood of one note",
         "tags": ["graph"],
@@ -2805,6 +3057,16 @@
             "in": "query",
             "name": "clusterBy",
             "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
           }
         ],
         "responses": {
@@ -2936,10 +3198,22 @@
         }
       }
     },
-    "/api/index/rebuild": {
+    "/api/v/{vault}/index/rebuild": {
       "post": {
         "summary": "Re-scan the vault and update the index",
         "tags": ["index"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -2992,11 +3266,23 @@
         }
       }
     },
-    "/api/events": {
+    "/api/v/{vault}/events": {
       "get": {
         "summary": "Index changes as server-sent events",
         "tags": ["index"],
         "description": "Emits `indexed`, `removed` and `rebuilt` events with a JSON payload whenever the index changes, plus a comment every 25 s as heartbeat.",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "503": {
             "description": "Shape of every error response",
@@ -3024,10 +3310,22 @@
         }
       }
     },
-    "/api/assets": {
+    "/api/v/{vault}/assets": {
       "get": {
         "summary": "List the files in the vault that are not notes",
         "tags": ["assets"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -3083,6 +3381,18 @@
       "post": {
         "summary": "Upload a file into assets/",
         "tags": ["assets"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",

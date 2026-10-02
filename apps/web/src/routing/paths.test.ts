@@ -1,32 +1,44 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { headingHref, noteHref, notePathFromLocation, notePathFromParam } from './paths.js';
+import { setCurrentVault } from './vault.js';
 
 describe('noteHref', () => {
+  afterEach(() => {
+    setCurrentVault('default');
+  });
+
+  it('builds the address inside the current vault', () => {
+    setCurrentVault('dnd');
+    expect(noteHref('Campaign/NPCs/Mira.md')).toBe('/v/dnd/notes/Campaign/NPCs/Mira');
+  });
+
   it('drops the extension and encodes each segment on its own', () => {
-    expect(noteHref('Campaign/NPCs/Mira.md')).toBe('/notes/Campaign/NPCs/Mira');
+    expect(noteHref('Campaign/NPCs/Mira.md')).toBe('/v/default/notes/Campaign/NPCs/Mira');
     expect(noteHref('Research/Über die Wurzeln.md')).toBe(
-      '/notes/Research/%C3%9Cber%20die%20Wurzeln',
+      '/v/default/notes/Research/%C3%9Cber%20die%20Wurzeln',
     );
-    expect(noteHref("Campaign/NPCs/Mira's Ledger.md")).toBe("/notes/Campaign/NPCs/Mira's%20Ledger");
+    expect(noteHref("Campaign/NPCs/Mira's Ledger.md")).toBe(
+      "/v/default/notes/Campaign/NPCs/Mira's%20Ledger",
+    );
   });
 
   it('keeps the wiki mode apart', () => {
-    expect(noteHref('Home.md', 'wiki')).toBe('/wiki/Home');
+    expect(noteHref('Home.md', 'wiki')).toBe('/v/default/wiki/Home');
   });
 
   it('leaves a path without a Markdown extension alone', () => {
-    expect(noteHref('Notes/v2.0 Notes.md')).toBe('/notes/Notes/v2.0%20Notes');
+    expect(noteHref('Notes/v2.0 Notes.md')).toBe('/v/default/notes/Notes/v2.0%20Notes');
   });
 });
 
 describe('headingHref', () => {
   it('hangs the bare slug onto the note, the way a link to a heading is written', () => {
     expect(headingHref('Campaign/Places/Silverstadt.md', 'districts')).toBe(
-      '/notes/Campaign/Places/Silverstadt#districts',
+      '/v/default/notes/Campaign/Places/Silverstadt#districts',
     );
     expect(headingHref('Research/Über die Wurzeln.md', 'über-die-wurzeln')).toBe(
-      '/notes/Research/%C3%9Cber%20die%20Wurzeln#über-die-wurzeln',
+      '/v/default/notes/Research/%C3%9Cber%20die%20Wurzeln#über-die-wurzeln',
     );
   });
 });
@@ -49,6 +61,11 @@ describe('notePathFromLocation', () => {
     expect(notePathFromLocation('/wiki/Research/%C3%9Cber%20die%20Wurzeln')).toBe(
       'Research/Über die Wurzeln.md',
     );
+  });
+
+  it('reads it inside a vault too', () => {
+    expect(notePathFromLocation('/v/dnd/wiki/Campaign/NPCs/Mira')).toBe('Campaign/NPCs/Mira.md');
+    expect(notePathFromLocation('/v/dnd/graph')).toBeNull();
   });
 
   it('has no note anywhere else', () => {

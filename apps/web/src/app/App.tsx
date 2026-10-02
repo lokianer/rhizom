@@ -2,13 +2,19 @@ import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 
 import { HomePage } from '../pages/HomePage.js';
-import { Layout } from './Layout.js';
+import { legacyRedirect, revalidateVault, vaultLoader } from './vault-loader.js';
+import { VaultRoot } from './VaultRoot.js';
 
 // Created once at module level: a data router must not live in React state.
 const router = createBrowserRouter([
   {
-    path: '/',
-    Component: Layout,
+    // Every page lives inside a vault. The id names the route so the switcher can read the
+    // loader's list of vaults from anywhere below it.
+    id: 'vault',
+    path: '/v/:vault',
+    loader: vaultLoader,
+    shouldRevalidate: revalidateVault,
+    Component: VaultRoot,
     children: [
       { index: true, Component: HomePage },
       // Splat routes: the note path keeps its slashes, without the .md extension.
@@ -39,6 +45,9 @@ const router = createBrowserRouter([
       { path: '*', Component: HomePage },
     ],
   },
+  // `/` and every address from before vaults were in the URL: a bookmark of `/notes/…` lands on
+  // the same note in the vault this browser used last.
+  { path: '*', loader: legacyRedirect },
 ]);
 
 export function App() {

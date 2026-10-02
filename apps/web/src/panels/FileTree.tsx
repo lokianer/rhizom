@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { folderOf } from '@rhizom/core';
 import type { TreeEntry } from '@rhizom/core';
 
-import { useUiStore } from '../store/ui.js';
+import { useVaultUiStore } from '../store/vault-ui.js';
 import {
   ancestorFolders,
   flattenTree,
@@ -39,9 +39,9 @@ export interface FileTreeProps {
 export function FileTree({ tree, activePath, onOpen, onCreate }: FileTreeProps) {
   const { t } = useTranslation();
   const baseId = useId();
-  const expandedFolders = useUiStore((state) => state.expandedFolders);
-  const toggleFolder = useUiStore((state) => state.toggleFolder);
-  const expandFolders = useUiStore((state) => state.expandFolders);
+  const expandedFolders = useVaultUiStore((state) => state.expandedFolders);
+  const toggleFolder = useVaultUiStore((state) => state.toggleFolder);
+  const expandFolders = useVaultUiStore((state) => state.expandFolders);
 
   const expanded = useMemo(() => new Set(expandedFolders), [expandedFolders]);
   const rows = useMemo(() => flattenTree(tree, expanded), [tree, expanded]);
@@ -56,7 +56,7 @@ export function FileTree({ tree, activePath, onOpen, onCreate }: FileTreeProps) 
     if (activePath === null) {
       return;
     }
-    const open = useUiStore.getState().expandedFolders;
+    const open = useVaultUiStore.getState().expandedFolders;
     const missing = ancestorFolders(activePath).filter((folder) => !open.includes(folder));
     if (missing.length > 0) {
       expandFolders(missing);

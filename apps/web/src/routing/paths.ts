@@ -2,12 +2,14 @@
 // with an "ends in a dot-something is a file" rule still serve the app for deep links.
 import { ensureMarkdownExtension } from '@rhizom/core';
 
+import { stripVault, vaultHref } from './vault.js';
+
 const MARKDOWN = /\.(md|markdown)$/i;
 
-/** `Campaign/NPCs/Mira.md` → `/notes/Campaign/NPCs/Mira` */
+/** `Campaign/NPCs/Mira.md` → `/v/<vault>/notes/Campaign/NPCs/Mira`, in the current vault. */
 export function noteHref(path: string, mode: 'notes' | 'wiki' = 'notes'): string {
   const withoutExtension = path.replace(MARKDOWN, '');
-  return `/${mode}/${withoutExtension.split('/').map(encodeURIComponent).join('/')}`;
+  return vaultHref(`/${mode}/${withoutExtension.split('/').map(encodeURIComponent).join('/')}`);
 }
 
 /**
@@ -22,9 +24,9 @@ export function headingHref(path: string, slug: string): string {
   return `${noteHref(path)}#${slug}`;
 }
 
-/** The open note of a `/notes/…` or `/wiki/…` URL, for components above those routes. */
+/** The open note of a `…/notes/…` or `…/wiki/…` URL, for components above those routes. */
 export function notePathFromLocation(pathname: string): string | null {
-  const match = /^\/(?:notes|wiki)\/(.+)$/.exec(pathname);
+  const match = /^\/(?:notes|wiki)\/(.+)$/.exec(stripVault(pathname));
   const splat = match?.[1];
   if (splat === undefined) {
     return null;

@@ -9,7 +9,7 @@ test('the graph draws the vault and can be narrowed to one note', async ({ page 
   await page.goto('/notes/Campaign/Places/Silverstadt');
   await page.getByRole('link', { name: 'Graph' }).click();
 
-  await expect(page).toHaveURL(/\/graph\?note=/);
+  await expect(page).toHaveURL(/\/v\/default\/graph\?note=/);
   await page.getByLabel('Depth').selectOption('1');
   await expect(page.getByRole('img', { name: /graph/i })).toBeVisible();
 });
@@ -33,7 +33,7 @@ test('an embedded image is shown, not a broken link', async ({ page }) => {
 
   const image = page.getByRole('article').locator('img').first();
   await expect(image).toBeVisible();
-  await expect(image).toHaveAttribute('src', '/api/assets/assets/tavern.png');
+  await expect(image).toHaveAttribute('src', '/api/v/default/assets/assets/tavern.png');
   // A broken image has no intrinsic width, however visible its alt text is.
   await expect
     .poll(async () => image.evaluate((element: { naturalWidth: number }) => element.naturalWidth))

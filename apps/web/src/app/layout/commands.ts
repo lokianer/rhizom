@@ -2,15 +2,16 @@
 // reads as a table of contents for the app: every command the palette offers, in the order it
 // offers them. What each command needs is handed in rather than closed over, so the list can be
 // read - and a command added to it - without the component around it.
-import type { DailySettings, NoteSummary } from '@rhizom/core';
+import type { DailySettings, NoteSummary, VaultSummary } from '@rhizom/core';
 import type { TFunction } from 'i18next';
 import type { NavigateFunction } from 'react-router';
 
 import { api } from '../../api/client.js';
 import type { PaletteCommand } from '../../palette/index.js';
 import type { SidebarTab, ThemeChoice } from '../../store/ui.js';
-import { randomNotePath } from './commands-model.js';
+import { otherVaults, randomNotePath } from './commands-model.js';
 import { noteHref } from '../../routing/paths.js';
+import { vaultHref } from '../../routing/vault.js';
 
 /** Everything the commands reach for. One field per value the list used to close over. */
 export interface CommandContext {
@@ -33,6 +34,9 @@ export interface CommandContext {
   toggleSplitView: () => void;
   toggleVimMode: () => void;
   toggleZen: () => void;
+  /** The vault this tab is in, and every registered one. */
+  vault: string;
+  vaults: VaultSummary[];
 }
 
 export function paletteCommands({
@@ -55,6 +59,8 @@ export function paletteCommands({
   toggleSplitView,
   toggleVimMode,
   toggleZen,
+  vault,
+  vaults,
 }: CommandContext): PaletteCommand[] {
   return [
     {
@@ -76,7 +82,9 @@ export function paletteCommands({
       label: t('palette.commandNames.openGraph'),
       run: () => {
         void navigate(
-          openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`,
+          vaultHref(
+            openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`,
+          ),
         );
       },
     },
@@ -84,7 +92,7 @@ export function paletteCommands({
       id: 'openGlossary',
       label: t('palette.commandNames.openGlossary'),
       run: () => {
-        void navigate('/glossary');
+        void navigate(vaultHref('/glossary'));
       },
     },
     {
@@ -107,6 +115,14 @@ export function paletteCommands({
             },
           },
         ]),
+    // One per other vault; none at all while there is only one.
+    ...otherVaults(vaults, vault).map((other) => ({
+      id: `vault:${other.id}`,
+      label: t('vault.switchTo', { name: other.name }),
+      run: () => {
+        void navigate(vaultHref('/', other.id));
+      },
+    })),
     // Nothing to open at random in a vault with no notes in it.
     ...(notes.length === 0
       ? []

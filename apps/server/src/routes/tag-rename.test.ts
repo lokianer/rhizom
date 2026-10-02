@@ -40,7 +40,7 @@ afterEach(async () => {
 async function preview(app: FastifyInstance, from: string, to: string): Promise<TagRenamePreview> {
   const res = await app.inject({
     method: 'GET',
-    url: `/api/tags/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    url: `/api/v/default/tags/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
   });
   expect(res.statusCode).toBe(200);
   return res.json();
@@ -55,7 +55,7 @@ async function rename(
   const dry = await preview(app, from, to);
   const res = await app.inject({
     method: 'POST',
-    url: '/api/tags/rename',
+    url: '/api/v/default/tags/rename',
     payload: {
       from,
       to,
@@ -71,7 +71,7 @@ function read(root: string, path: string): string {
 }
 
 async function tags(app: FastifyInstance): Promise<string[]> {
-  const res = await app.inject({ method: 'GET', url: '/api/tags' });
+  const res = await app.inject({ method: 'GET', url: '/api/v/default/tags' });
   const rows: TagCount[] = res.json();
   return rows.map((entry) => entry.tag);
 }
@@ -185,7 +185,7 @@ describe('renaming a tag', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/tags/rename',
+      url: '/api/v/default/tags/rename',
       payload: { from: 'campaign', to: '#nope', files: [] },
     });
     expect(res.statusCode).toBe(400);
@@ -201,7 +201,7 @@ describe('renaming a tag', () => {
 
     const res = await app.inject({
       method: 'POST',
-      url: '/api/tags/rename',
+      url: '/api/v/default/tags/rename',
       payload: {
         from: 'campaign',
         to: 'chronicle',
@@ -223,7 +223,7 @@ describe('renaming a tag', () => {
     const first = await preview(app, 'campaign', 'chronicle');
     await app.inject({
       method: 'POST',
-      url: '/api/tags/rename',
+      url: '/api/v/default/tags/rename',
       payload: {
         from: 'campaign',
         to: 'chronicle',

@@ -4,7 +4,7 @@ Rhizom is built in strict phases. Every phase ends in a runnable state with gree
 Windows, macOS and Linux, updated documentation and clean, atomic commits — and then stops
 for review before the next phase begins. Features from later phases are never pulled forward.
 
-Status: **Phases 0 to 2 complete**; Phase 3 is next, and not begun.
+Status: **Phases 0 to 2 complete**; Phase 3 is in progress.
 
 Versions: everything up to the end of Phase 5 is `0.x`. The format a vault is written in may
 still move in that stretch, and every move comes with a note in the changelog. The end of
@@ -108,7 +108,7 @@ _The module is a vocabulary, not a second programme: templates, a handful of fro
 a few renderers and a graph colouring. It is system-agnostic — 5e is one stat block renderer
 among several — and it is not a virtual tabletop: no battle map, no tokens, no combat tracker._
 
-- [ ] More than one vault, and a way between them. The server serves one vault today; a game
+- [x] More than one vault, and a way between them. The server served one vault; a game
       master keeps one per campaign, a researcher one per project, and reopening the server with
       another folder is not a way to work. The operator registers the vaults — an env var, or a
       small list in the data directory — and **only a registered vault can be opened**: a browser

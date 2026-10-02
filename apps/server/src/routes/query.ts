@@ -10,13 +10,13 @@
 // what could not, each with the line it stands on, and the renderer shows both.
 import { parseQuery } from '@rhizom/core';
 
-import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { ErrorSchema, QueryBodySchema, QueryResultSchema } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
-export function registerQueryRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerQueryRoutes(app: TypedApp, context: VaultContextOf): void {
   app.post(
-    '/api/query',
+    '/query',
     {
       schema: {
         tags: ['search'],
@@ -26,7 +26,7 @@ export function registerQueryRoutes(app: TypedApp, context: () => VaultContext):
       },
     },
     (request) => {
-      const ctx = context();
+      const ctx = context(request);
       const { query, problems } = parseQuery(request.body.body);
       // What the caller asked for is added to what the block shows, without changing what the
       // block shows: `columns` is the view, `fields` is the data a caller happens to need.

@@ -1,7 +1,7 @@
 import type { NoteSummary, VaultInfo } from '@rhizom/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { refreshCount, useVaultStore } from './vault.js';
+import { refreshCount, resetVaultStore, useVaultStore } from './vault.js';
 
 function summary(path: string, aliases: string[] = [], size = 10): NoteSummary {
   return {
@@ -34,12 +34,12 @@ function stubServer(): { requests: string[] } {
   vi.stubGlobal('fetch', (input: string) => {
     requests.push(input);
     const body: Record<string, unknown> = {
-      '/api/vault': INFO,
-      '/api/notes': notes,
-      '/api/tree': [],
-      '/api/tags': [],
-      '/api/assets': [],
-      '/api/glossary': [],
+      '/api/v/default/vault': INFO,
+      '/api/v/default/notes': notes,
+      '/api/v/default/tree': [],
+      '/api/v/default/tags': [],
+      '/api/v/default/assets': [],
+      '/api/v/default/glossary': [],
     };
     return Promise.resolve(
       new Response(JSON.stringify(body[input]), {
@@ -107,7 +107,7 @@ describe('the vault store', () => {
     let call = 0;
     const server = globalThis.fetch;
     vi.stubGlobal('fetch', (input: string) => {
-      if (input !== '/api/notes') {
+      if (input !== '/api/v/default/notes') {
         return server(input);
       }
       const list = lists[call] ?? [];
@@ -140,6 +140,31 @@ describe('the vault store', () => {
     const running = useVaultStore.getState().refresh();
     expect(refreshCount()).toBe(before + 1);
     await running;
-    expect(requests.filter((url) => url === '/api/notes')).toHaveLength(2);
+    expect(requests.filter((url) => url === '/api/v/default/notes')).toHaveLength(2);
+  });
+
+  it('drops a load that was still running for the vault it switched away from', async () => {
+    stubServer();
+    const server = globalThis.fetch;
+    // Every request of the load waits until the switch has happened.
+    const held: (() => void)[] = [];
+    vi.stubGlobal(
+      'fetch',
+      (input: string) =>
+        new Promise<Response>((resolve) => {
+          held.push(() => {
+            resolve(server(input));
+          });
+        }),
+    );
+    resetVaultStore();
+    const loading = useVaultStore.getState().load();
+    resetVaultStore();
+    for (const release of held) {
+      release();
+    }
+    await loading;
+    expect(useVaultStore.getState().notes).toEqual([]);
+    expect(useVaultStore.getState().status).toBe('idle');
   });
 });

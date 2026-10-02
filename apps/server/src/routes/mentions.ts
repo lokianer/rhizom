@@ -10,6 +10,7 @@ import { createTermMatcher, findMentions, linkMentions, type Mention } from '@rh
 
 import { VaultError } from '../vault/files.js';
 import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { errorBody } from './errors.js';
 import {
   ErrorSchema,
@@ -23,9 +24,9 @@ import type { TypedApp } from './typed-app.js';
 /** How many notes the full-text filter may hand back before the answer says it is short. */
 const CANDIDATE_LIMIT = 200;
 
-export function registerMentionRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerMentionRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/mentions',
+    '/mentions',
     {
       schema: {
         tags: ['mentions'],
@@ -35,7 +36,7 @@ export function registerMentionRoutes(app: TypedApp, context: () => VaultContext
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const path = request.query.path;
       const note = ctx.index.getNote(path);
       if (note === undefined) {
@@ -76,7 +77,7 @@ export function registerMentionRoutes(app: TypedApp, context: () => VaultContext
   );
 
   app.post(
-    '/api/mentions/link',
+    '/mentions/link',
     {
       schema: {
         tags: ['mentions'],
@@ -86,7 +87,7 @@ export function registerMentionRoutes(app: TypedApp, context: () => VaultContext
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const target = request.body.path;
       const note = ctx.index.getNote(target);
       if (note === undefined) {

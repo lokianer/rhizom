@@ -5,11 +5,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function writeNote(page: Page, path: string, lines: string[]): Promise<void> {
   const content = `${lines.join('\n')}\n`;
-  const created = await page.request.post('/api/notes', { data: { path, content } });
+  const created = await page.request.post('/api/v/default/notes', { data: { path, content } });
   if (created.ok()) {
     return;
   }
-  const url = `/api/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const url = `/api/v/default/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
   const saved = await page.request.put(url, { data: { content } });
   expect(saved.ok(), `could not write ${path}`).toBeTruthy();
 }
@@ -73,7 +73,7 @@ test('the key gives the block an id and puts the link on the clipboard', async (
   // The id reaches the file, where a link from another note will look for it.
   await page.keyboard.press('ControlOrMeta+Shift+X');
   await expect(page.getByText('Saved')).toBeVisible({ timeout: 10_000 });
-  const saved = await page.request.get(`/api/notes/${encodeURIComponent(PATH)}`);
+  const saved = await page.request.get(`/api/v/default/notes/${encodeURIComponent(PATH)}`);
   expect(((await saved.json()) as { content: string }).content).toContain(
     'The ledger was open on the desk. ^the-ledger-was-open',
   );

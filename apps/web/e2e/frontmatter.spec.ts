@@ -53,7 +53,7 @@ function savedOnce(page: Page): Promise<unknown> {
   return page.waitForResponse(
     (response) =>
       response.request().method() === 'PUT' &&
-      response.url().includes('/api/notes/') &&
+      response.url().includes('/api/v/default/notes/') &&
       response.ok(),
     { timeout: 15_000 },
   );

@@ -1,5 +1,5 @@
 // Turning what an embed or an image link says into a URL the browser can load. Files live in
-// the vault and are served by the server under /api/assets/<vault path>.
+// the vault and are served by the server under /api/v/<vault>/assets/<vault path>.
 import { folderOf, toVaultPath } from '@rhizom/core';
 
 import { api } from '../api/client.js';

@@ -1,79 +1,92 @@
-# Handoff — 27 September 2026, evening
+# Handoff — 2 October 2026, evening
 
 Working notes for whoever picks this up next, on whichever machine. Rewrite it at the end of a
 session and commit it with the rest of the work.
 
 ## Where it stands
 
-**0.2.1 is released**: pull request #5 (branch `lokianer/feat-graph-fancier`) is merged into
-`main` with a merge commit and tagged `v0.2.1`, with a GitHub release. Its commits: `e4f7a2c`
-fix(core) (frontmatter that contains itself or expands too far), `9ed7810` perf(server) (the
-memory slice), `59c7051` feat(graph) (the WebGL2 field), `efe458e` the release commit, `034b108`
-test(e2e) (a CodeQL finding in a test helper) and this handoff. CI was green 11/11 on the pull
-request (three systems × Node 22/24, Docker, CodeQL, dependency review), the local sequence
-before every push, and the perf commit on its own in a separate worktree. **Phase 3 (D&D mode)
-is next and not begun** — wait for the maintainer's go.
+**Phase 3 has begun.** The maintainer gave the go and agreed to split the phase into
+sub-projects, each with its own spec, plan and review:
+
+1. More than one vault — **done on `lokianer/feat-multi-vault`**, not pushed yet
+2. Module core: `type: campaign`, the NPC stat block, the templates
+3. The GM gate: `> [!gm]`, `%%…%%`, public and private index sides, reveals, the player view
+4. At the table: capture bar, dice, tables, decks
+5. Ties, blocs, axis packs, acquaintance colouring
+6. Campaign time: clocks, the session spine, the improv drawer, the party ledger
+7. The second half of the phase (fourteen items), later
+
+Dependabot's PR #6 (14 minor and patch updates) was merged into `main` by the maintainer before
+the branch was cut.
 
 ## What this session did
 
-Between Phases 2 and 3, at the maintainer's request: a vault of 2,000 notes lagged, and the
-bubble field was to become much more worth looking at. Spec with the measurements and the
-prototype judging: `docs/specs/2026-09-27-graph-renderer.md`; reasons in `DECISIONS.md`
-(2026-09-27, WebGL2 and Memory); the user-facing list in `CHANGELOG.md` under 0.2.1.
+Sub-project 1, spec `docs/specs/2026-10-02-multi-vault.md`, plan
+`docs/plans/2026-10-02-multi-vault.md`, reasons in `DECISIONS.md` (2026-10-02, "More than one
+vault"), the user-facing list in `CHANGELOG.md` under Unreleased.
 
-- **Renderer** (`apps/web/src/graph/`): `controller.ts` drives everything; `gl/` is the WebGL2
-  field, `canvas2d-renderer.ts` the fallback behind the same `FieldRenderer` interface
-  (`types.ts`), `overlay.ts` + `labels.ts` + `label-sprites.ts` the words on a 2D canvas,
-  `GraphLegend.tsx` / `GraphInfo.tsx` the DOM panels. `look.ts` holds the numbers all three
-  renderers (WebGL, Canvas 2D, SVG export) share.
-- **Renderer choice:** WebGL2 unless it is missing, lost for good, or drawn in software
-  (SwiftShader, llvmpipe, softpipe — not WARP). `localStorage['rhizom.renderer']` = `webgl2` or
-  `canvas2d` overrides it; the e2e suite forces WebGL2 once so CI still compiles the shaders.
-- **Layout worker:** sleeps 2 s after settling, ticks in 8 ms slices, falls back to the page when
-  its script does not load (`worker-layout.ts`, `layout.worker.ts`).
-- **Server memory:** graph cached per clustering in the index and dropped by every write;
-  prepared statements (`store/index/statements.ts`); `--max-semi-space-size=16` on native starts.
-- **Reviews:** two review waves with adversarial verification (code, docs, a11y, environment,
-  GL, tests, security). Everything confirmed was fixed; the security pass found the two
-  frontmatter crashes, which were already on `main` and got their own commit.
+- **Server:** `vault/registry.ts` parses `RHIZOM_VAULTS` (`id=path;…`) or the
+  `RHIZOM_VAULT_DIR` shorthand (id `default`); `vault/pool.ts` opens a vault on first use and
+  closes it after ten idle minutes, held open by an event stream; `routes/vault-scope.ts` puts
+  every vault route under `/api/v/:vault`, resolves the vault in an `onRequest` hook and adds the
+  `vault` parameter to every schema through `onRoute`. Assets are one `@fastify/static` per
+  vault. Indexes live at `<data>/<id>/index.sqlite`.
+- **Web:** `routing/vault.ts` holds the tab's vault; `app/vault-loader.ts` sets it, empties the
+  stores (`store/reset.ts`, with a generation counter in `store/vault.ts`) and switches
+  `store/vault-ui.ts` (open folders, milieu field, graph depth — per vault in `localStorage`).
+  Old addresses redirect. `app/layout/VaultSwitcher.tsx` and a palette command appear only with
+  two vaults or more.
+- **e2e:** `serve.mjs` registers two vaults (`default`, `second`); `vaults.spec.ts` covers the
+  redirect, the switcher, the palette, two tabs, links staying inside a vault and an unknown id.
+
+A fresh reviewer read the whole change. Fixed with a failing test first each: a pending edit that
+flushed during a vault switch went to the new vault (saves now carry the vault they were opened
+in); a switch interrupted before it committed left the tab speaking to the other vault (the
+route revalidates when an address leaves the tab's vault); an event stream whose client left
+while the vault was opening held it open for good; a failed vault list overwrote the remembered
+vault; a failing idle close became an unhandled rejection; a stale 404 blocked an embed in the
+new vault.
 
 ## Open, in the order I would take them
 
-1. **Start phase 3** once the maintainer says so.
-2. **Watch CI on `main`** after the merge, and the e2e suite on CI in general: the field tests
-   wait for the layout to come to rest and were tuned for SwiftShader runners.
-3. **An error boundary around the note page.** The router's default error screen is what catches
-   a render error today; the frontmatter fix removed the one known trigger.
-4. **The milieu field still hashes its colours**, so a folder can have another colour there than
-   in the bubble field. Worth a vault-wide assignment once somebody uses both side by side.
-5. Older items still open: the two block-reference gaps in `ROADMAP.md`, the zen-mode hint and
-   the rename confirmation, and the `NotePage` chunk over 500 kB.
+1. **Push sub-project 1** once the maintainer has looked at it, then the pull request; CI on
+   three systems.
+2. **Sub-project 2** (module core): brainstorm, spec, plan.
+3. Minors the review left, deliberately not fixed: `VaultPool.get()` after `close()` can reopen
+   a vault during shutdown; a request longer than the idle time can see its context closed; the
+   `ui` store's move to version 2 drops the open folders, milieu field and graph depth once
+   instead of moving them to the `default` vault; a vault at a drive root (`x=D:\`) has an empty
+   name in the switcher; the registry's Windows-path test only checks the tail of the path.
+4. Older items: an error boundary around the note page; the milieu field still hashes its
+   colours; the two block-reference gaps in `ROADMAP.md`; the zen-mode hint and the rename
+   confirmation; the `NotePage` chunk over 500 kB.
 
 ## Traps, so the next session does not walk into them
 
-- **Heredocs eat backslashes.** `\n`, `\t`, `\r` in a bash/python heredoc become real control
-  characters. Use Write/Edit for anything with a backslash; backticks inside `node -e` strings
-  get eaten by bash too.
+- **Heredocs eat backslashes** — in the Bash tool, even inside a quoted `'EOF'` heredoc feeding
+  Python: `\n` arrives as a real newline, `C:\notes` loses its backslash. Use Write/Edit for
+  anything with a backslash.
+- **The web unit tests run in Node, without a DOM.** No jsdom, no testing-library: logic worth
+  asserting goes into plain functions (`commands-model.ts`), and `localStorage` is stubbed with
+  `vi.stubGlobal`. A zustand `persist` store grabs its storage when the module loads, so
+  `store/vault-ui.ts` hands it a wrapper that reaches `localStorage` on each call.
+- **Do not `setState` a persisted store before pointing it at another key**: it saves under the
+  old key. `switchVaultUi` resets through the `merge` option instead.
 - **`netstat` answers in German.** Never grep for `LISTENING`; match `":3737"`, take the last
-  column, verify the port is free afterwards. A surviving dev server gets reused by Playwright
-  and the e2e run tests the wrong vault.
-- **Agents that are stopped leave servers behind.** After stopping a workflow, look for node
-  processes on 39xx/51xx ports and for a stale `.git/worktrees/*/index.lock`.
-- **A Chrome tab driven by automation may be hidden:** `requestAnimationFrame` then only runs on
-  screenshots, and the field's entry growth looks five times slower than it is.
-- **Headless Chromium draws WebGL2 through SwiftShader**, so CI gets the Canvas 2D field unless
-  a test sets `rhizom.renderer`.
-- **Run the whole CI sequence locally before pushing**, not just the tests: format:check, lint,
-  typecheck, test:coverage, build, site:build, `CI=1 pnpm e2e` (with `RHIZOM_E2E_API_PORT` when
-  a dev server holds 3737).
+  column, verify the port is free afterwards.
+- **The auto-mode classifier blocks `gh pr merge`.** The maintainer merges with
+  `! gh pr merge <n> --merge`.
+- **Run the whole CI sequence locally before pushing**: format:check, lint, typecheck,
+  test:coverage, build, site:build, `CI=1 pnpm e2e`.
 
 ## How to run it
 
 ```
 pnpm install
-pnpm dev                 # core watch + Fastify on 3737 + Vite on 5173
-RHIZOM_VAULT_DIR=<dir> pnpm dev
+pnpm dev                                         # core watch + Fastify on 3737 + Vite on 5173
+RHIZOM_VAULT_DIR=<dir> pnpm dev                   # one vault
+RHIZOM_VAULTS="dnd=<dir>;thesis=<dir>" pnpm dev   # several
 ```
 
-Run the dev server against a throwaway copy of `examples/vault` in the session scratchpad, never
+Run the dev server against throwaway copies of `examples/vault` in the session scratchpad, never
 against the repository's own example vault. Stop whatever holds 3737 before `pnpm e2e`.

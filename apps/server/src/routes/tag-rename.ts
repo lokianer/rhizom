@@ -25,6 +25,7 @@ import {
 
 import { VaultError } from '../vault/files.js';
 import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { errorBody } from './errors.js';
 import {
   ErrorSchema,
@@ -53,9 +54,9 @@ interface Change {
   context: string;
 }
 
-export function registerTagRenameRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerTagRenameRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/tags/rename',
+    '/tags/rename',
     {
       schema: {
         tags: ['tags'],
@@ -65,7 +66,7 @@ export function registerTagRenameRoutes(app: TypedApp, context: () => VaultConte
       },
     },
     async (request) => {
-      const ctx = context();
+      const ctx = context(request);
       const from = normaliseTag(request.query.from) ?? '';
       const to = request.query.to.trim();
       const empty = { from, to, files: [], merges: [] };
@@ -102,7 +103,7 @@ export function registerTagRenameRoutes(app: TypedApp, context: () => VaultConte
   );
 
   app.post(
-    '/api/tags/rename',
+    '/tags/rename',
     {
       schema: {
         tags: ['tags'],
@@ -112,7 +113,7 @@ export function registerTagRenameRoutes(app: TypedApp, context: () => VaultConte
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const from = normaliseTag(request.body.from) ?? '';
       const to = request.body.to.trim();
 

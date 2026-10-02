@@ -1,7 +1,7 @@
 import { localGraph, type GraphData } from '@rhizom/core';
 import type { FastifyReply } from 'fastify';
 
-import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import {
   ErrorSchema,
   GraphQuerySchema,
@@ -29,9 +29,9 @@ function sendJson(reply: FastifyReply, body: Buffer): FastifyReply {
   return reply.type('application/json; charset=utf-8').send(body);
 }
 
-export function registerGraphRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerGraphRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/graph',
+    '/graph',
     {
       schema: {
         tags: ['graph'],
@@ -41,7 +41,7 @@ export function registerGraphRoutes(app: TypedApp, context: () => VaultContext):
       },
     },
     async (request, reply) => {
-      const graph = context().index.graph(request.query.clusterBy ?? 'folder');
+      const graph = context(request).index.graph(request.query.clusterBy ?? 'folder');
       let body = bodies.get(graph);
       if (body === undefined) {
         // A shallow copy only to satisfy the serializer's parameter type, which wants an index
@@ -54,7 +54,7 @@ export function registerGraphRoutes(app: TypedApp, context: () => VaultContext):
   );
 
   app.get(
-    '/api/graph/local',
+    '/graph/local',
     {
       schema: {
         tags: ['graph'],
@@ -68,7 +68,7 @@ export function registerGraphRoutes(app: TypedApp, context: () => VaultContext):
       // one note is a few percent of the vault, and reading every link to find it was 30 MB of
       // garbage per click.
       localGraph(
-        context().index.graph(request.query.clusterBy ?? 'folder'),
+        context(request).index.graph(request.query.clusterBy ?? 'folder'),
         request.query.path,
         request.query.depth ?? 1,
       ),

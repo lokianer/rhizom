@@ -48,7 +48,7 @@ afterEach(async () => {
 });
 
 async function graph(app: FastifyInstance, query = ''): Promise<GraphResponse> {
-  const res = await app.inject({ method: 'GET', url: `/api/graph${query}` });
+  const res = await app.inject({ method: 'GET', url: `/api/v/default/graph${query}` });
   expect(res.statusCode).toBe(200);
   return res.json();
 }
@@ -62,15 +62,18 @@ describe('GET /api/graph from the cache', () => {
     const build = vi.spyOn(VaultIndex.prototype, 'graphInput');
     const { app } = await openVault();
 
-    const first = await app.inject({ method: 'GET', url: '/api/graph' });
-    const second = await app.inject({ method: 'GET', url: '/api/graph?clusterBy=folder' });
+    const first = await app.inject({ method: 'GET', url: '/api/v/default/graph' });
+    const second = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/graph?clusterBy=folder',
+    });
     expect(second.body).toBe(first.body);
     expect(first.headers['content-type']).toBe('application/json; charset=utf-8');
-    await app.inject({ method: 'GET', url: '/api/graph?clusterBy=tag' });
-    await app.inject({ method: 'GET', url: '/api/graph?clusterBy=tag' });
+    await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=tag' });
+    await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=tag' });
     await app.inject({
       method: 'GET',
-      url: '/api/graph/local?path=Home.md&depth=1&clusterBy=tag',
+      url: '/api/v/default/graph/local?path=Home.md&depth=1&clusterBy=tag',
     });
     expect(build).toHaveBeenCalledTimes(2);
   });
@@ -81,10 +84,13 @@ describe('GET /api/graph from the cache', () => {
     // neighbourhood three hops wide is the whole of this vault — the same nodes in the same
     // order, the same edges, the same clusters.
     for (const clusterBy of ['folder', 'tag']) {
-      const whole = await app.inject({ method: 'GET', url: `/api/graph?clusterBy=${clusterBy}` });
+      const whole = await app.inject({
+        method: 'GET',
+        url: `/api/v/default/graph?clusterBy=${clusterBy}`,
+      });
       const local = await app.inject({
         method: 'GET',
-        url: `/api/graph/local?path=Home.md&depth=3&clusterBy=${clusterBy}`,
+        url: `/api/v/default/graph/local?path=Home.md&depth=3&clusterBy=${clusterBy}`,
       });
       expect(whole.body).toBe(local.body);
     }
@@ -103,7 +109,7 @@ describe('GET /api/graph from the cache', () => {
     expect(edge(await graph(app), 'Home.md', 'Glossary/Ledger.md')).toBeUndefined();
     const saved = await app.inject({
       method: 'PUT',
-      url: '/api/notes/Home.md',
+      url: '/api/v/default/notes/Home.md',
       payload: { content: '# Home\n\nNow [[Ledger]] as well as [[Silverstadt]] and [[Mira]].\n' },
     });
     expect(saved.statusCode).toBe(200);
@@ -115,14 +121,17 @@ describe('GET /api/graph from the cache', () => {
     await graph(app);
     await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { path: 'Campaign/Quay.md', content: '# Quay\n\nNext to [[Silverstadt]].\n' },
     });
     const created = await graph(app);
     expect(paths(created)).toContain('Campaign/Quay.md');
     expect(edge(created, 'Campaign/Quay.md', 'Campaign/Places/Silverstadt.md')).toBeDefined();
 
-    const deleted = await app.inject({ method: 'DELETE', url: '/api/notes/Campaign/Quay.md' });
+    const deleted = await app.inject({
+      method: 'DELETE',
+      url: '/api/v/default/notes/Campaign/Quay.md',
+    });
     expect(deleted.statusCode).toBe(204);
     expect(paths(await graph(app))).not.toContain('Campaign/Quay.md');
   });
@@ -132,12 +141,12 @@ describe('GET /api/graph from the cache', () => {
     await graph(app);
     const dry = await app.inject({
       method: 'GET',
-      url: `/api/rename?from=${encodeURIComponent('Campaign/NPCs/Mira.md')}&to=${encodeURIComponent('People/Mira.md')}`,
+      url: `/api/v/default/rename?from=${encodeURIComponent('Campaign/NPCs/Mira.md')}&to=${encodeURIComponent('People/Mira.md')}`,
     });
     const preview = dry.json<RenamePreview>();
     const res = await app.inject({
       method: 'POST',
-      url: '/api/rename',
+      url: '/api/v/default/rename',
       payload: {
         from: 'Campaign/NPCs/Mira.md',
         to: 'People/Mira.md',
@@ -158,12 +167,12 @@ describe('GET /api/graph from the cache', () => {
     expect((await graph(app, '?clusterBy=tag')).clusters).toContain('glossary');
     const dry = await app.inject({
       method: 'GET',
-      url: '/api/tags/rename?from=glossary&to=lexicon',
+      url: '/api/v/default/tags/rename?from=glossary&to=lexicon',
     });
     const preview = dry.json<TagRenamePreview>();
     const res = await app.inject({
       method: 'POST',
-      url: '/api/tags/rename',
+      url: '/api/v/default/tags/rename',
       payload: {
         from: 'glossary',
         to: 'lexicon',
@@ -180,7 +189,7 @@ describe('GET /api/graph from the cache', () => {
     const { app, root } = await openVault();
     await graph(app);
     writeInto(root, 'Outside.md', '# Outside\n\nWritten by another editor, about [[Home]].\n');
-    const rebuilt = await app.inject({ method: 'POST', url: '/api/index/rebuild' });
+    const rebuilt = await app.inject({ method: 'POST', url: '/api/v/default/index/rebuild' });
     expect(rebuilt.statusCode).toBe(200);
     expect(edge(await graph(app), 'Outside.md', 'Home.md')).toBeDefined();
   });
@@ -206,7 +215,7 @@ describe('GET /api/graph from the cache', () => {
   it('cuts neighbourhoods without changing the whole graph the index keeps', async () => {
     const graphOf = vi.spyOn(VaultIndex.prototype, 'graph');
     const { app } = await openVault();
-    const whole = await app.inject({ method: 'GET', url: '/api/graph?clusterBy=folder' });
+    const whole = await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=folder' });
     // The index that answered, caught on its way through: the app does not hand it out.
     const index = graphOf.mock.contexts[0];
     if (!(index instanceof VaultIndex)) {
@@ -221,7 +230,7 @@ describe('GET /api/graph from the cache', () => {
     ] as const) {
       const res = await app.inject({
         method: 'GET',
-        url: `/api/graph/local?path=${encodeURIComponent(path)}&depth=${String(depth)}&clusterBy=folder`,
+        url: `/api/v/default/graph/local?path=${encodeURIComponent(path)}&depth=${String(depth)}&clusterBy=folder`,
       });
       expect(res.statusCode, res.body).toBe(200);
       expect(paths(res.json<GraphResponse>())).toContain(path);
@@ -229,7 +238,7 @@ describe('GET /api/graph from the cache', () => {
 
     expect(index.graph('folder')).toBe(kept);
     expect(JSON.stringify(kept)).toBe(before);
-    const again = await app.inject({ method: 'GET', url: '/api/graph?clusterBy=folder' });
+    const again = await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=folder' });
     expect(again.body).toBe(whole.body);
   });
 
@@ -237,12 +246,12 @@ describe('GET /api/graph from the cache', () => {
     const { app } = await openVault();
     const local = async (): Promise<GraphResponse> =>
       (
-        await app.inject({ method: 'GET', url: '/api/graph/local?path=Home.md&depth=1' })
+        await app.inject({ method: 'GET', url: '/api/v/default/graph/local?path=Home.md&depth=1' })
       ).json<GraphResponse>();
     expect(paths(await local())).not.toContain('Glossary/Ledger.md');
     await app.inject({
       method: 'PUT',
-      url: '/api/notes/Home.md',
+      url: '/api/v/default/notes/Home.md',
       payload: { content: '# Home\n\nOnly [[Ledger]].\n' },
     });
     expect(paths(await local()).sort()).toEqual(['Glossary/Ledger.md', 'Home.md']);

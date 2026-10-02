@@ -62,7 +62,7 @@ describe('the query store', () => {
     useQueryResults.getState().request('from: Campaign');
     await vi.waitFor(() => expect(answerOf('from: Campaign')).toBeDefined());
 
-    expect(calls[0]?.url).toBe('/api/query');
+    expect(calls[0]?.url).toBe('/api/v/default/query');
     expect(calls[0]?.body).toBe(JSON.stringify({ body: 'from: Campaign' }));
     expect(answerOf('from: Campaign')).toEqual({ state: 'ready', result: ANSWER });
   });

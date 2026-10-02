@@ -1,7 +1,7 @@
 import type { NoteSummary } from '@rhizom/core';
 import { describe, expect, it } from 'vitest';
 
-import { copyPath, randomNotePath } from './commands-model.js';
+import { copyPath, otherVaults, randomNotePath, showsVaultSwitcher } from './commands-model.js';
 
 function note(path: string): NoteSummary {
   return {
@@ -64,5 +64,22 @@ describe('copyPath', () => {
   it('keeps a name in any script whole', () => {
     expect(copyPath('Templates/Übung.md', new Set())).toBe('Templates/Übung copy.md');
     expect(copyPath('Templates/🌱 Seedling.md', new Set())).toBe('Templates/🌱 Seedling copy.md');
+  });
+});
+
+describe('vault switching', () => {
+  const vaults = [
+    { id: 'dnd', name: 'dnd' },
+    { id: 'thesis', name: 'Thesis' },
+  ];
+
+  it('offers nothing to switch to with a single vault', () => {
+    expect(showsVaultSwitcher([{ id: 'dnd', name: 'dnd' }])).toBe(false);
+    expect(otherVaults([{ id: 'dnd', name: 'dnd' }], 'dnd')).toEqual([]);
+  });
+
+  it('offers every other vault once there are two', () => {
+    expect(showsVaultSwitcher(vaults)).toBe(true);
+    expect(otherVaults(vaults, 'dnd')).toEqual([{ id: 'thesis', name: 'Thesis' }]);
   });
 });

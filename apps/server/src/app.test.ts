@@ -96,7 +96,7 @@ describe('GET /api/health', () => {
   });
 
   it('returns a JSON 404 for unknown /api routes', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/nope' });
+    const res = await app.inject({ method: 'GET', url: '/api/v/default/nope' });
 
     expect(res.statusCode).toBe(404);
     expect(res.headers['content-type']).toMatch(/^application\/json/);
@@ -111,7 +111,7 @@ describe('GET /api/health', () => {
   });
 
   it('answers vault routes with 503 when no vault is configured', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/vault' });
+    const res = await app.inject({ method: 'GET', url: '/api/v/default/vault' });
 
     expect(res.statusCode).toBe(503);
     expect(res.json()).toMatchObject({ statusCode: 503, error: 'Service Unavailable' });
@@ -137,7 +137,7 @@ describe('vault API', () => {
   });
 
   it('describes the vault', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/vault' });
+    const res = await app.inject({ method: 'GET', url: '/api/v/default/vault' });
 
     expect(res.statusCode).toBe(200);
     const body: VaultInfo = res.json();
@@ -151,13 +151,13 @@ describe('vault API', () => {
   });
 
   it('lists the tree and the notes', async () => {
-    const tree = await app.inject({ method: 'GET', url: '/api/tree' });
+    const tree = await app.inject({ method: 'GET', url: '/api/v/default/tree' });
     const entries: TreeEntry[] = tree.json();
     expect(entries[0]).toMatchObject({ type: 'folder', name: 'Campaign' });
     expect(entries[1]).toMatchObject({ type: 'folder', name: 'Glossary' });
     expect(entries[2]).toMatchObject({ type: 'note', path: 'Home.md' });
 
-    const notes = await app.inject({ method: 'GET', url: '/api/notes' });
+    const notes = await app.inject({ method: 'GET', url: '/api/v/default/notes' });
     const list: NoteSummary[] = notes.json();
     expect(list.map((n) => n.path)).toEqual([
       'Campaign/NPCs/Mira.md',
@@ -168,7 +168,10 @@ describe('vault API', () => {
   });
 
   it('reads a note with its content, hash and metadata', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/notes/Campaign/NPCs/Mira.md' });
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/notes/Campaign/NPCs/Mira.md',
+    });
 
     expect(res.statusCode).toBe(200);
     const note: NoteDocument = res.json();
@@ -185,14 +188,20 @@ describe('vault API', () => {
   });
 
   it('answers 404 for a missing note and 400 for an unsafe path', async () => {
-    const missing = await app.inject({ method: 'GET', url: '/api/notes/Nope.md' });
+    const missing = await app.inject({ method: 'GET', url: '/api/v/default/notes/Nope.md' });
     expect(missing.statusCode).toBe(404);
     expect(missing.json()).toMatchObject({ statusCode: 404, error: 'Not Found' });
 
-    const unsafe = await app.inject({ method: 'GET', url: '/api/notes/..%2F..%2Fsecret.md' });
+    const unsafe = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/notes/..%2F..%2Fsecret.md',
+    });
     expect(unsafe.statusCode).toBe(400);
 
-    const hidden = await app.inject({ method: 'GET', url: '/api/notes/.obsidian/app.json' });
+    const hidden = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/notes/.obsidian/app.json',
+    });
     expect(hidden.statusCode).toBe(400);
   });
 
@@ -201,12 +210,15 @@ describe('vault API', () => {
     const content = '# Über Wurzeln 🌱\n\nSchön: 👨‍👩‍👧 und 🇩🇪 und 𝄞.\n';
     const created = await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { path, content },
     });
     expect(created.statusCode).toBe(201);
 
-    const read = await app.inject({ method: 'GET', url: `/api/notes/${encodeURI(path)}` });
+    const read = await app.inject({
+      method: 'GET',
+      url: `/api/v/default/notes/${encodeURI(path)}`,
+    });
     expect(read.statusCode).toBe(200);
     const note: NoteDocument = read.json();
     expect(note.content).toBe(content);
@@ -218,7 +230,7 @@ describe('vault API', () => {
   it('creates a note, indexes it and refuses to create it twice', async () => {
     const created = await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { path: 'Ideas/Graph layout', content: '# Graph layout\n\nSee [[Home]].\n' },
     });
     expect(created.statusCode).toBe(201);
@@ -227,19 +239,22 @@ describe('vault API', () => {
     expect(note.title).toBe('Graph layout');
     expect(existsSync(join(root, 'Ideas', 'Graph layout.md'))).toBe(true);
 
-    const backlinks = await app.inject({ method: 'GET', url: '/api/backlinks?path=Home.md' });
+    const backlinks = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/backlinks?path=Home.md',
+    });
     expect(backlinks.json<Backlink[]>().map((b) => b.source)).toContain('Ideas/Graph layout.md');
 
     const again = await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { path: 'Ideas/Graph layout.md' },
     });
     expect(again.statusCode).toBe(409);
 
     const invalid = await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { content: 'no path' },
     });
     expect(invalid.statusCode).toBe(400);
@@ -247,12 +262,12 @@ describe('vault API', () => {
 
   it('saves a note with optimistic concurrency', async () => {
     const before: NoteDocument = (
-      await app.inject({ method: 'GET', url: '/api/notes/Home.md' })
+      await app.inject({ method: 'GET', url: '/api/v/default/notes/Home.md' })
     ).json();
 
     const stale = await app.inject({
       method: 'PUT',
-      url: '/api/notes/Home.md',
+      url: '/api/v/default/notes/Home.md',
       headers: { 'if-match': '"not-the-hash"' },
       payload: { content: '# Home\n\nStale write.\n' },
     });
@@ -260,7 +275,7 @@ describe('vault API', () => {
 
     const saved = await app.inject({
       method: 'PUT',
-      url: '/api/notes/Home.md',
+      url: '/api/v/default/notes/Home.md',
       headers: { 'if-match': `"${before.hash}"` },
       payload: { content: '# Home\n\nFresh write with [[Mira]].\n' },
     });
@@ -271,19 +286,19 @@ describe('vault API', () => {
       '# Home\n\nFresh write with [[Mira]].\n',
     );
 
-    const links = await app.inject({ method: 'GET', url: '/api/links?path=Home.md' });
+    const links = await app.inject({ method: 'GET', url: '/api/v/default/links?path=Home.md' });
     expect(links.json<NoteLink[]>().map((l) => l.target)).toEqual(['Campaign/NPCs/Mira.md']);
 
     const badBody = await app.inject({
       method: 'PUT',
-      url: '/api/notes/Home.md',
+      url: '/api/v/default/notes/Home.md',
       payload: { text: 'x' },
     });
     expect(badBody.statusCode).toBe(400);
 
     const missing = await app.inject({
       method: 'PUT',
-      url: '/api/notes/Nope.md',
+      url: '/api/v/default/notes/Nope.md',
       payload: { content: 'x' },
     });
     expect(missing.statusCode).toBe(404);
@@ -292,32 +307,36 @@ describe('vault API', () => {
   it('deletes a note into the trash', async () => {
     const created = await app.inject({
       method: 'POST',
-      url: '/api/notes',
+      url: '/api/v/default/notes',
       payload: { path: 'Temp.md', content: 'x' },
     });
     expect(created.statusCode).toBe(201);
 
-    const deleted = await app.inject({ method: 'DELETE', url: '/api/notes/Temp.md' });
+    const deleted = await app.inject({ method: 'DELETE', url: '/api/v/default/notes/Temp.md' });
     expect(deleted.statusCode).toBe(204);
     expect(existsSync(join(root, '.trash', 'Temp.md'))).toBe(true);
-    expect((await app.inject({ method: 'GET', url: '/api/notes/Temp.md' })).statusCode).toBe(404);
-    expect((await app.inject({ method: 'DELETE', url: '/api/notes/Temp.md' })).statusCode).toBe(
-      404,
-    );
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/v/default/notes/Temp.md' })).statusCode,
+    ).toBe(404);
+    expect(
+      (await app.inject({ method: 'DELETE', url: '/api/v/default/notes/Temp.md' })).statusCode,
+    ).toBe(404);
   });
 
   it('searches the full text and reports backlinks, links and tags', async () => {
-    const search = await app.inject({ method: 'GET', url: '/api/search?q=harbour' });
+    const search = await app.inject({ method: 'GET', url: '/api/v/default/search?q=harbour' });
     expect(search.statusCode).toBe(200);
     const result: SearchResponse = search.json();
     expect(result.total).toBe(2);
     expect(result.hits[0]?.snippet).toContain('<mark>harbour</mark>');
 
-    expect((await app.inject({ method: 'GET', url: '/api/search' })).statusCode).toBe(400);
+    expect((await app.inject({ method: 'GET', url: '/api/v/default/search' })).statusCode).toBe(
+      400,
+    );
 
     // Mira answers to "The Ledger-Keeper", and only her frontmatter says so: the hit comes from
     // the aliases column, and the snippet from the body, which marks nothing here.
-    const byAlias = await app.inject({ method: 'GET', url: '/api/search?q=Keeper' });
+    const byAlias = await app.inject({ method: 'GET', url: '/api/v/default/search?q=Keeper' });
     const aliasResult: SearchResponse = byAlias.json();
     expect(aliasResult.hits.map((hit) => hit.path)).toEqual(['Campaign/NPCs/Mira.md']);
     expect(aliasResult.hits[0]?.snippet).toContain('She keeps the harbour ledger');
@@ -325,18 +344,18 @@ describe('vault API', () => {
 
     const backlinks = await app.inject({
       method: 'GET',
-      url: '/api/backlinks?path=Campaign/NPCs/Mira.md',
+      url: '/api/v/default/backlinks?path=Campaign/NPCs/Mira.md',
     });
     expect(backlinks.json<Backlink[]>().map((b) => b.source)).toContain(
       'Campaign/Places/Silverstadt.md',
     );
 
-    const tags = await app.inject({ method: 'GET', url: '/api/tags' });
+    const tags = await app.inject({ method: 'GET', url: '/api/v/default/tags' });
     expect(tags.json<TagCount[]>()).toContainEqual({ tag: 'campaign', count: 2 });
   });
 
   it('lists one glossary entry per definition note', async () => {
-    const glossary = await app.inject({ method: 'GET', url: '/api/glossary' });
+    const glossary = await app.inject({ method: 'GET', url: '/api/v/default/glossary' });
     expect(glossary.statusCode).toBe(200);
     expect(glossary.json<GlossaryEntry[]>()).toEqual([
       {
@@ -351,7 +370,7 @@ describe('vault API', () => {
   it('finds where a note is named without a link, and links it on request', async () => {
     const found = await app.inject({
       method: 'GET',
-      url: '/api/mentions?path=Campaign/NPCs/Mira.md',
+      url: '/api/v/default/mentions?path=Campaign/NPCs/Mira.md',
     });
     expect(found.statusCode).toBe(200);
     const mentions: MentionsResponse = found.json();
@@ -371,7 +390,7 @@ describe('vault API', () => {
     };
     const linked = await app.inject({
       method: 'POST',
-      url: '/api/mentions/link',
+      url: '/api/v/default/mentions/link',
       payload: { path: 'Campaign/NPCs/Mira.md', writes: [write] },
     });
     expect(linked.statusCode).toBe(200);
@@ -384,7 +403,7 @@ describe('vault API', () => {
     // Once written it is a link, so it is no longer an unlinked mention.
     const again = await app.inject({
       method: 'GET',
-      url: '/api/mentions?path=Campaign/NPCs/Mira.md',
+      url: '/api/v/default/mentions?path=Campaign/NPCs/Mira.md',
     });
     expect(again.json<MentionsResponse>().groups.map((entry) => entry.source)).not.toContain(
       'Glossary/Ledger.md',
@@ -395,7 +414,7 @@ describe('vault API', () => {
     const before = readFileSync(join(root, 'Home.md'), 'utf8');
     const result = await app.inject({
       method: 'POST',
-      url: '/api/mentions/link',
+      url: '/api/v/default/mentions/link',
       payload: {
         path: 'Campaign/NPCs/Mira.md',
         writes: [{ source: 'Home.md', hash: 'not-the-hash-on-disk', offsets: [0] }],
@@ -411,11 +430,11 @@ describe('vault API', () => {
 
   it('answers 404 for a note that is not there, on both mention routes', async () => {
     expect(
-      (await app.inject({ method: 'GET', url: '/api/mentions?path=Nope.md' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/mentions?path=Nope.md' })).statusCode,
     ).toBe(404);
     const post = await app.inject({
       method: 'POST',
-      url: '/api/mentions/link',
+      url: '/api/v/default/mentions/link',
       payload: { path: 'Nope.md', writes: [{ source: 'Home.md', hash: 'x', offsets: [0] }] },
     });
     expect(post.statusCode).toBe(404);
@@ -423,7 +442,7 @@ describe('vault API', () => {
       (
         await app.inject({
           method: 'POST',
-          url: '/api/mentions/link',
+          url: '/api/v/default/mentions/link',
           payload: { path: 'Campaign/NPCs/Mira.md', writes: [] },
         })
       ).statusCode,
@@ -431,34 +450,35 @@ describe('vault API', () => {
   });
 
   it('serves graph data for the vault and for a neighbourhood', async () => {
-    const graph = await app.inject({ method: 'GET', url: '/api/graph' });
+    const graph = await app.inject({ method: 'GET', url: '/api/v/default/graph' });
     expect(graph.statusCode).toBe(200);
     const data: GraphResponse = graph.json();
     expect(data.nodes.length).toBeGreaterThanOrEqual(3);
     expect(data.clusters).toContain('Campaign');
 
-    const byTag = await app.inject({ method: 'GET', url: '/api/graph?clusterBy=tag' });
+    const byTag = await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=tag' });
     expect(byTag.json<GraphResponse>().clusters).toContain('campaign');
 
     const local = await app.inject({
       method: 'GET',
-      url: '/api/graph/local?path=Campaign/NPCs/Mira.md&depth=1',
+      url: '/api/v/default/graph/local?path=Campaign/NPCs/Mira.md&depth=1',
     });
     expect(local.json<GraphResponse>().nodes.map((n) => n.path)).toContain(
       'Campaign/Places/Silverstadt.md',
     );
 
     expect(
-      (await app.inject({ method: 'GET', url: '/api/graph/local?path=Home.md&depth=9' }))
+      (await app.inject({ method: 'GET', url: '/api/v/default/graph/local?path=Home.md&depth=9' }))
         .statusCode,
     ).toBe(400);
     expect(
-      (await app.inject({ method: 'GET', url: '/api/graph?clusterBy=colour' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/graph?clusterBy=colour' }))
+        .statusCode,
     ).toBe(400);
   });
 
   it('lists the files that are not notes', async () => {
-    const response = await app.inject({ method: 'GET', url: '/api/assets' });
+    const response = await app.inject({ method: 'GET', url: '/api/v/default/assets' });
 
     expect(response.statusCode).toBe(200);
     const assets = response.json<AssetSummary[]>();
@@ -469,25 +489,32 @@ describe('vault API', () => {
   });
 
   it('serves vault assets but never hidden files', async () => {
-    const png = await app.inject({ method: 'GET', url: '/api/assets/assets/tavern.png' });
+    const png = await app.inject({ method: 'GET', url: '/api/v/default/assets/assets/tavern.png' });
     expect(png.statusCode).toBe(200);
     expect(png.headers['content-type']).toMatch(/^image\/png/);
 
     expect(
-      (await app.inject({ method: 'GET', url: '/api/assets/.obsidian/app.json' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/assets/.obsidian/app.json' }))
+        .statusCode,
     ).toBe(404);
     expect(
-      (await app.inject({ method: 'GET', url: '/api/assets/..%2Fpackage.json' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/assets/..%2Fpackage.json' }))
+        .statusCode,
     ).not.toBe(200);
   });
 
   it('never serves a note as an asset: the notes have one door, and it is /api/notes', async () => {
-    expect((await app.inject({ method: 'GET', url: '/api/assets/Home.md' })).statusCode).toBe(404);
     expect(
-      (await app.inject({ method: 'GET', url: '/api/assets/Campaign/NPCs/Mira.md' })).statusCode,
+      (await app.inject({ method: 'GET', url: '/api/v/default/assets/Home.md' })).statusCode,
+    ).toBe(404);
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/v/default/assets/Campaign/NPCs/Mira.md' }))
+        .statusCode,
     ).toBe(404);
     // The same file is there, through the door that will one day be asked who is knocking.
-    expect((await app.inject({ method: 'GET', url: '/api/notes/Home.md' })).statusCode).toBe(200);
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/v/default/notes/Home.md' })).statusCode,
+    ).toBe(200);
   });
 
   it('stores an uploaded file under assets/', async () => {
@@ -503,7 +530,7 @@ describe('vault API', () => {
     ].join('\r\n');
     const res = await app.inject({
       method: 'POST',
-      url: '/api/assets',
+      url: '/api/v/default/assets',
       headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
       payload,
     });
@@ -512,19 +539,22 @@ describe('vault API', () => {
     expect(res.json()).toEqual({ path: 'assets/map sketch.png' });
     expect(readFileSync(join(root, 'assets', 'map sketch.png'), 'utf8')).toBe('PNGDATA');
 
-    const served = await app.inject({ method: 'GET', url: '/api/assets/assets/map%20sketch.png' });
+    const served = await app.inject({
+      method: 'GET',
+      url: '/api/v/default/assets/assets/map%20sketch.png',
+    });
     expect(served.statusCode).toBe(200);
   });
 
   it('rebuilds the index on request and picks up external changes', async () => {
     writeInto(root, 'External.md', '# External\n\nWritten outside Rhizom.\n');
-    const res = await app.inject({ method: 'POST', url: '/api/index/rebuild' });
+    const res = await app.inject({ method: 'POST', url: '/api/v/default/index/rebuild' });
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ added: 1 });
-    expect((await app.inject({ method: 'GET', url: '/api/notes/External.md' })).statusCode).toBe(
-      200,
-    );
+    expect(
+      (await app.inject({ method: 'GET', url: '/api/v/default/notes/External.md' })).statusCode,
+    ).toBe(200);
   });
 
   it('publishes the OpenAPI document and its UI', async () => {
@@ -533,7 +563,12 @@ describe('vault API', () => {
     const openapi = doc.json<{ openapi: string; paths: Record<string, unknown> }>();
     expect(openapi.openapi).toMatch(/^3\./);
     expect(Object.keys(openapi.paths)).toEqual(
-      expect.arrayContaining(['/api/vault', '/api/search', '/api/notes', '/api/graph/local']),
+      expect.arrayContaining([
+        '/api/v/{vault}/vault',
+        '/api/v/{vault}/search',
+        '/api/v/{vault}/notes',
+        '/api/v/{vault}/graph/local',
+      ]),
     );
 
     const ui = await app.inject({ method: 'GET', url: '/api/docs' });
@@ -544,7 +579,9 @@ describe('vault API', () => {
     const address = await app.listen({ port: 0, host: '127.0.0.1' });
     const controller = new AbortController();
     try {
-      const response = await fetch(`${address}/api/events`, { signal: controller.signal });
+      const response = await fetch(`${address}/api/v/default/events`, {
+        signal: controller.signal,
+      });
       expect(response.headers.get('content-type')).toMatch(/^text\/event-stream/);
       const reader = response.body?.getReader();
       expect(reader).toBeDefined();
@@ -554,7 +591,7 @@ describe('vault API', () => {
       received += decoder.decode(first.value as Uint8Array);
       expect(received).toContain(': connected');
 
-      await fetch(`${address}/api/notes`, {
+      await fetch(`${address}/api/v/default/notes`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ path: 'Streamed.md', content: '# Streamed' }),
@@ -574,7 +611,41 @@ describe('vault API', () => {
   });
 });
 
-describe('GET /api/events', () => {
+describe('GET /api/v/{vault}/events', () => {
+  it('holds nothing for a stream whose client left while the vault was still opening', async () => {
+    const limits = vi.spyOn(EventEmitter.prototype, 'setMaxListeners');
+    const root = makeVault();
+    // Enough notes that opening the vault — its first sync — outlasts the client's patience.
+    for (let i = 0; i < 500; i += 1) {
+      writeInto(root, `Bulk/Note ${String(i)}.md`, `# Note ${String(i)}\n\nSee [[Home]].\n`);
+    }
+    const app = await buildApp({
+      webDist: false,
+      vault: { dir: root, dataDir: ':memory:', watch: false },
+    });
+    try {
+      const address = await app.listen({ port: 0, host: '127.0.0.1' });
+      const stream = new AbortController();
+      const response = fetch(`${address}/api/v/default/events`, { signal: stream.signal });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      stream.abort();
+      await response.catch(() => undefined);
+      // Wait for the open to finish, then for the handler that ran after it.
+      await app.inject('/api/v/default/vault');
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const call = limits.mock.calls.findIndex(([limit]) => limit === MAX_EVENT_LISTENERS);
+      const events = limits.mock.contexts[call];
+      if (!(events instanceof EventEmitter)) {
+        throw new Error('the vault context raised no emitter to its listener limit');
+      }
+      expect(events.listenerCount('index')).toBe(0);
+    } finally {
+      limits.mockRestore();
+      await app.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 20_000);
+
   it('takes the index listener of every stream away again once the stream closes', async () => {
     // The app does not hand out the context's emitter; it is caught as the one whose listener
     // limit the context raises.
@@ -584,6 +655,8 @@ describe('GET /api/events', () => {
       webDist: false,
       vault: { dir: root, dataDir: ':memory:', watch: false },
     });
+    // A vault is opened by its first request, and its emitter with it.
+    await app.inject('/api/v/default/vault');
     const call = limits.mock.calls.findIndex(([limit]) => limit === MAX_EVENT_LISTENERS);
     const events = limits.mock.contexts[call];
     limits.mockRestore();
@@ -596,7 +669,7 @@ describe('GET /api/events', () => {
       const start = events.listenerCount('index');
       const decoder = new TextDecoder();
       for (const stream of streams) {
-        const response = await fetch(`${address}/api/events`, { signal: stream.signal });
+        const response = await fetch(`${address}/api/v/default/events`, { signal: stream.signal });
         const reader = response.body?.getReader();
         if (reader === undefined) {
           throw new Error('the event stream has no body');
@@ -688,7 +761,7 @@ describe('web app with history-API fallback', () => {
   });
 
   it('keeps /api/* JSON even when the web app is served', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/nope' });
+    const res = await app.inject({ method: 'GET', url: '/api/v/default/nope' });
 
     expect(res.statusCode).toBe(404);
     expect(res.headers['content-type']).toMatch(/^application\/json/);

@@ -328,7 +328,15 @@
     "loading": "Loading the vault…",
     "error": "Could not reach the server: {{message}}",
     "retry": "Try again",
-    "noVault": "No vault is configured. Set RHIZOM_VAULT_DIR and restart the server."
+    "noVault": "No vault is configured. Set RHIZOM_VAULTS or RHIZOM_VAULT_DIR and restart the server."
+  },
+  "vault": {
+    "switch": "Vault",
+    "switchTo": "Switch to vault {{name}}",
+    "notFound": {
+      "title": "This vault does not exist",
+      "body": "No vault is registered as “{{id}}”. These are:"
+    }
   },
   "callout": {
     "note": "Note",
