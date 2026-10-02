@@ -65,7 +65,8 @@
     "createButton": "Anlegen",
     "cancel": "Abbrechen",
     "inFolder": "in {{folder}}",
-    "atRoot": "im Wurzelordner"
+    "atRoot": "im Wurzelordner",
+    "builtInTemplate": "{{name}} (eingebaut)"
   },
   "editor": {
     "label": "Notiz bearbeiten",
@@ -352,5 +353,35 @@
     "bug": "Fehler",
     "example": "Beispiel",
     "quote": "Zitat"
+  },
+  "statblock": {
+    "problem": "Dieser Statblock ließ sich nicht lesen: {{message}}",
+    "abilities": {
+      "str": "STÄ",
+      "dex": "GES",
+      "con": "KON",
+      "int": "INT",
+      "wis": "WEI",
+      "cha": "CHA"
+    },
+    "fields": {
+      "ac": "Rüstungsklasse",
+      "hp": "Trefferpunkte",
+      "speed": "Bewegungsrate",
+      "saves": "Rettungswürfe",
+      "skillsaves": "Fertigkeiten",
+      "damage_vulnerabilities": "Schadensanfälligkeiten",
+      "damage_resistances": "Schadensresistenzen",
+      "damage_immunities": "Schadensimmunitäten",
+      "condition_immunities": "Zustandsimmunitäten",
+      "senses": "Sinne",
+      "languages": "Sprachen",
+      "cr": "Herausforderungsgrad",
+      "traits": "Merkmale",
+      "actions": "Aktionen",
+      "bonus_actions": "Bonusaktionen",
+      "reactions": "Reaktionen",
+      "legendary_actions": "Legendäre Aktionen"
+    }
   }
 }

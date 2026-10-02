@@ -24,6 +24,7 @@ const INFO: VaultInfo = {
   indexedAt: null,
   templates: { folder: null, dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm' },
   daily: { folder: null, format: 'YYYY-MM-DD', template: null },
+  campaign: null,
 };
 
 let notes: NoteSummary[];

@@ -12,6 +12,7 @@ import { unified } from 'unified';
 
 import type { Heading, LinkKind } from '../api.js';
 import type { CalloutLabels } from '../syntax/callout.js';
+import type { StatblockLabels } from './statblock-view.js';
 import { remarkWikilink } from '../syntax/remark-wikilink.js';
 import { findBlockMarkers } from '../syntax/section.js';
 import type { TermMatcher } from '../vault/terms.js';
@@ -96,6 +97,11 @@ export interface RenderOptions {
    * falls back to the word the note itself wrote, `[!tldr]` and all.
    */
   calloutLabels?: CalloutLabels | undefined;
+  /**
+   * The words a stat block is drawn with. Like the callout titles they come from the app; without
+   * them a ` ```statblock ` fence is still drawn, under its keys as written.
+   */
+  statblockLabels?: StatblockLabels | undefined;
   /**
    * Marks the terms the vault defines where they appear in prose. Built once by the caller and
    * reused: this runs over every text node of every render.

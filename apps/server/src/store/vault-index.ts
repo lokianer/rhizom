@@ -16,12 +16,14 @@ import {
   type SearchResponse,
   type TagCount,
   type TreeEntry,
+  type CampaignInfo,
 } from '@rhizom/core';
 import type Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
 import { INDEX_SCHEMA_VERSION, openDatabase } from './database.js';
 import type { IndexContext } from './index/context.js';
+import * as campaignStore from './index/campaign.js';
 import * as glossaryStore from './index/glossary.js';
 import * as graphStore from './index/graph.js';
 import * as linksStore from './index/links.js';
@@ -239,6 +241,11 @@ export class VaultIndex {
    */
   glossary(): GlossaryEntry[] {
     return glossaryStore.glossary(this.ctx);
+  }
+
+  /** The vault's campaign note and the folder it scopes, or null when it has none. */
+  campaign(): CampaignInfo | null {
+    return campaignStore.campaign(this.ctx);
   }
 
   tree(): TreeEntry[] {

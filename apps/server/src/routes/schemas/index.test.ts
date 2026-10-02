@@ -40,6 +40,7 @@ import type {
   UploadResponse,
   VaultInfo,
   VaultSummary,
+  CampaignInfo,
 } from '@rhizom/core';
 import type { Static } from '@sinclair/typebox';
 import { describe, expect, it } from 'vitest';
@@ -81,6 +82,7 @@ import type {
   UploadResponseSchema,
   VaultInfoSchema,
   VaultSummarySchema,
+  CampaignInfoSchema,
 } from './index.js';
 
 /**
@@ -112,6 +114,7 @@ const matching: Same<{ a: number; b?: string }, { a: number; b?: string }> = tru
 type Checked = [
   Pair<HealthResponse, Static<typeof HealthSchema>>,
   Pair<VaultSummary, Static<typeof VaultSummarySchema>>,
+  Pair<CampaignInfo, Static<typeof CampaignInfoSchema>>,
   Pair<VaultInfo, Static<typeof VaultInfoSchema>>,
   Pair<Heading, Static<typeof HeadingSchema>>,
   Pair<NoteSummary, Static<typeof NoteSummarySchema>>,
@@ -188,8 +191,9 @@ describe('API contracts', () => {
       true,
       true,
       true,
+      true,
     ];
-    expect(checked).toHaveLength(36);
+    expect(checked).toHaveLength(37);
   });
 
   it('has teeth: the comparison rejects a shape that only looks the same', () => {

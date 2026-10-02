@@ -193,6 +193,13 @@
       "raw": "![map](assets/silverstadt-map.svg)",
       "resolvesTo": "assets/silverstadt-map.svg",
       "kind": "markdown-image"
+    },
+    {
+      "from": "Campaign/Sessions/Session 13 – Ashes and Ink.md",
+      "raw": "![[Mira's Ledger#statblock]]",
+      "resolvesTo": "Campaign/NPCs/Mira's Ledger.md",
+      "heading": "statblock",
+      "kind": "heading"
     }
   ],
   "specialFiles": {

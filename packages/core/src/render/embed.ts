@@ -18,7 +18,7 @@ import {
   type RenderOptions,
   type RenderedNote,
 } from './note.js';
-import { sliceBlock, sliceSection } from '../syntax/section.js';
+import { sliceBlock, sliceSection, sliceStatblock } from '../syntax/section.js';
 
 /** A rendered note, plus what it still needs before it is complete. */
 export interface RenderedWithEmbeds extends RenderedNote {
@@ -126,12 +126,14 @@ export function renderNoteWithEmbeds(
   // before the term list arrived carries no marks, and reusing it would keep it that way, and
   // `renderQuery` for the same reason — an embedded note may hold a query block of its own.
   // `calloutLabels` likewise: a reader who switches the interface to German would otherwise keep
-  // every callout title an embedded note had when it was last rendered.
+  // every callout title an embedded note had when it was last rendered, and `statblockLabels`
+  // for the same reason with an embedded stat block.
   const identity = [
     base.resolveLink,
     base.assetUrl,
     base.terms,
     base.calloutLabels,
+    base.statblockLabels,
     labels,
     readNote,
     base.renderQuery,
@@ -217,7 +219,12 @@ export function renderNoteWithEmbeds(
       }
       let body = source.markdown;
       if (reference.heading !== undefined) {
-        const section = sliceSection(source.markdown, source.headings, reference.heading);
+        // `#statblock` is the note's stat block, unless the note has a heading of that name.
+        const section =
+          sliceSection(source.markdown, source.headings, reference.heading) ??
+          (reference.heading.trim().toLowerCase() === 'statblock'
+            ? sliceStatblock(source.markdown)
+            : undefined);
         if (section === undefined) {
           return { state: 'missing', label: labels.noSection(shown, reference.heading) };
         }

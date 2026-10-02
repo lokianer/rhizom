@@ -75,6 +75,7 @@ export function registerNoteRoutes(app: TypedApp, context: VaultContextOf): void
         indexedAt: stats.indexedAt,
         templates: ctx.templates(),
         daily: ctx.daily(),
+        campaign: ctx.index.campaign(),
       };
     },
   );

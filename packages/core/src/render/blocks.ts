@@ -7,9 +7,11 @@ import type { Blockquote, Code, Paragraph } from 'mdast';
 
 import { QUERY_LANGUAGE } from '../query/language.js';
 import { parseWikilink } from '../syntax/wikilink.js';
-import { MERMAID_CLASS, MERMAID_LANGUAGE } from './classes.js';
+import { MERMAID_CLASS, MERMAID_LANGUAGE, STATBLOCK_LANGUAGE } from './classes.js';
 import { embedKind, labelOf } from './links.js';
 import type { Context, EmbedReference } from './note.js';
+import { parseStatblock } from './statblock.js';
+import { renderStatblock } from './statblock-view.js';
 
 /**
  * Turns a paragraph that holds nothing but `![[Note]]` into the embedded-note block. Only a
@@ -133,5 +135,52 @@ export function mermaidBlock(node: Code): Blockquote | undefined {
     type: 'blockquote',
     children: [{ type: 'code', lang: MERMAID_LANGUAGE, value: node.value }],
     data: { hName: 'div', hProperties: { className: [MERMAID_CLASS] } },
+  };
+}
+
+/**
+ * Draws a ` ```statblock ` fence. Unlike a query it needs nothing from outside, so it is drawn on
+ * the spot and put into the page after sanitising, the way an answered query is: the block is
+ * built from text nodes by statblock-view.ts and carries nothing the sanitiser would need to
+ * judge. A fence that cannot be read stays the code block it is, with a notice saying why — never
+ * an empty frame.
+ *
+ * Undefined for every other fence.
+ */
+export function statblockBlock(node: Code, context: Context): Paragraph | Blockquote | undefined {
+  if (node.lang?.trim().toLowerCase() !== STATBLOCK_LANGUAGE) {
+    return undefined;
+  }
+  const block = parseStatblock(node.value);
+  if ('problem' in block) {
+    const labels = context.options.statblockLabels;
+    return {
+      type: 'blockquote',
+      children: [
+        {
+          type: 'paragraph',
+          children: [
+            {
+              type: 'text',
+              value: labels === undefined ? block.message : labels.problem(block.message),
+            },
+          ],
+        },
+        { type: 'code', lang: node.lang, value: node.value },
+      ],
+      data: { hName: 'div', hProperties: { className: ['rz-statblock-problem'] } },
+    };
+  }
+  const html = renderStatblock(block, context.options.statblockLabels);
+  return {
+    type: 'paragraph',
+    children: [],
+    data: {
+      hName: 'div',
+      hProperties: {
+        className: ['rz-statblock-host'],
+        dataEmbed: String(context.embeds.push(html) - 1),
+      },
+    },
   };
 }

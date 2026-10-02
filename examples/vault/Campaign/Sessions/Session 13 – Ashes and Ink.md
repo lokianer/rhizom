@@ -44,6 +44,12 @@ Nothing new this session except the catalogue card, which Orrin has kept.
 
 Party split on what to do with the charts: Orrin wants to read them with Wren, Dagny wants to sell, Tessaly wants to hand them over and be done. Ended on that argument, which is the best kind of ending. Next session on the 24th.
 
+## Prep for session 14
+
+If the party goes to Bell Square, Mira is waiting for them:
+
+![[Mira's Ledger#statblock]]
+
 ## Notes to self
 
 - The Ashen Codex: decide what it is. Leaning towards the founding charter of the Order, misfiled

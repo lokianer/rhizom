@@ -3,7 +3,7 @@
 // exactly the classes and attributes this renderer emits and by nothing else.
 import { defaultSchema, type Options as SanitizeSchema } from 'rehype-sanitize';
 
-import { CALLOUT_CLASSES, MERMAID_CLASS } from './classes.js';
+import { CALLOUT_CLASSES, MERMAID_CLASS, STATBLOCK_CLASSES } from './classes.js';
 
 type SanitizeAttributes = NonNullable<SanitizeSchema['attributes']>;
 type PropertyDefinition = SanitizeAttributes[string][number];
@@ -39,7 +39,7 @@ export const sanitizeSchema: SanitizeSchema = {
     a: allowFor('a', ['rz-wikilink', 'rz-wikilink-missing', 'rz-embed-file'], 'dataTarget'),
     div: allowFor(
       'div',
-      ['rz-embed', 'rz-query', MERMAID_CLASS, ...CALLOUT_CLASSES],
+      ['rz-embed', 'rz-query', MERMAID_CLASS, ...STATBLOCK_CLASSES, ...CALLOUT_CLASSES],
       'dataPath',
       'dataEmbed',
       'dataState',

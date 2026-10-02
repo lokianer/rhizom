@@ -64,6 +64,12 @@ describe('expandTemplate', () => {
     expect(expand(source).text).toBe(source);
   });
 
+  it('fills a stat block, which is data like the frontmatter rather than code', () => {
+    expect(expand('```statblock\nname: "{{title}}"\n```\n').text).toBe(
+      '```statblock\nname: "Session 12"\n```\n',
+    );
+  });
+
   it('fills the frontmatter, where the templates in a real vault put it', () => {
     const source = '---\ncreated: "{{date}}"\n---\n\n# {{title}}\n';
     expect(expand(source).text).toBe('---\ncreated: "2026-09-17"\n---\n\n# Session 12\n');

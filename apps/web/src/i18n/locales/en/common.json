@@ -65,7 +65,8 @@
     "createButton": "Create",
     "cancel": "Cancel",
     "inFolder": "in {{folder}}",
-    "atRoot": "at the vault root"
+    "atRoot": "at the vault root",
+    "builtInTemplate": "{{name}} (built in)"
   },
   "editor": {
     "label": "Note editor",
@@ -352,5 +353,35 @@
     "bug": "Bug",
     "example": "Example",
     "quote": "Quote"
+  },
+  "statblock": {
+    "problem": "This stat block could not be read: {{message}}",
+    "abilities": {
+      "str": "STR",
+      "dex": "DEX",
+      "con": "CON",
+      "int": "INT",
+      "wis": "WIS",
+      "cha": "CHA"
+    },
+    "fields": {
+      "ac": "Armor Class",
+      "hp": "Hit Points",
+      "speed": "Speed",
+      "saves": "Saving Throws",
+      "skillsaves": "Skills",
+      "damage_vulnerabilities": "Damage Vulnerabilities",
+      "damage_resistances": "Damage Resistances",
+      "damage_immunities": "Damage Immunities",
+      "condition_immunities": "Condition Immunities",
+      "senses": "Senses",
+      "languages": "Languages",
+      "cr": "Challenge",
+      "traits": "Traits",
+      "actions": "Actions",
+      "bonus_actions": "Bonus Actions",
+      "reactions": "Reactions",
+      "legendary_actions": "Legendary Actions"
+    }
   }
 }

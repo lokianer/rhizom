@@ -121,14 +121,18 @@ among several — and it is not a virtual tabletop: no battle map, no tokens, no
       boundary — a vault is what a name resolves inside, and a link that only Rhizom could follow
       would break the promise that the files are the truth. A single-vault setup keeps working
       exactly as it does now, with no switcher shown at all
-- [ ] The module is switched on by a note: `type: campaign` in the vault root names the system and
-      enables the module's vocabulary. Its types (`npc`, `place`, `faction`, `item`, `quest`,
-      `session`) count only while it is on, so the globally reserved set stays the four of Phase 2
-- [ ] NPC template: stat block in frontmatter (5e-compatible fields) plus motivation, secrets,
-      voice/manner of speech; rendered as a classic stat block. Keys of a system we have never
-      heard of are laid out in the order they were written rather than refused, and the block is
-      addressable as `![[Mira's Ledger#statblock]]`, so a prep note embeds it instead of copying it
-- [ ] Templates for places, factions, items, quests and session logs
+- [x] The module is switched on by a note: `type: campaign` names the system and enables the
+      module's vocabulary for its own folder and everything below it (the vault root scopes the
+      whole vault). Its types (`npc`, `place`, `faction`, `item`, `quest`, `session`) count only
+      inside that scope, so the globally reserved set stays the four of Phase 2
+- [x] NPC template: a ` ```statblock ` fence in the layout of the Obsidian plugin Fantasy
+      Statblocks (rather than frontmatter, so the plugin draws the same file and later versions can
+      stand under headings) plus motivation, secrets, voice/manner of speech; rendered as a classic
+      stat block. Keys of a system we have never heard of are laid out in the order they were
+      written rather than refused, and the block is addressable as `![[Mira's Ledger#statblock]]`,
+      so a prep note embeds it instead of copying it
+- [x] Templates for places, factions, items, quests and session logs, built in and offered inside
+      the campaign; a vault template of the same name replaces one
 - [ ] GM-only blocks: `> [!gm]` for a section and `%%…%%` for a sentence — an Obsidian callout, so
       another editor shows a marked quote rather than a secret. Visibility is decided once, when a
       note is indexed (a public title and body, a second FTS table), and wiki, search, backlinks,

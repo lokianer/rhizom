@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The campaign module, switched on by a note: a note with `type: campaign` names the game system
+  and scopes its own folder and everything below it. `npc`, `place`, `faction`, `item`, `quest`
+  and `session` are reserved for the module inside that scope, for what the rest of the phase
+  builds on them; outside it they are ordinary notes. The vault info reports the campaign.
+- Stat blocks: a ` ```statblock ` fence, written in the layout of the Obsidian plugin Fantasy
+  Statblocks, is drawn as a classic stat block — ability scores with their modifiers, armour class,
+  hit points, saves, senses, traits, actions, reactions — in English or German. Keys of any other
+  system are laid out in the order they were written. `![[Note#statblock]]` embeds a note's stat
+  block, and only the block, so a prep note shows it without copying it. A block that cannot be
+  read stays its code block, with a notice saying why.
+- Built-in templates for NPCs (with a stat block to fill in), places, factions, items, quests and
+  session logs, in the interface language. The new-note dialog offers them inside the campaign,
+  after the vault's own templates; a vault template of the same name replaces one.
+- The example vault's Mira and Captain Thane have stat blocks, and the session 13 note embeds
+  Mira's as prep for the next session.
+
 - More than one vault: `RHIZOM_VAULTS` registers several as `id=path` pairs separated by
   semicolons (`dnd=/srv/dnd;thesis=/srv/notes`), and each lives at its own address, `/v/<id>/…`,
   so a link into one is a link, a bookmark works and two tabs can hold two vaults at once. A
