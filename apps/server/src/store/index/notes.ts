@@ -8,7 +8,17 @@ import { meta, notes, noteTags } from '../schema.js';
 import type { IndexContext } from './context.js';
 import { asc } from 'drizzle-orm';
 
-import { definedTerms, foldTerm, resolveLinkTarget, type DefinedTerm } from '@rhizom/core';
+import {
+  definedTerms,
+  findGates,
+  foldTerm,
+  parseNote,
+  publicMarkdown,
+  resolveLinkTarget,
+  type DefinedTerm,
+  type Gate,
+  type ParsedNote,
+} from '@rhizom/core';
 
 import { reresolve } from './resolution.js';
 import {
@@ -34,6 +44,9 @@ export function upsertNote(
   const lines = input.content.split(/\r?\n/);
   const st = ctx.statements;
 
+  const side = publicSide(input.content, parsed, name);
+  const gates = JSON.parse(side.gates) as Gate[];
+
   ctx.sqlite.transaction(() => {
     forget(ctx, path);
 
@@ -51,6 +64,7 @@ export function upsertNote(
       aliases: JSON.stringify(parsed.aliases),
       wordCount: parsed.wordCount,
       body: parsed.text,
+      ...side,
     });
     for (const tag of parsed.tags) {
       st.insertTag.run(path, tag);
@@ -91,6 +105,7 @@ export function upsertNote(
         heading: link.heading ?? null,
         line: link.line,
         context: (lines[link.line - 1] ?? '').trim().slice(0, CONTEXT_LENGTH),
+        publicFrom: publicFrom(gates, link.offset),
       });
     }
 
@@ -185,4 +200,52 @@ export function getNote(ctx: IndexContext, path: string): NoteRecord | undefined
     aliases: row.aliases,
     wordCount: row.wordCount,
   };
+}
+
+/**
+ * What the players may read of a note, decided once, here. A note with no gate is its own text;
+ * the rest is parsed again without its frontmatter, its comments
+ * and every GM callout, revealed or not — a block marked `revealed: 99` must not be findable
+ * before session 99. The title is the public text's first heading, never the frontmatter's.
+ */
+function publicSide(
+  content: string,
+  parsed: ParsedNote,
+  name: string,
+): { publicTitle: string; publicBody: string; gates: string } {
+  const heading = (headings: readonly { level: number; text: string }[]): string =>
+    headings.find((entry) => entry.level === 1)?.text ?? name;
+  // No shortcut on the raw text: a gate can be spelt in ways a pattern would miss (`[!GM ]`,
+  // `[&#33;gm]`), so the parser that cuts the note is also the one that says whether to cut it.
+  const gates = findGates(content);
+  if (gates.length === 0) {
+    return { publicTitle: heading(parsed.headings), publicBody: parsed.text, gates: '[]' };
+  }
+  const visible = parseNote(publicMarkdown(content, 0), { fallbackTitle: name });
+  return {
+    publicTitle: heading(visible.headings),
+    publicBody: visible.text,
+    gates: JSON.stringify(gates),
+  };
+}
+
+/** What `public_from` stores for a link the players never see. */
+export const NEVER_PUBLIC = 2147483647;
+
+/**
+ * The session from which a link at this offset is public: null outside every gate, the latest
+ * reveal among the callouts around it, and never inside a comment or an unrevealed callout.
+ */
+function publicFrom(gates: readonly Gate[], offset: number): number | null {
+  let from: number | null = null;
+  for (const gate of gates) {
+    if (offset < gate.start || offset >= gate.end) {
+      continue;
+    }
+    if (gate.kind === 'comment' || gate.revealed === null) {
+      return NEVER_PUBLIC;
+    }
+    from = Math.max(from ?? 0, gate.revealed);
+  }
+  return from;
 }

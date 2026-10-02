@@ -11,7 +11,7 @@ import Database from 'better-sqlite3';
  * rebuilt: `syncVault` skips a file whose size and modification time are unchanged and would
  * otherwise keep the old answer forever.
  */
-export const INDEX_SCHEMA_VERSION = 5;
+export const INDEX_SCHEMA_VERSION = 6;
 
 const DDL = `
 create table if not exists notes (
@@ -27,7 +27,12 @@ create table if not exists notes (
   headings text not null,
   aliases text not null,
   word_count integer not null,
-  body text not null
+  body text not null,
+  -- What the players may read: the note without its frontmatter, its comments and every GM
+  -- callout, revealed or not (see gm.ts in core). The player view reads only these.
+  public_title text not null,
+  public_body text not null,
+  gates text not null
 );
 create index if not exists notes_folder on notes (folder);
 create index if not exists notes_name on notes (name);
@@ -42,7 +47,11 @@ create table if not exists links (
   alias text,
   heading text,
   line integer not null,
-  context text not null
+  context text not null,
+  -- The session from which the players may see this link: null when it stands in public text,
+  -- the reveal session inside a revealed GM callout, and never (2147483647) inside a comment or a
+  -- callout that is not revealed. "Met" is decided by this column.
+  public_from integer
 );
 create index if not exists links_source on links (source);
 create index if not exists links_target on links (target);
@@ -96,6 +105,30 @@ create trigger if not exists notes_fts_update after update on notes begin
   insert into notes_fts (notes_fts, rowid, title, aliases, body)
   values ('delete', old.id, old.title, old.aliases, old.body);
   insert into notes_fts (rowid, title, aliases, body) values (new.id, new.title, new.aliases, new.body);
+end;
+
+-- The player view's search. A table of its own over the public columns only, so a query from the
+-- view cannot reach a gated word however it is written.
+create virtual table if not exists notes_public_fts using fts5(
+  public_title,
+  public_body,
+  content='notes',
+  content_rowid='id',
+  tokenize='unicode61 remove_diacritics 2'
+);
+create trigger if not exists notes_public_fts_insert after insert on notes begin
+  insert into notes_public_fts (rowid, public_title, public_body)
+  values (new.id, new.public_title, new.public_body);
+end;
+create trigger if not exists notes_public_fts_delete after delete on notes begin
+  insert into notes_public_fts (notes_public_fts, rowid, public_title, public_body)
+  values ('delete', old.id, old.public_title, old.public_body);
+end;
+create trigger if not exists notes_public_fts_update after update on notes begin
+  insert into notes_public_fts (notes_public_fts, rowid, public_title, public_body)
+  values ('delete', old.id, old.public_title, old.public_body);
+  insert into notes_public_fts (rowid, public_title, public_body)
+  values (new.id, new.public_title, new.public_body);
 end;
 `;
 

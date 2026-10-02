@@ -1,9 +1,8 @@
 // The `/v/:vault` route: the app inside a vault, or a page saying the vault does not exist.
 import { useTranslation } from 'react-i18next';
-import { Link, useLoaderData, useParams } from 'react-router';
+import { Link, Outlet, useLoaderData, useParams } from 'react-router';
 
 import { vaultHref } from '../routing/vault.js';
-import { Layout } from './Layout.js';
 import type { VaultLoaderData } from './vault-loader.js';
 
 export function VaultRoot() {
@@ -27,5 +26,5 @@ export function VaultRoot() {
   }
   // Keyed by the vault: switching remounts everything below, so no component keeps state that
   // belongs to the vault it came from.
-  return <Layout key={vault} />;
+  return <Outlet key={vault} />;
 }

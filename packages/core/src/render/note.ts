@@ -37,6 +37,11 @@ export interface RenderedLink {
   href: string;
   /** Text to show; defaults to the alias or the raw target. */
   label?: string;
+  /**
+   * Draw the link as its words alone, with nothing to follow: the player view's way of writing a
+   * link to a note the table has not met, which must neither lead anywhere nor say where.
+   */
+  plain?: boolean;
 }
 
 /** What an `![[…]]` points at, as far as this note can tell. */

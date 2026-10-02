@@ -76,7 +76,9 @@ describe('parseNote', () => {
   });
 
   it('finds wikilinks with their parts and line numbers', () => {
-    const wikilinks = note.links.filter((l) => l.kind === 'wikilink');
+    const wikilinks = note.links
+      .filter((l) => l.kind === 'wikilink')
+      .map(({ offset: _offset, ...link }) => link);
     expect(wikilinks).toEqual([
       { kind: 'wikilink', raw: 'Silverstadt', target: 'Silverstadt', line: 11 },
       {
@@ -97,13 +99,21 @@ describe('parseNote', () => {
     ]);
   });
 
+  it('places every link at the offset where it is written', () => {
+    for (const link of note.links) {
+      expect(NOTE.slice(link.offset, link.offset + 40)).toMatch(/^(!?\[\[|\[|!\[)/);
+    }
+  });
+
   it('finds embeds of notes and files, including standard image syntax', () => {
     const embeds = note.links.filter((l) => l.kind === 'embed').map((l) => l.target);
     expect(embeds).toEqual(['tavern.png', 'Templates/NPC', 'assets/silverstadt-map.svg']);
   });
 
   it('treats relative Markdown links to .md files as links and skips external URLs', () => {
-    const markdownLinks = note.links.filter((l) => l.kind === 'markdown');
+    const markdownLinks = note.links
+      .filter((l) => l.kind === 'markdown')
+      .map(({ offset: _offset, ...link }) => link);
     expect(markdownLinks).toEqual([
       {
         kind: 'markdown',

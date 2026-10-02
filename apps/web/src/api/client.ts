@@ -25,6 +25,10 @@ import type {
   UploadResponse,
   VaultInfo,
   VaultSummary,
+  PublicNote,
+  PublicNoteDocument,
+  SearchHit,
+  TableSessions,
 } from '@rhizom/core';
 
 import { currentVault } from '../routing/vault.js';
@@ -235,5 +239,20 @@ export const api = {
     ),
 
   /** URL of a file inside the vault, for `<img src>` and links. */
+  // The player view. Every call names its session; the server cuts what the table may read.
+  tableSessions: (options?: RequestOptions) =>
+    request<TableSessions>(inVault('/table/sessions'), options),
+  tableNotes: (session: number, options?: RequestOptions) =>
+    request<PublicNote[]>(inVault(`/table/notes?session=${String(session)}`), options),
+  tableNote: (path: string, session: number, options?: RequestOptions) =>
+    request<PublicNoteDocument>(
+      inVault(`/table/notes/${encodeVaultPath(path)}?session=${String(session)}`),
+      options,
+    ),
+  tableSearch: (query: string, session: number, options?: RequestOptions) =>
+    request<SearchHit[]>(
+      inVault(`/table/search?q=${encodeURIComponent(query)}&session=${String(session)}`),
+      options,
+    ),
   assetUrl: (path: string) => inVault(`/assets/${encodeVaultPath(path)}`),
 };

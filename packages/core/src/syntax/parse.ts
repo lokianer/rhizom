@@ -28,6 +28,11 @@ export interface ParsedLink {
   blockId?: string;
   /** 1-based line of the link in the source. */
   line: number;
+  /**
+   * UTF-16 offset of the link in the source, so a link can be placed inside or outside a GM gate
+   * exactly rather than by its line: a comment and a public link may share one.
+   */
+  offset: number;
 }
 
 export interface ParsedNote {
@@ -146,6 +151,7 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
           raw: node.value,
           target: parts.target,
           line: lineOf(node),
+          offset: offsetOf(node),
         };
         if (parts.alias !== undefined) {
           link.alias = parts.alias;
@@ -169,6 +175,7 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
           raw: node.url,
           target: target.path,
           line: lineOf(node),
+          offset: offsetOf(node),
         };
         const alias = toString(node).trim();
         if (alias !== '') {
@@ -187,7 +194,13 @@ function walk(node: RootContent, state: WalkState, insideLink: boolean): void {
     case 'image': {
       const target = localTarget(node.url);
       if (target !== undefined) {
-        state.links.push({ kind: 'embed', raw: node.url, target: target.path, line: lineOf(node) });
+        state.links.push({
+          kind: 'embed',
+          raw: node.url,
+          target: target.path,
+          line: lineOf(node),
+          offset: offsetOf(node),
+        });
       }
       state.pieces.push(node.alt ?? '');
       return;
@@ -281,6 +294,10 @@ function collectText(node: Nodes, pieces: string[]): void {
 
 function lineOf(node: Nodes): number {
   return node.position?.start.line ?? 0;
+}
+
+function offsetOf(node: Nodes): number {
+  return node.position?.start.offset ?? 0;
 }
 
 function readFrontmatter(tree: Root): { frontmatter: Record<string, unknown>; error?: string } {

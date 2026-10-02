@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GM-only text: a `> [!gm]` callout hides a passage from the players, `%%…%%` (Obsidian's
+  comment) a sentence, and `> [!gm] revealed: 12` marks a passage the party learnt in session 12.
+  Other editors show a marked quote, never a secret by accident. In the app a GM block is drawn
+  in the campaign's ochre with a dashed line and the word "GM".
+- The player view (`/v/<id>/table`, "Player view" in the header): the vault as the table knows
+  it, at any session. It shows the session notes, the notes a session note has linked to, and
+  notes marked `public: true` — inside the campaign, nothing else — with every GM block not yet
+  revealed, every comment and the frontmatter left out. A slider moves through the sessions; links
+  to notes the party has not met are plain text; its search reads only public text. It says on
+  screen that it is a view, not a lock: locking comes in Phase 4.
+
 - The campaign module, switched on by a note: a note with `type: campaign` names the game system
   and scopes its own folder and everything below it. `npc`, `place`, `faction`, `item`, `quest`
   and `session` are reserved for the module inside that scope, for what the rest of the phase

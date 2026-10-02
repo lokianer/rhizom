@@ -339,6 +339,21 @@
       "body": "No vault is registered as “{{id}}”. These are:"
     }
   },
+  "table": {
+    "title": "Player view",
+    "open": "Player view",
+    "back": "GM view",
+    "banner": "This is a view, not a lock: anyone who has this address can open the GM view as well. Locking comes in Phase 4.",
+    "session": "After session {{n}}",
+    "sessionLabel": "Session",
+    "beforeFirst": "Before the first session",
+    "notes": "What the party knows",
+    "nothingYet": "The party has not met anything yet.",
+    "pick": "Pick a note on the left.",
+    "search": "Search what the party knows",
+    "missing": "The party does not know this note.",
+    "noCampaign": "This vault has no campaign note, so there is nothing to show the table."
+  },
   "callout": {
     "note": "Note",
     "abstract": "Summary",
@@ -352,7 +367,8 @@
     "danger": "Danger",
     "bug": "Bug",
     "example": "Example",
-    "quote": "Quote"
+    "quote": "Quote",
+    "gm": "GM"
   },
   "statblock": {
     "problem": "This stat block could not be read: {{message}}",
