@@ -1,0 +1,98 @@
+/* The player view: the vault as the table knows it. Quieter than the GM lens — no sidebar of
+   tools, no editor — and laid out to be read from across a table: reading size throughout. */
+.rz-table {
+  min-height: 100%;
+  padding: var(--rz-space-4) var(--rz-space-6) var(--rz-space-7);
+  background: var(--rz-bg);
+}
+
+.rz-table-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rz-space-4);
+  padding-bottom: var(--rz-space-3);
+  border-bottom: 1px solid var(--rz-border);
+}
+
+.rz-table-header h1 {
+  margin: 0;
+  font-family: var(--rz-font-serif);
+  font-size: var(--rz-text-2xl);
+}
+
+.rz-table-session {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rz-space-3);
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.rz-table-session input {
+  width: min(22rem, 50vw);
+  accent-color: var(--rz-ochre);
+}
+
+/* Said plainly and kept on screen: this page is a view of the vault, not a lock on it. */
+.rz-table-banner {
+  margin: var(--rz-space-3) 0 0;
+  padding: var(--rz-space-2) var(--rz-space-3);
+  border: 1px solid color-mix(in srgb, var(--rz-warning) 55%, var(--rz-border));
+  border-radius: var(--rz-radius-sm);
+  background: var(--rz-surface);
+  color: var(--rz-text);
+}
+
+.rz-table-body {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+  gap: var(--rz-space-6);
+  margin-top: var(--rz-space-5);
+}
+
+@media (max-width: 760px) {
+  .rz-table-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rz-table-side h2 {
+  margin: var(--rz-space-5) 0 var(--rz-space-2);
+  font-size: var(--rz-text-lg);
+}
+
+.rz-table-search input {
+  width: 100%;
+}
+
+.rz-table-list {
+  margin: var(--rz-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--rz-space-1);
+}
+
+.rz-table-list a {
+  color: var(--rz-link);
+  text-decoration: none;
+}
+
+.rz-table-list a[aria-current='page'] {
+  color: var(--rz-text);
+  font-weight: 600;
+}
+
+.rz-table-snippet {
+  display: block;
+  color: var(--rz-text-muted);
+}
+
+.rz-table-note {
+  max-width: var(--rz-measure);
+}
+
+.rz-table-empty {
+  color: var(--rz-text-muted);
+}

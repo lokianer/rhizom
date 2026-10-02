@@ -133,14 +133,14 @@ among several — and it is not a virtual tabletop: no battle map, no tokens, no
       so a prep note embeds it instead of copying it
 - [x] Templates for places, factions, items, quests and session logs, built in and offered inside
       the campaign; a vault template of the same name replaces one
-- [ ] GM-only blocks: `> [!gm]` for a section and `%%…%%` for a sentence — an Obsidian callout, so
+- [x] GM-only blocks: `> [!gm]` for a section and `%%…%%` for a sentence — an Obsidian callout, so
       another editor shows a marked quote rather than a secret. Visibility is decided once, when a
       note is indexed (a public title and body, a second FTS table), and wiki, search, backlinks,
       graph, glossary and export read only the public side; the gate defaults to deny
-- [ ] Reveal markers: `> [!gm] revealed: 12` says the party learnt this in session 12, so one mark
+- [x] Reveal markers: `> [!gm] revealed: 12` says the party learnt this in session 12, so one mark
       answers both "may this be shown" and "have they been told". The derived `reveals` rows are
       rebuilt from the files like everything else
-- [ ] Player view: the vault as the table knows it — unrevealed blocks gone, links to notes they
+- [x] Player view: the vault as the table knows it — unrevealed blocks gone, links to notes they
       have never met flattened to plain text, and a session slider that shows the vault as it stood
       in session 9. Read-only, and honest about being a view: the lock is Phase 4, not this
 - [ ] Capture bar: one line over any note that appends to tonight's session note without leaving

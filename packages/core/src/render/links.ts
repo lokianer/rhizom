@@ -36,6 +36,16 @@ function noteLink(parts: WikilinkTarget, kind: LinkKind, value: string, context:
   // `parseWikilink` reads a fragment as one or the other, never both; put back together here as
   // it was written, because that is the form `fragmentOf` tells the two apart by.
   const fragment = parts.blockId === undefined ? parts.heading : `^${parts.blockId}`;
+  if (link.plain === true) {
+    // A span with nothing on it: the words as the reader would have seen them, no address, and
+    // not the target either — the alias is all that stands, or the target as written.
+    return {
+      type: 'link',
+      url: '',
+      children: [{ type: 'text', value: parts.alias ?? parts.target }],
+      data: { hName: 'span', hProperties: {} },
+    };
+  }
   return {
     type: 'link',
     url: link.href + fragmentOf(fragment),
@@ -94,8 +104,14 @@ export function rewriteLink(node: Link, context: Context): void {
     return;
   }
   const link = context.options.resolveLink(target.path, 'markdown', context.options.sourcePath);
-  node.url = link.href + fragmentOf(target.fragment);
   const data = (node.data ??= {});
+  if (link.plain === true) {
+    node.url = '';
+    data.hName = 'span';
+    data.hProperties = {};
+    return;
+  }
+  node.url = link.href + fragmentOf(target.fragment);
   data.hProperties = { ...data.hProperties, ...noteLinkProperties(link, target.path) };
 }
 

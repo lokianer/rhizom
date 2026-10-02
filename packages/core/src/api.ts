@@ -428,3 +428,24 @@ export interface ApiError {
   error: string;
   message: string;
 }
+
+/** `GET /api/table/sessions` — the player view's sessions. */
+export interface TableSessions {
+  campaign: boolean;
+  sessions: number[];
+}
+
+/** A note the player view may show, under its public title. */
+export interface PublicNote {
+  path: string;
+  title: string;
+}
+
+/** `GET /api/table/notes/{path}?session=` — a note as the table may read it. */
+export interface PublicNoteDocument {
+  path: string;
+  title: string;
+  /** The note without frontmatter, comments and the GM callouts not revealed by `session`. */
+  markdown: string;
+  session: number;
+}

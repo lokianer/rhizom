@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router/dom';
 
 import { HomePage } from '../pages/HomePage.js';
 import { legacyRedirect, revalidateVault, vaultLoader } from './vault-loader.js';
+import { Layout } from './Layout.js';
 import { VaultRoot } from './VaultRoot.js';
 
 // Created once at module level: a data router must not live in React state.
@@ -16,33 +17,46 @@ const router = createBrowserRouter([
     shouldRevalidate: revalidateVault,
     Component: VaultRoot,
     children: [
-      { index: true, Component: HomePage },
-      // Splat routes: the note path keeps its slashes, without the .md extension.
-      // The editor brings CodeMirror and its Markdown grammar, which together are the largest
-      // thing in the app and of no use to somebody who came to read; like the three below it is
-      // fetched when someone goes there rather than on the first page.
+      // The player view stands beside the GM lens rather than inside it: no sidebar, no tree, no
+      // note list of the GM's — nothing on screen the table has not met.
       {
-        path: 'notes/*',
-        lazy: async () => ({ Component: (await import('../pages/NotePage.js')).NotePage }),
-      },
-      // The graph brings the force layout, the wiki the Markdown renderer; both are loaded
-      // when someone goes there rather than on the first page.
-      {
-        path: 'wiki/*',
-        lazy: async () => ({ Component: (await import('../pages/WikiPage.js')).WikiPage }),
+        path: 'table/*',
+        lazy: async () => ({ Component: (await import('../table/TablePage.js')).TablePage }),
       },
       {
-        path: 'graph',
-        lazy: async () => ({ Component: (await import('../pages/GraphPage.js')).GraphPage }),
+        Component: Layout,
+        children: [
+          { index: true, Component: HomePage },
+          // Splat routes: the note path keeps its slashes, without the .md extension.
+          // The editor brings CodeMirror and its Markdown grammar, which together are the largest
+          // thing in the app and of no use to somebody who came to read; like the three below it is
+          // fetched when someone goes there rather than on the first page.
+          {
+            path: 'notes/*',
+            lazy: async () => ({ Component: (await import('../pages/NotePage.js')).NotePage }),
+          },
+          // The graph brings the force layout, the wiki the Markdown renderer; both are loaded
+          // when someone goes there rather than on the first page.
+          {
+            path: 'wiki/*',
+            lazy: async () => ({ Component: (await import('../pages/WikiPage.js')).WikiPage }),
+          },
+          {
+            path: 'graph',
+            lazy: async () => ({ Component: (await import('../pages/GraphPage.js')).GraphPage }),
+          },
+          {
+            path: 'glossary',
+            lazy: async () => ({
+              Component: (await import('../pages/GlossaryPage.js')).GlossaryPage,
+            }),
+          },
+          // Anything unmatched shows the home page. React Router ranks routes by how specific they
+          // are rather than by order, so this does not shadow its siblings; it is written last
+          // because that is where a reader looks for the fallback.
+          { path: '*', Component: HomePage },
+        ],
       },
-      {
-        path: 'glossary',
-        lazy: async () => ({ Component: (await import('../pages/GlossaryPage.js')).GlossaryPage }),
-      },
-      // Anything unmatched shows the home page. React Router ranks routes by how specific they
-      // are rather than by order, so this does not shadow its siblings; it is written last
-      // because that is where a reader looks for the fallback.
-      { path: '*', Component: HomePage },
     ],
   },
   // `/` and every address from before vaults were in the URL: a bookmark of `/notes/…` lands on

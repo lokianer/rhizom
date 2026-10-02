@@ -8,9 +8,10 @@ session and commit it with the rest of the work.
 **Phase 3 is in progress**, split into sub-projects, each with its own spec, plan and review:
 
 1. More than one vault — **merged** (PR #7, CI 11/11)
-2. Module core: `type: campaign`, the stat block, the templates — **done on
-   `lokianer/feat-campaign-module`**
-3. The GM gate: `> [!gm]`, `%%…%%`, public and private index sides, reveals, the player view
+2. Module core: `type: campaign`, the stat block, the templates — **PR #8, CI 11/11**, waiting
+   for the maintainer's merge
+3. The GM gate: `> [!gm]`, `%%…%%`, public index side, reveals, the player view — **done on
+   `lokianer/feat-gm-gate`**, which is stacked on the PR #8 branch
 4. At the table: capture bar, dice, tables, decks
 5. Ties, blocs, axis packs, acquaintance colouring
 6. Campaign time: clocks, the session spine, the improv drawer, the party ledger
@@ -48,10 +49,29 @@ filled inside the fence and would not have been quoted (fences of stat blocks ar
 template overrode a built-in one only in its own language. Left: YAML merge keys (`<<`) are not
 resolved, and odd nested values flatten oddly.
 
+**Sub-project 3** (spec `docs/specs/2026-10-03-gm-gate.md`, reasons in `DECISIONS.md`
+2026-10-03 "The GM gate"):
+
+- **Core:** `syntax/gm.ts` (`findGates`, `publicMarkdown`, `sessionNumberOf`, `isPublicNote`);
+  `[!gm]` is a callout kind; `ParsedLink.offset`; `RenderedLink.plain`.
+- **Server:** schema 6 — `notes.public_title/public_body/gates`, `notes_public_fts`,
+  `links.public_from`; `store/public-index.ts` is all the player view's routes
+  (`routes/table.ts`) can reach. `table.test.ts` is the leak test: a marker in every gated form,
+  every route, every session.
+- **Web:** `table/TablePage.tsx` and `table/table-model.ts` under `/v/<id>/table`, outside the GM
+  layout; `pages/render-labels.ts` shares the render words with the preview.
+
+An adversarial security review found real leaks, all fixed with failing tests first and added to
+the leak test: a GM callout inside a revealed one; spellings the GM lens drew as GM but the gate
+missed (`[!GM ]`, `[!gm|wide]`, `[&#33;gm]`, setext, a `[!gm]:` reference); frontmatter with
+spaces after the fence; lone `
+` line ends; `\%%`; HTML blocks; the indexer's raw-text
+shortcut; and the player view loading the GM note list. Prep sections now belong in `[!gm]`.
+
 ## Open, in the order I would take them
 
-1. **Push sub-project 2**, then the pull request; CI on three systems.
-2. **Sub-project 3** (the GM gate): the security-relevant one — brainstorm and spec carefully.
+1. **Merge PR #8**, then rebase `lokianer/feat-gm-gate` onto `main`, push it and open its PR.
+2. **Sub-project 4** (at the table: capture bar, dice, tables, decks).
 3. Minors left by the sub-project 1 review: `VaultPool.get()` after `close()` can reopen a vault
    during shutdown; a request longer than the idle time can see its context closed; the `ui`
    store's move to version 2 drops the open folders, milieu field and graph depth once; a vault

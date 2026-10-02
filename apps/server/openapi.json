@@ -3342,6 +3342,397 @@
         }
       }
     },
+    "/api/v/{vault}/table/sessions": {
+      "get": {
+        "summary": "The sessions of the campaign",
+        "tags": ["player view"],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["campaign", "sessions"],
+                  "properties": {
+                    "campaign": {
+                      "description": "Whether the vault has a campaign at all",
+                      "type": "boolean"
+                    },
+                    "sessions": {
+                      "description": "The session numbers, in order",
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v/{vault}/table/notes": {
+      "get": {
+        "summary": "The notes the table may read at a session",
+        "tags": ["player view"],
+        "parameters": [
+          {
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "session",
+            "required": false,
+            "description": "Defaults to the latest session"
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["path", "title"],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "description": "The public title: the first heading of the public text",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v/{vault}/table/notes/{*}": {
+      "get": {
+        "summary": "A note as the table may read it at a session",
+        "tags": ["player view"],
+        "parameters": [
+          {
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "session",
+            "required": false,
+            "description": "Defaults to the latest session"
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          },
+          {
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "in": "path",
+            "name": "*",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["path", "title", "markdown", "session"],
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "markdown": {
+                      "description": "The note without anything gated at that session",
+                      "type": "string"
+                    },
+                    "session": {
+                      "description": "The session the text was cut for",
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v/{vault}/table/search": {
+      "get": {
+        "summary": "Full-text search over what the table may read at a session",
+        "tags": ["player view"],
+        "parameters": [
+          {
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "q",
+            "required": true
+          },
+          {
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "session",
+            "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "vault",
+            "required": true,
+            "description": "Vault id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["path", "title", "snippet", "score"],
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "snippet": {
+                        "description": "HTML-escaped, matches wrapped in <mark>",
+                        "type": "string"
+                      },
+                      "score": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Shape of every error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Shape of every error response",
+                  "type": "object",
+                  "required": ["statusCode", "error", "message"],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v/{vault}/assets": {
       "get": {
         "summary": "List the files in the vault that are not notes",

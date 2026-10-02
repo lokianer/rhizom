@@ -30,6 +30,9 @@ Wears the Order's dark blue coat with the lantern badge blackened by weather. Ke
 
 Order, in the literal sense. He believes the fire at the Municipal [[Campaign/Places/Archive|Archive]] was set to destroy a specific record and wants to know which one before the [[The Archivists|Archivists]] do.
 
+> [!gm] revealed: 12
+> Aldric owes Mira forty gold, and she has reminded him of it twice. The party overheard the second time.
+
 ## Relationship to the party
 
 | Session | Event | Attitude after |

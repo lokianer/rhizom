@@ -20,7 +20,7 @@ The party woke at The Cracked Bell to the bridge bell and smoke over the Bellwar
 
 ## Ink
 
-[[Corvin Marsh]] in the ruined reading room, sorting wet paper by hand. He asked for the charts again, more quietly. Orrin asked what the Archive owed Mira Voss. Marsh said, "Everything, once," and would not go on. Good line; I did not plan it.
+[[Corvin Marsh]] in the ruined reading room, sorting wet paper by hand. He asked for the charts again, more quietly. Orrin asked what the Archive owed [[Mira Voss]]. Marsh said, "Everything, once," and would not go on. Good line; I did not plan it.
 
 Among the burnt records Tessaly found a scorched catalogue card referring to a bound volume the Archive had held on deposit: [[The Ashen Codex]]. No such book exists in any note of mine yet, which means the players have handed me a plot hook and I intend to use it.
 
@@ -46,12 +46,16 @@ Party split on what to do with the charts: Orrin wants to read them with Wren, D
 
 ## Prep for session 14
 
-If the party goes to Bell Square, Mira is waiting for them:
-
-![[Mira's Ledger#statblock]]
+> [!gm] Bell Square
+> If the party goes to Bell Square, Mira is waiting for them:
+>
+> ![[Mira's Ledger#statblock]]
 
 ## Notes to self
 
-- The Ashen Codex: decide what it is. Leaning towards the founding charter of the Order, misfiled
-- Lady Vermillion: the Order's patron in the Bellward, or the Bench's chair. Pick one and do not tell the players which
-- Attendance in `stats.csv`; Ilex's player has confirmed for the 24th
+%%Not for the table: the fire was started from inside the Archive.%%
+
+> [!gm]
+> - The Ashen Codex: decide what it is. Leaning towards the founding charter of the Order, misfiled
+> - Lady Vermillion: the Order's patron in the Bellward, or the Bench's chair. Pick one and do not tell the players which
+> - Attendance in `stats.csv`; Ilex's player has confirmed for the 24th

@@ -1,6 +1,6 @@
 // Drizzle table definitions for the index. The DDL in database.ts must match these exactly; the
 // index is disposable, so a schema change bumps INDEX_SCHEMA_VERSION instead of migrating.
-import type { Heading, LinkKind } from '@rhizom/core';
+import type { Gate, Heading, LinkKind } from '@rhizom/core';
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const notes = sqliteTable(
@@ -21,6 +21,11 @@ export const notes = sqliteTable(
     wordCount: integer('word_count').notNull(),
     /** Plain text for full-text search; the Markdown file stays the source of truth. */
     body: text('body').notNull(),
+    /** The note as the players may read it: see `public_body` in database.ts. */
+    publicTitle: text('public_title').notNull(),
+    publicBody: text('public_body').notNull(),
+    /** Where the GM gate sits in the note, as `Gate[]` from core. */
+    gates: text('gates', { mode: 'json' }).$type<Gate[]>().notNull(),
   },
   (table) => [index('notes_folder').on(table.folder), index('notes_name').on(table.name)],
 );
@@ -42,6 +47,8 @@ export const links = sqliteTable(
     line: integer('line').notNull(),
     /** The source line, trimmed, for the backlinks panel. */
     context: text('context').notNull(),
+    /** The session from which the players may see this link; null in public text. */
+    publicFrom: integer('public_from'),
   },
   (table) => [
     index('links_source').on(table.source),

@@ -19,6 +19,7 @@ import { HealthSchema, TreeEntrySchema } from './routes/schemas/index.js';
 import { registerMentionRoutes } from './routes/mentions.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerTagRenameRoutes } from './routes/tag-rename.js';
+import { registerTableRoutes } from './routes/table.js';
 import { registerTermRoutes } from './routes/terms.js';
 import { registerVaultScope, vaultContextOf } from './routes/vault-scope.js';
 import { registerNotFound } from './plugins/not-found.js';
@@ -146,6 +147,14 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     registerMentionRoutes(scoped, vaultContextOf);
     registerGraphRoutes(scoped, vaultContextOf);
     registerMaintenanceRoutes(scoped, vaultContextOf, hold);
+    // The player view gets the public side of the index and nothing else.
+    registerTableRoutes(scoped, (request) => {
+      const context = vaultContextOf(request);
+      return {
+        view: context.index.publicView(),
+        readNote: async (path) => (await context.vault.readNote(path)).content,
+      };
+    });
     await registerAssetRoutes(scoped, vaultContextOf);
   });
 

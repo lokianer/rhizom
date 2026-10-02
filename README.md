@@ -26,7 +26,8 @@ connections. Every vault doubles as a navigable wiki.
 > **Early development.** Phases 1 and 2 of seven are what you can run today: open a vault,
 > write, link, search, see the field, and everything the knowledge layer adds — definitions,
 > transclusion, query blocks, templates, milieu axes. Phase 3, the D&D module, is under way:
-> several vaults per server, campaign notes, stat blocks and campaign templates are in.
+> several vaults per server, campaign notes, stat blocks, campaign templates, GM-only blocks
+> with reveals and a read-only player view are in.
 > Everything up to the end of Phase 5 is a `0.x`: the format a vault is written in may still
 > move. Keep a backup of your notes.
 

@@ -71,6 +71,15 @@ describe('callout kinds', () => {
   });
 });
 
+describe('callout metadata', () => {
+  it('reads the kind before Obsidian metadata, so [!gm|wide] is a GM block', () => {
+    const html = render('> [!gm|wide] Behind the curtain\n> The truth.');
+    expect(html).toContain('rz-callout-gm');
+    expect(html).toContain('Behind the curtain');
+    expect(html).not.toContain('wide');
+  });
+});
+
 describe('renderNote: callouts', () => {
   it('renders a callout with a title and a body', () => {
     expect(render('> [!note] Watch the tide\n> The causeway floods.')).toBe(

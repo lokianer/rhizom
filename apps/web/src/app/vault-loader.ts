@@ -38,7 +38,10 @@ export interface VaultLoaderData {
   known: boolean;
 }
 
-export async function vaultLoader({ params }: LoaderFunctionArgs): Promise<VaultLoaderData> {
+export async function vaultLoader({
+  params,
+  request,
+}: LoaderFunctionArgs): Promise<VaultLoaderData> {
   const vaults = await registeredVaults();
   const id = params.vault ?? '';
   // With no vault configured there is nothing to switch to; the pages say so as they do today.
@@ -49,8 +52,12 @@ export async function vaultLoader({ params }: LoaderFunctionArgs): Promise<Vault
     resetVaultStores();
     await switchVaultUi(id);
     // A page that stays mounted — the way back from a switch that never committed — does not
-    // load again by itself; a fresh one finds this load already running and waits for it.
-    void useVaultStore.getState().load();
+    // load again by itself; a fresh one finds this load already running and waits for it. Not
+    // for the player view, which must not hold the GM's note list, tree or tags at all: going
+    // from there to the GM lens mounts the layout, and the layout loads.
+    if (!isPlayerView(new URL(request.url).pathname)) {
+      void useVaultStore.getState().load();
+    }
   }
   return { vaults, known };
 }
@@ -73,4 +80,9 @@ export async function legacyRedirect({ request }: LoaderFunctionArgs): Promise<R
   return redirect(
     redirectTarget(legacyUrl(request.url, window.location), pickVault(vaults, lastVault())),
   );
+}
+
+/** Whether an address is the player view's: `/v/<id>/table`, or anything below it. */
+export function isPlayerView(pathname: string): boolean {
+  return /^\/v\/[^/]+\/table(?:\/|$)/.test(pathname);
 }

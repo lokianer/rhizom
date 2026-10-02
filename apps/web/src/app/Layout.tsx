@@ -215,6 +215,10 @@ export function Layout() {
           >
             {t('glossary.title')}
           </NavLink>
+          {/* Only with a campaign: without one the table has nothing to read. */}
+          {info?.campaign == null ? null : (
+            <NavLink to={vaultHref('/table')}>{t('table.open')}</NavLink>
+          )}
           {openNotePath === null ? null : (
             <NavLink to={noteHref(openNotePath, 'wiki')}>{t('wiki.title')}</NavLink>
           )}

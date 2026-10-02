@@ -13,3 +13,4 @@ export * from './query.js';
 export * from './rename.js';
 export * from './search.js';
 export * from './tag-rename.js';
+export * from './table.js';

@@ -30,6 +30,8 @@ export const CALLOUT_KINDS = [
   'bug',
   'example',
   'quote',
+  // A passage the players must not see; see gm.ts for what the player view does with it.
+  'gm',
 ] as const;
 
 export type CalloutKind = (typeof CALLOUT_KINDS)[number];
@@ -73,6 +75,7 @@ export const CALLOUT_ALIASES: Readonly<Record<string, CalloutKind>> = {
   example: 'example',
   quote: 'quote',
   cite: 'quote',
+  gm: 'gm',
 };
 
 /**
@@ -116,7 +119,8 @@ export function applyCallout(node: Blockquote, labels: CalloutLabels | undefined
   if (header === null) {
     return false;
   }
-  const written = (header[1] ?? '').trim();
+  // Obsidian lets a theme hang metadata off the kind (`[!gm|wide]`); the kind is what comes first.
+  const written = (header[1] ?? '').split('|')[0]?.trim() ?? '';
   if (written === '') {
     // `[!]` names nothing, so there is nothing to draw it as: it stays the blockquote it is.
     return false;

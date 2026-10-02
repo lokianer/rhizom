@@ -3,13 +3,9 @@
 // fetched here rather than in core, which stays a pure function of what is already known — the
 // editor renders an unsaved draft on every keystroke, and no server has ever seen that text.
 import {
-  CALLOUT_KINDS,
   createTermMatcher,
   renderNoteWithEmbeds,
   renderQueryResult,
-  type CalloutLabels,
-  type StatblockLabels,
-  type EmbedLabels,
   type LinkKind,
   type QueryLabels,
   type QueryLinks,
@@ -31,6 +27,7 @@ import {
   type DiagramLabels,
 } from '../mermaid/mermaid.js';
 import { noteHref } from '../routing/paths.js';
+import { useRenderLabels } from './render-labels.js';
 
 /**
  * The slug a fragment names. A browser percent-encodes a fragment holding anything but ASCII,
@@ -47,29 +44,6 @@ function decodeSlug(raw: string): string {
 
 // A stable identity, so a keystroke does not look like a different vault to the renderer.
 const assetUrlOf = (vaultPath: string): string => api.assetUrl(vaultPath);
-
-/** The stat-block keys the interface has words for; see `statblock.fields` in the locales. */
-const STATBLOCK_FIELDS = [
-  'ac',
-  'hp',
-  'speed',
-  'saves',
-  'skillsaves',
-  'damage_vulnerabilities',
-  'damage_resistances',
-  'damage_immunities',
-  'condition_immunities',
-  'senses',
-  'languages',
-  'cr',
-  'traits',
-  'actions',
-  'bonus_actions',
-  'reactions',
-  'legendary_actions',
-] as const;
-
-const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 
 /** A failure shown where the answer would be: the reader reads the reason, not an empty list. */
 function failedQuery(message: string): QueryResult {
@@ -114,17 +88,7 @@ export function NotePreview({
   // rebuilding the matcher for a keystroke would be the expensive part of this render.
   const matcher = useMemo(() => createTermMatcher(terms), [terms]);
 
-  const labels = useMemo<EmbedLabels>(
-    () => ({
-      loading: (target) => t('embed.loading', { target }),
-      missing: (target) => t('embed.missing', { target }),
-      noSection: (target, heading) => t('embed.noSection', { target, heading }),
-      circular: (target) => t('embed.circular', { target }),
-      tooDeep: (target) => t('embed.tooDeep', { target }),
-      tooMany: (target) => t('embed.tooMany', { target }),
-    }),
-    [t],
-  );
+  const { labels, calloutLabels, statblockLabels } = useRenderLabels();
 
   const queryLabels = useMemo<QueryLabels>(
     () => ({
@@ -202,29 +166,6 @@ export function NotePreview({
       return renderQueryResult(result, queryLabels, queryLinks);
     },
     [answers, queryLabels, queryLinks],
-  );
-
-  // One word per kind of callout, because core carries no language. The full record is what the
-  // type asks for, so a kind added to the renderer cannot ship without a word for it.
-  const calloutLabels = useMemo<CalloutLabels>(
-    () =>
-      Object.fromEntries(
-        CALLOUT_KINDS.map((kind) => [kind, t(`callout.${kind}`)]),
-      ) as CalloutLabels,
-    [t],
-  );
-
-  // The words a stat block is drawn with. The keys are the ones the Fantasy Statblocks layout
-  // names; a key outside this list is shown as it was written.
-  const statblockLabels = useMemo<StatblockLabels>(
-    () => ({
-      fields: Object.fromEntries(
-        STATBLOCK_FIELDS.map((key) => [key, t(`statblock.fields.${key}`)]),
-      ),
-      abilities: ABILITIES.map((key) => t(`statblock.abilities.${key}`)),
-      problem: (message) => t('statblock.problem', { message }),
-    }),
-    [t],
   );
 
   const { html, wanted, queryKey } = useMemo(() => {

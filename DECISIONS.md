@@ -1268,3 +1268,56 @@ note is the point of it. The name is written `name: "{{title}}"`, because a titl
 would break the quoting. The template's stat block stands under `## Stats`, not `## Statblock`,
 so `![[New NPC#statblock]]` embeds the block alone. They are data tables rather than i18n strings because
 they become the user's notes, and core carries no i18n library.
+
+## 2026-10-03 — The GM gate: two lenses, decided at index time, deny by default
+
+**Two lenses.** Without a login (Phase 4) the game master is the app's only user, so the app as it
+was — the GM lens — shows everything, gated text marked, and its search and graph find secrets.
+The player view is a separate, read-only route with API routes of its own (`/api/v/{vault}/table`)
+that are handed a `PublicIndex` and never the index itself. The roadmap's wording ("wiki, search,
+backlinks, graph, glossary and export read only the public side") would have hidden the GM's own
+material from the GM's own search; two lenses keep the guarantee where it matters — on every
+surface the table is shown — without that cost.
+
+**What is gated.** A blockquote whose first line is `[!gm]`, at any depth, as a whole; `%%…%%`
+outside code, always, and everything after an `%%` that never closes; the frontmatter, which holds
+alignments and secrets as often as anything. Detection goes through the Markdown parser, so a
+`[!gm]` in a fence or `%%` in a code span is text. `revealed: N` on the callout's first line opens
+it from session N; a reveal that cannot be read keeps it closed. `publicMarkdown(markdown,
+session)` in core is the one function the indexer and the view both cut with.
+
+**Decided once, when a note is indexed.** `notes.public_title`, `public_body` and a second FTS table
+over them hold the note at session 0: every GM callout removed, revealed or not, so `revealed: 99`
+is not findable before session 99. Each link row carries `public_from` — null in public text, the
+reveal session inside a revealed callout, never inside a comment or a closed callout — so "met"
+is a query, and a comment and a public link on one line are told apart by offset, not by line.
+That needed the link's offset in `ParsedLink`. The schema version rose to 6.
+
+**Met and visible.** A session note is a campaign note with `type: session` and a whole `session:`.
+A note is met at session N when a session note numbered at most N links to it from text that is
+public at N. Visible at N: those session notes, those notes, and `public: true` notes, all inside
+the campaign. A note that is not visible answers exactly like one that does not exist.
+
+**The view loads nothing of the GM's.** It never asks for the note list, the tree or the tags; its
+link resolver knows only the visible notes, so a link to anything else is drawn as plain text
+(`RenderedLink.plain`) — it neither leads anywhere nor says where. Aliases are frontmatter, so a
+link by alias is plain text in the view.
+
+**Hardened by an adversarial review.** A callout's first line is read twice — as the file writes
+it, with one `>` taken off, and as the parser decoded it — and either reading that names `gm` is
+enough, so `[!GM ]`, `[!gm|wide]` (Obsidian metadata, which the GM lens now reads too),
+`[&#33;gm]`, a setext underline and a reference definition named `[!gm]` all stay closed. A GM
+callout inside a revealed one stays closed. An HTML block that holds a `[!`, a `%%` or an entity is
+gated whole, because the parser cannot see inside it. `\%%` is text. The frontmatter is cut where
+the parser found it, not by a pattern of its own. The indexer has no shortcut on the raw text any
+more: every note goes through `findGates`, the parser that cuts is the one that decides, at the
+cost of one more parse per note on indexing. The player view no longer triggers the GM lens's
+loads; an e2e test lists every request the page makes.
+
+**Prep belongs in a GM block.** The newest session note is the view's default, and a session note
+written ahead of the game — prep for next week — counts with everything public in it. The rule is
+simple and written into the example vault: prep and notes to self go in `> [!gm]`. A "played"
+marker would be the alternative; it waits until somebody needs it.
+
+**Honest about being a view.** Anyone with the address can open the GM lens, and a vault asset is
+served to anyone who knows its path. The view says so on screen; the lock is Phase 4.

@@ -40,6 +40,9 @@ Contents, so far as the party has pieced together from [[Session 11 – Under th
 
 To be the only one in the city who knows what everyone owes. The tidewater charts threaten that, because whatever is under the [[Sunken Archive]] predates her ledger.
 
+> [!gm] The last page
+> Mira forged the Archive's debt herself, to keep a hold on the city clerk. If the party reads the last page, she knows within the hour.
+
 ## Stats
 
 Master Thief stat block, no weapons on her person. Four bodyguards, always in the next room.

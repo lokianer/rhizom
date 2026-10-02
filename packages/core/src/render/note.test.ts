@@ -91,6 +91,20 @@ describe('renderNote: wikilinks', () => {
   });
 });
 
+describe('renderNote: links drawn as plain text', () => {
+  it('writes a link the resolver marks plain as its words, with nothing to follow', () => {
+    const plain = () => ({ path: null, href: '/nowhere', plain: true });
+    const html = render('Ask [[Hidden Villain|the stranger]] or read [notes](Secret.md).', {
+      resolveLink: plain,
+    });
+    expect(html).toContain('the stranger');
+    expect(html).toContain('notes');
+    expect(html).not.toContain('<a');
+    expect(html).not.toContain('/nowhere');
+    expect(html).not.toContain('Hidden Villain');
+  });
+});
+
 describe('renderNote: embeds', () => {
   it('renders an image embed through assetUrl', () => {
     expect(render('![[assets/tavern.png]]')).toBe(

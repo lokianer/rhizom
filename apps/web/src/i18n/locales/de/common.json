@@ -339,6 +339,21 @@
       "body": "Kein Tresor ist als „{{id}}“ registriert. Diese gibt es:"
     }
   },
+  "table": {
+    "title": "Spieleransicht",
+    "open": "Spieleransicht",
+    "back": "SL-Ansicht",
+    "banner": "Das ist eine Ansicht, keine Sperre: Wer diese Adresse hat, kann auch die SL-Ansicht öffnen. Die Sperre kommt in Phase 4.",
+    "session": "Nach Session {{n}}",
+    "sessionLabel": "Session",
+    "beforeFirst": "Vor der ersten Session",
+    "notes": "Was die Gruppe kennt",
+    "nothingYet": "Die Gruppe ist noch nichts begegnet.",
+    "pick": "Wähle links eine Notiz.",
+    "search": "Durchsuchen, was die Gruppe kennt",
+    "missing": "Diese Notiz kennt die Gruppe nicht.",
+    "noCampaign": "Dieser Tresor hat keine Kampagnen-Notiz, also gibt es für den Tisch nichts zu zeigen."
+  },
   "callout": {
     "note": "Notiz",
     "abstract": "Zusammenfassung",
@@ -352,7 +367,8 @@
     "danger": "Gefahr",
     "bug": "Fehler",
     "example": "Beispiel",
-    "quote": "Zitat"
+    "quote": "Zitat",
+    "gm": "SL"
   },
   "statblock": {
     "problem": "Dieser Statblock ließ sich nicht lesen: {{message}}",

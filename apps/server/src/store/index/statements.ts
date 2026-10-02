@@ -21,6 +21,9 @@ export interface NoteRow {
   aliases: string;
   wordCount: number;
   body: string;
+  publicTitle: string;
+  publicBody: string;
+  gates: string;
 }
 
 /** A `links` row as it is written. */
@@ -34,6 +37,7 @@ export interface LinkRow {
   heading: string | null;
   line: number;
   context: string;
+  publicFrom: number | null;
 }
 
 export interface WriteStatements {
@@ -66,16 +70,16 @@ export function prepareWriteStatements(sqlite: Database.Database): WriteStatemen
     deleteTags: sqlite.prepare('delete from note_tags where path = ?'),
     deleteTerms: sqlite.prepare('delete from terms where path = ?'),
     insertNote: sqlite.prepare<NoteRow>(
-      `insert into notes (path, name, title, folder, modified_at, size, hash, frontmatter, headings, aliases, word_count, body)
-       values (@path, @name, @title, @folder, @modifiedAt, @size, @hash, @frontmatter, @headings, @aliases, @wordCount, @body)`,
+      `insert into notes (path, name, title, folder, modified_at, size, hash, frontmatter, headings, aliases, word_count, body, public_title, public_body, gates)
+       values (@path, @name, @title, @folder, @modifiedAt, @size, @hash, @frontmatter, @headings, @aliases, @wordCount, @body, @publicTitle, @publicBody, @gates)`,
     ),
     insertTag: sqlite.prepare('insert into note_tags (path, tag) values (?, ?)'),
     insertTerm: sqlite.prepare(
       'insert into terms (path, surface, folded, alias) values (?, ?, ?, ?)',
     ),
     insertLink: sqlite.prepare<LinkRow>(
-      `insert into links (source, target, raw, target_key, kind, alias, heading, line, context)
-       values (@source, @target, @raw, @targetKey, @kind, @alias, @heading, @line, @context)`,
+      `insert into links (source, target, raw, target_key, kind, alias, heading, line, context, public_from)
+       values (@source, @target, @raw, @targetKey, @kind, @alias, @heading, @line, @context, @publicFrom)`,
     ),
     unresolveLinksTo: sqlite.prepare('update links set target = null where target = ?'),
     setLinkTarget: sqlite.prepare('update links set target = ? where id = ?'),

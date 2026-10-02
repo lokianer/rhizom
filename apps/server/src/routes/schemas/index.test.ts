@@ -41,6 +41,9 @@ import type {
   VaultInfo,
   VaultSummary,
   CampaignInfo,
+  TableSessions,
+  PublicNote,
+  PublicNoteDocument,
 } from '@rhizom/core';
 import type { Static } from '@sinclair/typebox';
 import { describe, expect, it } from 'vitest';
@@ -83,6 +86,9 @@ import type {
   VaultInfoSchema,
   VaultSummarySchema,
   CampaignInfoSchema,
+  TableSessionsSchema,
+  PublicNoteSchema,
+  PublicNoteDocumentSchema,
 } from './index.js';
 
 /**
@@ -115,6 +121,9 @@ type Checked = [
   Pair<HealthResponse, Static<typeof HealthSchema>>,
   Pair<VaultSummary, Static<typeof VaultSummarySchema>>,
   Pair<CampaignInfo, Static<typeof CampaignInfoSchema>>,
+  Pair<TableSessions, Static<typeof TableSessionsSchema>>,
+  Pair<PublicNote, Static<typeof PublicNoteSchema>>,
+  Pair<PublicNoteDocument, Static<typeof PublicNoteDocumentSchema>>,
   Pair<VaultInfo, Static<typeof VaultInfoSchema>>,
   Pair<Heading, Static<typeof HeadingSchema>>,
   Pair<NoteSummary, Static<typeof NoteSummarySchema>>,
@@ -192,8 +201,11 @@ describe('API contracts', () => {
       true,
       true,
       true,
+      true,
+      true,
+      true,
     ];
-    expect(checked).toHaveLength(37);
+    expect(checked).toHaveLength(40);
   });
 
   it('has teeth: the comparison rejects a shape that only looks the same', () => {

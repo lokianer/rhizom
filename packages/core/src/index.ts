@@ -39,6 +39,9 @@ export type {
   UploadResponse,
   VaultInfo,
   VaultSummary,
+  TableSessions,
+  PublicNote,
+  PublicNoteDocument,
 } from './api.js';
 export {
   calloutKindOf,
@@ -76,6 +79,14 @@ export {
   type CampaignTemplate,
 } from './vault/campaign-templates.js';
 export type { StatblockLabels } from './render/statblock-view.js';
+export {
+  findGates,
+  hiddenAt,
+  isPublicNote,
+  publicMarkdown,
+  sessionNumberOf,
+  type Gate,
+} from './syntax/gm.js';
 export {
   findFrontmatter,
   frontmatterFields,
