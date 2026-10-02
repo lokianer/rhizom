@@ -101,7 +101,7 @@ jobs:
           # many notes the example vault holds. Writing it out here made adding one note to the
           # vault a red build in a place nobody would look for it.
           expected=$(node -p "require('$GITHUB_WORKSPACE/examples/vault.manifest.json').notes.count")
-          curl -sf http://127.0.0.1:3838/api/vault | grep "\"noteCount\":$expected"
+          curl -sf http://127.0.0.1:3838/api/v/default/vault | grep "\"noteCount\":$expected"
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3838/api/docs)" = 200
           kill %1
@@ -153,7 +153,7 @@ jobs:
           echo
           docker logs rhizom
           curl -sf http://127.0.0.1:3737/api/health | grep '"status":"ok"'
-          curl -sf http://127.0.0.1:3737/api/vault | grep '"noteCount":0'
+          curl -sf http://127.0.0.1:3737/api/v/default/vault | grep '"noteCount":0'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/api/openapi.json)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3737/notes/does-not-exist)" = 200
