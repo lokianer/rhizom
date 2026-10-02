@@ -54,7 +54,7 @@ test('a note can be moved to the trash', async ({ page }) => {
   await page.getByRole('button', { name: 'Move to trash' }).click();
   await page.getByRole('button', { name: 'Move to trash' }).click();
 
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/v\/default$/);
   await expect(page.getByRole('tree').getByRole('treeitem', { name: 'Doomed note' })).toHaveCount(
     0,
   );

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiRequestError, encodeVaultPath, isAbortError } from './client.js';
+import { setCurrentVault } from '../routing/vault.js';
 
 interface Call {
   url: string;
@@ -29,6 +30,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  setCurrentVault('default');
 });
 
 describe('encodeVaultPath', () => {
@@ -50,7 +52,7 @@ describe('the note endpoints', () => {
 
     await api.note('Campaign/Mira Voss.md');
 
-    expect(calls[0]?.url).toBe('/api/notes/Campaign/Mira%20Voss.md');
+    expect(calls[0]?.url).toBe('/api/v/default/notes/Campaign/Mira%20Voss.md');
   });
 
   it('sends the loaded hash as a quoted If-Match header', async () => {
@@ -62,6 +64,16 @@ describe('the note endpoints', () => {
     expect(calls[0]?.init?.method).toBe('PUT');
     expect(headers['if-match']).toBe('"abc123"');
     expect(calls[0]?.init?.body).toBe(JSON.stringify({ content: '# Home' }));
+  });
+
+  it('saves into the vault the note was opened in, even after the tab moved on', async () => {
+    const calls = stubFetch(() => jsonResponse({ path: 'Home.md' }));
+    setCurrentVault('second');
+
+    await api.saveNote('Home.md', { content: '# Home' }, 'abc123', { vault: 'default' });
+
+    expect(calls[0]?.url).toBe('/api/v/default/notes/Home.md');
+    expect(calls[0]?.init).not.toHaveProperty('vault');
   });
 
   it('omits If-Match when no hash is known', async () => {
@@ -107,8 +119,8 @@ describe('the query endpoints', () => {
     await api.search('a & b');
     await api.backlinks('Campaign/Mira Voss.md');
 
-    expect(calls[0]?.url).toBe('/api/search?q=a%20%26%20b');
-    expect(calls[1]?.url).toBe('/api/backlinks?path=Campaign%2FMira%20Voss.md');
+    expect(calls[0]?.url).toBe('/api/v/default/search?q=a%20%26%20b');
+    expect(calls[1]?.url).toBe('/api/v/default/backlinks?path=Campaign%2FMira%20Voss.md');
   });
 
   it('asks for the neighbourhood of one note', async () => {
@@ -116,11 +128,13 @@ describe('the query endpoints', () => {
 
     await api.localGraph('Home.md', 2, 'tag');
 
-    expect(calls[0]?.url).toBe('/api/graph/local?path=Home.md&depth=2&clusterBy=tag');
+    expect(calls[0]?.url).toBe('/api/v/default/graph/local?path=Home.md&depth=2&clusterBy=tag');
   });
 
   it('builds the URL of a file inside the vault', () => {
-    expect(api.assetUrl('assets/map sketch.png')).toBe('/api/assets/assets/map%20sketch.png');
+    expect(api.assetUrl('assets/map sketch.png')).toBe(
+      '/api/v/default/assets/assets/map%20sketch.png',
+    );
   });
 });
 

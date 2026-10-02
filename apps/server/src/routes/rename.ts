@@ -40,6 +40,7 @@ import {
 
 import { VaultError } from '../vault/files.js';
 import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { errorBody } from './errors.js';
 import {
   ErrorSchema,
@@ -58,9 +59,9 @@ const REF_LIMIT = 50;
  */
 const FILE_LIMIT = 1000;
 
-export function registerRenameRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerRenameRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/rename',
+    '/rename',
     {
       schema: {
         tags: ['notes'],
@@ -70,7 +71,7 @@ export function registerRenameRoutes(app: TypedApp, context: () => VaultContext)
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const from = toVaultPath(request.query.from);
       const to = ensureMarkdownExtension(toVaultPath(request.query.to));
 
@@ -132,7 +133,7 @@ export function registerRenameRoutes(app: TypedApp, context: () => VaultContext)
   );
 
   app.post(
-    '/api/rename',
+    '/rename',
     {
       schema: {
         tags: ['notes'],
@@ -142,7 +143,7 @@ export function registerRenameRoutes(app: TypedApp, context: () => VaultContext)
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const from = toVaultPath(request.body.from);
       const to = ensureMarkdownExtension(toVaultPath(request.body.to));
 

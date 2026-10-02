@@ -90,12 +90,12 @@ test('the palette duplicates the open note beside it', async ({ page }) => {
   // The original is untouched, copy or no copy. Asked of the note rather than of the file tree:
   // the tree shows a note's title, and a copy of `Home.md` opens with the same `# Home`, so two
   // rows legitimately read the same there.
-  const original = await page.request.get('/api/notes/Home.md');
+  const original = await page.request.get('/api/v/default/notes/Home.md');
   expect(original.ok()).toBeTruthy();
   expect(((await original.json()) as { content: string }).content).toContain('Silverstadt');
 
   // Leave the vault as the next spec expects to find it.
   await page.getByRole('button', { name: 'Move to trash' }).click();
   await page.getByRole('button', { name: 'Move to trash' }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/v\/default$/);
 });

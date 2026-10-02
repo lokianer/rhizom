@@ -138,7 +138,7 @@ async function openField(page: Page, url = '/graph'): Promise<void> {
 
 /** The vault's notes per cluster, as the server forms them. */
 async function graphOf(page: Page, clusterBy: ClusterBy): Promise<GraphNodeBody[]> {
-  const response = await page.request.get(`/api/graph?clusterBy=${clusterBy}`);
+  const response = await page.request.get(`/api/v/default/graph?clusterBy=${clusterBy}`);
   expect(response.ok(), 'the graph API answers').toBeTruthy();
   const body = (await response.json()) as { nodes: GraphNodeBody[] };
   return body.nodes;
@@ -787,7 +787,7 @@ test('a click on empty ground lets go of the open note', async ({ page }) => {
   await page.mouse.click(spot.x, spot.y);
 
   await expect(page).not.toHaveURL(/[?&]note=/);
-  expect(new URL(page.url()).pathname, 'the page stays on the graph').toBe('/graph');
+  expect(new URL(page.url()).pathname, 'the page stays on the graph').toBe('/v/default/graph');
   await expect(info).toHaveText(INFO_HINT);
 });
 
@@ -807,7 +807,7 @@ test('a pan on empty ground moves the view and keeps the open note', async ({ pa
   expect(after.k, 'a pan does not zoom').toBe(before.k);
   expect(after.x, 'the view moved with the pointer').toBeLessThan(before.x - 50);
   const url = new URL(page.url());
-  expect(url.pathname).toBe('/graph');
+  expect(url.pathname).toBe('/v/default/graph');
   expect(url.searchParams.get('note'), 'the note is still open').toBe(NOTE);
   await expect(info.locator('.rz-graph-info-name')).toHaveText(NOTE_NAME);
 });
@@ -855,7 +855,7 @@ test('dragging a bubble moves it and does not open its note', async ({ page }) =
   await page.mouse.up();
 
   const after = await settledSvg(page);
-  expect(new URL(page.url()).pathname, 'a drag opens no note').toBe('/graph');
+  expect(new URL(page.url()).pathname, 'a drag opens no note').toBe('/v/default/graph');
   expect(viewOf(after), 'the view stays where it was after the drag').toEqual(viewOf(svg));
 });
 

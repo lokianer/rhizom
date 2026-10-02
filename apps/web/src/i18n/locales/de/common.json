@@ -328,7 +328,15 @@
     "loading": "Tresor wird geladen…",
     "error": "Server nicht erreichbar: {{message}}",
     "retry": "Erneut versuchen",
-    "noVault": "Kein Tresor konfiguriert. RHIZOM_VAULT_DIR setzen und den Server neu starten."
+    "noVault": "Kein Tresor konfiguriert. RHIZOM_VAULTS oder RHIZOM_VAULT_DIR setzen und den Server neu starten."
+  },
+  "vault": {
+    "switch": "Tresor",
+    "switchTo": "Zum Tresor {{name}} wechseln",
+    "notFound": {
+      "title": "Diesen Tresor gibt es nicht",
+      "body": "Kein Tresor ist als „{{id}}“ registriert. Diese gibt es:"
+    }
   },
   "callout": {
     "note": "Notiz",

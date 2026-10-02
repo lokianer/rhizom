@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 
-import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import {
   ErrorSchema,
   SearchQuerySchema,
@@ -9,9 +9,9 @@ import {
 } from './schemas/index.js';
 import type { TypedApp } from './typed-app.js';
 
-export function registerSearchRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerSearchRoutes(app: TypedApp, context: VaultContextOf): void {
   app.get(
-    '/api/search',
+    '/search',
     {
       schema: {
         tags: ['search'],
@@ -20,11 +20,11 @@ export function registerSearchRoutes(app: TypedApp, context: () => VaultContext)
         response: { 200: SearchResponseSchema, '4xx': ErrorSchema, 503: ErrorSchema },
       },
     },
-    (request) => context().index.search(request.query.q, request.query.limit ?? 50),
+    (request) => context(request).index.search(request.query.q, request.query.limit ?? 50),
   );
 
   app.get(
-    '/api/tags',
+    '/tags',
     {
       schema: {
         tags: ['search'],
@@ -32,6 +32,6 @@ export function registerSearchRoutes(app: TypedApp, context: () => VaultContext)
         response: { 200: Type.Array(TagCountSchema), 503: ErrorSchema },
       },
     },
-    () => context().index.tags(),
+    (request) => context(request).index.tags(),
   );
 }

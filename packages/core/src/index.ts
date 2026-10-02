@@ -38,6 +38,7 @@ export type {
   TreeEntry,
   UploadResponse,
   VaultInfo,
+  VaultSummary,
 } from './api.js';
 export {
   calloutKindOf,

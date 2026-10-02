@@ -24,7 +24,10 @@ import type {
   TreeEntry,
   UploadResponse,
   VaultInfo,
+  VaultSummary,
 } from '@rhizom/core';
+
+import { currentVault } from '../routing/vault.js';
 
 export class ApiRequestError extends Error {
   readonly status: number;
@@ -51,6 +54,11 @@ export const SETTLE_MS = 400;
 
 export interface RequestOptions {
   signal?: AbortSignal | undefined;
+  /**
+   * The vault the request belongs to, when it must not follow the tab. A save that flushes while
+   * the tab is already switching to another vault still belongs to the one the note came from.
+   */
+  vault?: string | undefined;
 }
 
 // RequestInit types `signal` as `AbortSignal | null`, which under exactOptionalPropertyTypes
@@ -68,7 +76,8 @@ export function encodeVaultPath(path: string): string {
 }
 
 async function request<T>(path: string, init: RequestInput = {}): Promise<T> {
-  const { signal, ...rest } = init;
+  // The vault was spent on the URL already; it is not a fetch option.
+  const { signal, vault: _vault, ...rest } = init;
   const response = await fetch(path, { ...rest, signal: signal ?? null });
   if (!response.ok) {
     throw new ApiRequestError(response.status, await errorMessage(response));
@@ -93,24 +102,30 @@ async function errorMessage(response: Response): Promise<string> {
     : response.statusText;
 }
 
+/** A route of the vault this tab is in, or of the one a request names. */
+function inVault(path: string, vault: string = currentVault()): string {
+  return `/api/v/${encodeURIComponent(vault)}${path}`;
+}
+
 function json(body: unknown): RequestInput {
   return { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
 }
 
 export const api = {
-  vault: (options?: RequestOptions) => request<VaultInfo>('/api/vault', options),
-  tree: (options?: RequestOptions) => request<TreeEntry[]>('/api/tree', options),
-  notes: (options?: RequestOptions) => request<NoteSummary[]>('/api/notes', options),
+  vaults: (options?: RequestOptions) => request<VaultSummary[]>('/api/vaults', options),
+  vault: (options?: RequestOptions) => request<VaultInfo>(inVault('/vault'), options),
+  tree: (options?: RequestOptions) => request<TreeEntry[]>(inVault('/tree'), options),
+  notes: (options?: RequestOptions) => request<NoteSummary[]>(inVault('/notes'), options),
 
   note: (path: string, options?: RequestOptions) =>
-    request<NoteDocument>(`/api/notes/${encodeVaultPath(path)}`, options),
+    request<NoteDocument>(inVault(`/notes/${encodeVaultPath(path)}`, options?.vault), options),
 
   createNote: (body: CreateNoteRequest, options?: RequestOptions) =>
-    request<NoteDocument>('/api/notes', { method: 'POST', ...json(body), ...options }),
+    request<NoteDocument>(inVault('/notes'), { method: 'POST', ...json(body), ...options }),
 
   /** Saves a note; pass the hash of the loaded document to be told about concurrent edits. */
   saveNote: (path: string, body: SaveNoteRequest, hash?: string, options?: RequestOptions) =>
-    request<NoteDocument>(`/api/notes/${encodeVaultPath(path)}`, {
+    request<NoteDocument>(inVault(`/notes/${encodeVaultPath(path)}`, options?.vault), {
       method: 'PUT',
       ...json(body),
       headers: {
@@ -121,16 +136,16 @@ export const api = {
     }),
 
   deleteNote: (path: string, options?: RequestOptions) =>
-    request<void>(`/api/notes/${encodeVaultPath(path)}`, { method: 'DELETE', ...options }),
+    request<void>(inVault(`/notes/${encodeVaultPath(path)}`), { method: 'DELETE', ...options }),
 
   links: (path: string, options?: RequestOptions) =>
-    request<NoteLink[]>(`/api/links?path=${encodeURIComponent(path)}`, options),
+    request<NoteLink[]>(inVault(`/links?path=${encodeURIComponent(path)}`), options),
 
   backlinks: (path: string, options?: RequestOptions) =>
-    request<Backlink[]>(`/api/backlinks?path=${encodeURIComponent(path)}`, options),
+    request<Backlink[]>(inVault(`/backlinks?path=${encodeURIComponent(path)}`), options),
 
   search: (query: string, options?: RequestOptions) =>
-    request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`, options),
+    request<SearchResponse>(inVault(`/search?q=${encodeURIComponent(query)}`), options),
 
   /**
    * Answers one `rhizom-query` block against the index; the body is the text between the fences.
@@ -141,7 +156,7 @@ export const api = {
    * `row.fields` as text, next to the block's own columns, and change nothing about the block.
    */
   runQuery: (body: string, fields?: readonly string[], options?: RequestOptions) =>
-    request<QueryResult>('/api/query', {
+    request<QueryResult>(inVault('/query'), {
       method: 'POST',
       ...json(
         fields === undefined || fields.length === 0 ? { body } : { body, fields: [...fields] },
@@ -149,17 +164,17 @@ export const api = {
       ...options,
     }),
 
-  assets: (options?: RequestOptions) => request<AssetSummary[]>('/api/assets', options),
+  assets: (options?: RequestOptions) => request<AssetSummary[]>(inVault('/assets'), options),
 
-  tags: (options?: RequestOptions) => request<TagCount[]>('/api/tags', options),
+  tags: (options?: RequestOptions) => request<TagCount[]>(inVault('/tags'), options),
 
-  glossary: (options?: RequestOptions) => request<GlossaryEntry[]>('/api/glossary', options),
+  glossary: (options?: RequestOptions) => request<GlossaryEntry[]>(inVault('/glossary'), options),
 
   mentions: (path: string, options?: RequestOptions) =>
-    request<MentionsResponse>(`/api/mentions?path=${encodeURIComponent(path)}`, options),
+    request<MentionsResponse>(inVault(`/mentions?path=${encodeURIComponent(path)}`), options),
 
   linkMentions: (body: LinkMentionsRequest, options?: RequestOptions) =>
-    request<LinkMentionsResult>('/api/mentions/link', {
+    request<LinkMentionsResult>(inVault('/mentions/link'), {
       method: 'POST',
       ...json(body),
       ...options,
@@ -168,26 +183,31 @@ export const api = {
   /** What renaming `from` to `to` would do, before anything is written. */
   renamePreview: (from: string, to: string, options?: RequestOptions) =>
     request<RenamePreview>(
-      `/api/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      inVault(`/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
       options,
     ),
 
   renameNote: (body: RenameNoteRequest, options?: RequestOptions) =>
-    request<RenameNoteResult>('/api/rename', { method: 'POST', ...json(body), ...options }),
+    request<RenameNoteResult>(inVault('/rename'), { method: 'POST', ...json(body), ...options }),
 
   tagRenamePreview: (from: string, to: string, options?: RequestOptions) =>
     request<TagRenamePreview>(
-      `/api/tags/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+      inVault(`/tags/rename?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
       options,
     ),
 
   renameTag: (
     body: { from: string; to: string; files: { source: string; hash: string }[] },
     options?: RequestOptions,
-  ) => request<TagRenameResult>('/api/tags/rename', { method: 'POST', ...json(body), ...options }),
+  ) =>
+    request<TagRenameResult>(inVault('/tags/rename'), {
+      method: 'POST',
+      ...json(body),
+      ...options,
+    }),
 
   graph: (clusterBy: 'folder' | 'tag', options?: RequestOptions) =>
-    request<GraphResponse>(`/api/graph?clusterBy=${clusterBy}`, options),
+    request<GraphResponse>(inVault(`/graph?clusterBy=${clusterBy}`), options),
 
   localGraph: (
     path: string,
@@ -196,22 +216,24 @@ export const api = {
     options?: RequestOptions,
   ) =>
     request<GraphResponse>(
-      `/api/graph/local?path=${encodeURIComponent(path)}&depth=${String(depth)}&clusterBy=${clusterBy}`,
+      inVault(
+        `/graph/local?path=${encodeURIComponent(path)}&depth=${String(depth)}&clusterBy=${clusterBy}`,
+      ),
       options,
     ),
 
   uploadAsset: (file: File, options?: RequestOptions) => {
     const body = new FormData();
     body.append('file', file, file.name);
-    return request<UploadResponse>('/api/assets', { method: 'POST', body, ...options });
+    return request<UploadResponse>(inVault('/assets'), { method: 'POST', body, ...options });
   },
 
   rebuildIndex: (options?: RequestOptions) =>
     request<{ added: number; updated: number; removed: number; unchanged: number }>(
-      '/api/index/rebuild',
+      inVault('/index/rebuild'),
       { method: 'POST', ...options },
     ),
 
   /** URL of a file inside the vault, for `<img src>` and links. */
-  assetUrl: (path: string) => `/api/assets/${encodeVaultPath(path)}`,
+  assetUrl: (path: string) => inVault(`/assets/${encodeVaultPath(path)}`),
 };

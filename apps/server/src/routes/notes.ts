@@ -2,6 +2,7 @@ import { noteNameOf, type NoteDocument } from '@rhizom/core';
 import { Type } from '@sinclair/typebox';
 
 import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { errorBody } from './errors.js';
 import {
   BacklinkSchema,
@@ -53,11 +54,11 @@ function ifMatchHash(header: string | string[] | undefined): string | undefined 
   return value.trim().replace(/^W\//, '').replace(/^"|"$/g, '');
 }
 
-export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): void {
+export function registerNoteRoutes(app: TypedApp, context: VaultContextOf): void {
   const tags = ['notes'];
 
   app.get(
-    '/api/vault',
+    '/vault',
     {
       schema: {
         tags: ['vault'],
@@ -65,8 +66,8 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
         response: { 200: VaultInfoSchema, 503: ErrorSchema },
       },
     },
-    () => {
-      const ctx = context();
+    (request) => {
+      const ctx = context(request);
       const stats = ctx.index.stats();
       return {
         name: ctx.vault.name,
@@ -79,7 +80,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
   );
 
   app.get(
-    '/api/tree',
+    '/tree',
     {
       schema: {
         tags,
@@ -87,11 +88,11 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
         response: { 200: Type.Array(Type.Ref(TreeEntrySchema)), 503: ErrorSchema },
       },
     },
-    () => context().index.tree(),
+    (request) => context(request).index.tree(),
   );
 
   app.get(
-    '/api/notes',
+    '/notes',
     {
       schema: {
         tags,
@@ -99,11 +100,11 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
         response: { 200: Type.Array(NoteSummarySchema), 503: ErrorSchema },
       },
     },
-    () => context().index.listNotes(),
+    (request) => context(request).index.listNotes(),
   );
 
   app.post(
-    '/api/notes',
+    '/notes',
     {
       schema: {
         tags,
@@ -113,7 +114,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const created = await ctx.vault.createNote(request.body.path, request.body.content ?? '');
       await ctx.indexPaths([created.path]);
       const document = await readNoteDocument(ctx, created.path);
@@ -122,7 +123,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
   );
 
   app.get(
-    '/api/notes/*',
+    '/notes/*',
     {
       schema: {
         tags,
@@ -132,13 +133,13 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     async (request, reply) => {
-      const document = await readNoteDocument(context(), request.params['*']);
+      const document = await readNoteDocument(context(request), request.params['*']);
       return reply.header('etag', `"${document.hash}"`).send(document);
     },
   );
 
   app.put(
-    '/api/notes/*',
+    '/notes/*',
     {
       schema: {
         tags,
@@ -151,7 +152,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const path = request.params['*'];
       const expected = ifMatchHash(request.headers['if-match']);
       await ctx.vault.readNote(path);
@@ -163,7 +164,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
   );
 
   app.delete(
-    '/api/notes/*',
+    '/notes/*',
     {
       schema: {
         tags,
@@ -173,7 +174,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const path = request.params['*'];
       await ctx.vault.deleteNote(path);
       await ctx.indexPaths([path]);
@@ -182,7 +183,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
   );
 
   app.get(
-    '/api/links',
+    '/links',
     {
       schema: {
         tags,
@@ -192,7 +193,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       if (ctx.index.getNote(request.query.path) === undefined) {
         return reply.code(404).send(errorBody(404, `Note not found: ${request.query.path}`));
       }
@@ -201,7 +202,7 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
   );
 
   app.get(
-    '/api/backlinks',
+    '/backlinks',
     {
       schema: {
         tags,
@@ -210,6 +211,6 @@ export function registerNoteRoutes(app: TypedApp, context: () => VaultContext): 
         response: { 200: Type.Array(BacklinkSchema), '4xx': ErrorSchema, 503: ErrorSchema },
       },
     },
-    (request) => context().index.backlinks(request.query.path),
+    (request) => context(request).index.backlinks(request.query.path),
   );
 }

@@ -28,8 +28,9 @@ FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3737
-# The notes live in /vault (mount your folder there); the rebuildable index goes to /data.
-ENV RHIZOM_VAULT_DIR=/vault
+# The notes live in /vault (mount your folder there); the rebuildable index goes to /data. Set
+# RHIZOM_VAULTS to serve several mounted vaults instead; it replaces this default.
+ENV RHIZOM_VAULTS=default=/vault
 ENV RHIZOM_DATA_DIR=/data
 WORKDIR /app
 RUN mkdir -p /vault /data && chown node:node /vault /data

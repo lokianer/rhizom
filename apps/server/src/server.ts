@@ -1,8 +1,15 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildApp } from './app.js';
+import {
+  checkVaultDirs,
+  parseVaultList,
+  RegistryError,
+  singleVault,
+  type RegisteredVault,
+} from './vault/registry.js';
 
 /** Reads an environment variable; blank values count as unset. */
 function env(name: string, fallback: string): string {
@@ -22,14 +29,32 @@ if (!/^\d{1,5}$/.test(rawPort) || Number(rawPort) < 1 || Number(rawPort) > 65535
 }
 const port = Number(rawPort);
 
-// The vault: RHIZOM_VAULT_DIR, or the repository's example vault while developing.
+// The vaults: RHIZOM_VAULTS (id=path;…), or RHIZOM_VAULT_DIR for one, or the repository's
+// example vault while developing.
 const exampleVault = fileURLToPath(new URL('../../../examples/vault', import.meta.url));
+const vaultList = env('RHIZOM_VAULTS', '');
 const configuredVault = env('RHIZOM_VAULT_DIR', '');
-let vaultDir = configuredVault === '' ? '' : resolve(configuredVault);
+let vaults: RegisteredVault[] = [];
 let vaultNote = '';
-if (vaultDir === '' && !isProduction && existsSync(exampleVault)) {
-  vaultDir = exampleVault;
-  vaultNote = 'RHIZOM_VAULT_DIR is not set; using the example vault from the repository';
+try {
+  if (vaultList !== '' && configuredVault !== '') {
+    throw new RegistryError('Set RHIZOM_VAULTS or RHIZOM_VAULT_DIR, not both');
+  }
+  if (vaultList !== '') {
+    vaults = parseVaultList(vaultList, process.cwd());
+  } else if (configuredVault !== '') {
+    vaults = [singleVault(resolve(configuredVault))];
+  } else if (!isProduction && existsSync(exampleVault)) {
+    vaults = [singleVault(exampleVault)];
+    vaultNote = 'No vault is configured; using the example vault from the repository';
+  }
+  checkVaultDirs(vaults);
+} catch (error) {
+  if (error instanceof RegistryError) {
+    console.error(error.message);
+    process.exit(1);
+  }
+  throw error;
 }
 const dataDir = resolve(env('RHIZOM_DATA_DIR', 'data'));
 // Where the templates and the daily notes are, when the vault itself does not say — see
@@ -51,11 +76,11 @@ const app = await buildApp({
         },
       }
     : { level },
-  ...(vaultDir === ''
+  ...(vaults.length === 0
     ? {}
     : {
-        vault: {
-          dir: vaultDir,
+        vaults: {
+          list: vaults,
           dataDir,
           ...(templateDir === '' ? {} : { templateDir }),
           ...(dailyDir === '' ? {} : { dailyDir }),
@@ -66,10 +91,12 @@ const app = await buildApp({
 if (vaultNote !== '') {
   app.log.warn(vaultNote);
 }
-if (vaultDir === '') {
-  app.log.warn('No vault configured: set RHIZOM_VAULT_DIR to the folder with your notes');
+if (vaults.length === 0) {
+  app.log.warn('No vault configured: set RHIZOM_VAULTS or RHIZOM_VAULT_DIR');
 } else {
-  app.log.info(`Vault: ${vaultDir} (index in ${dataDir})`);
+  for (const vault of vaults) {
+    app.log.info(`Vault "${vault.id}": ${vault.dir} (index in ${join(dataDir, vault.id)})`);
+  }
 }
 
 try {

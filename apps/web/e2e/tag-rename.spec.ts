@@ -11,11 +11,11 @@ function unique(name: string, retry: number): string {
 
 async function writeNote(page: Page, path: string, lines: string[]): Promise<void> {
   const content = `${lines.join('\n')}\n`;
-  const created = await page.request.post('/api/notes', { data: { path, content } });
+  const created = await page.request.post('/api/v/default/notes', { data: { path, content } });
   if (created.ok()) {
     return;
   }
-  const url = `/api/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const url = `/api/v/default/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
   const saved = await page.request.put(url, { data: { content } });
   expect(saved.ok(), `could not write ${path}`).toBeTruthy();
 }
@@ -58,8 +58,12 @@ test('renaming a tag rewrites the prose and the frontmatter', async ({ page }, i
   ).toBeVisible({ timeout: 10_000 });
   await expect(chip).toBeHidden();
 
-  const prose = await page.request.get(`/api/notes/${encodeURIComponent(`${inProse}.md`)}`);
+  const prose = await page.request.get(
+    `/api/v/default/notes/${encodeURIComponent(`${inProse}.md`)}`,
+  );
   expect(((await prose.json()) as { content: string }).content).toContain(`#${renamed}`);
-  const front = await page.request.get(`/api/notes/${encodeURIComponent(`${inFrontmatter}.md`)}`);
+  const front = await page.request.get(
+    `/api/v/default/notes/${encodeURIComponent(`${inFrontmatter}.md`)}`,
+  );
   expect(((await front.json()) as { content: string }).content).toContain(`${renamed}/deep`);
 });

@@ -26,6 +26,14 @@ export const DailySettingsSchema = Type.Object(
   { $id: 'DailySettings' },
 );
 
+export const VaultSummarySchema = Type.Object(
+  {
+    id: Type.String({ description: 'The id the vault is registered under' }),
+    name: Type.String({ description: 'Folder name of the vault' }),
+  },
+  { $id: 'VaultSummary' },
+);
+
 export const VaultInfoSchema = Type.Object(
   {
     name: Type.String({ description: 'Folder name of the vault' }),

@@ -2,11 +2,13 @@
 // its own, so a restarted server simply resumes the stream.
 import type { IndexEvent } from '@rhizom/core';
 
+import { currentVault } from '../routing/vault.js';
+
 export type IndexEventListener = (event: IndexEvent) => void;
 
-/** Subscribes to `/api/events`; the returned function closes the stream. */
+/** Subscribes to `/api/v/<vault>/events` of this tab's vault; the returned function closes it. */
 export function subscribeToIndexEvents(listener: IndexEventListener): () => void {
-  const source = new EventSource('/api/events');
+  const source = new EventSource(`/api/v/${encodeURIComponent(currentVault())}/events`);
   const handle = (event: MessageEvent<string>): void => {
     try {
       listener(JSON.parse(event.data) as IndexEvent);

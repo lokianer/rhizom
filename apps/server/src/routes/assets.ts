@@ -1,7 +1,6 @@
 import fastifyMultipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
 
-import type { VaultContext } from '../vault/context.js';
+import type { VaultContextOf } from './vault-scope.js';
 import { HttpError } from './errors.js';
 import { Type } from '@sinclair/typebox';
 
@@ -10,31 +9,11 @@ import type { TypedApp } from './typed-app.js';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
-export async function registerAssetRoutes(
-  app: TypedApp,
-  context: () => VaultContext,
-  vaultRoot: string | undefined,
-): Promise<void> {
-  // Files inside the vault (images, PDFs …) for embeds; hidden files are never served.
-  if (vaultRoot !== undefined) {
-    await app.register(fastifyStatic, {
-      root: vaultRoot,
-      prefix: '/api/assets/',
-      decorateReply: false,
-      dotfiles: 'ignore',
-      index: false,
-      list: false,
-      // A note is not an asset. `GET /api/assets` already leaves notes out, and this is the
-      // same contract: one door to the notes, which is `/api/notes/*`. A second one would be a
-      // way around whatever that door is given to check later.
-      allowedPath: (pathName) => !/\.(md|markdown)$/i.test(pathName),
-    });
-  }
-
+export async function registerAssetRoutes(app: TypedApp, context: VaultContextOf): Promise<void> {
   await app.register(fastifyMultipart, { limits: { files: 1, fileSize: MAX_UPLOAD_BYTES } });
 
   app.get(
-    '/api/assets',
+    '/assets',
     {
       schema: {
         tags: ['assets'],
@@ -42,8 +21,8 @@ export async function registerAssetRoutes(
         response: { 200: Type.Array(AssetSummarySchema), 503: ErrorSchema },
       },
     },
-    async () => {
-      const files = await context().vault.listAssets();
+    async (request) => {
+      const files = await context(request).vault.listAssets();
       return files.map((file) => ({
         path: file.path,
         size: file.size,
@@ -53,7 +32,7 @@ export async function registerAssetRoutes(
   );
 
   app.post(
-    '/api/assets',
+    '/assets',
     {
       schema: {
         tags: ['assets'],
@@ -63,7 +42,7 @@ export async function registerAssetRoutes(
       },
     },
     async (request, reply) => {
-      const ctx = context();
+      const ctx = context(request);
       const file = await request.file();
       if (file === undefined) {
         throw new HttpError(400, 'Expected one file in a multipart/form-data body');

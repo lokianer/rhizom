@@ -1,8 +1,9 @@
 // The frame around every view: header, the sidebar with its four panels, and the command
 // palette. Everything that needs the whole app (theme, shortcuts, note creation) lives here.
+import type { VaultSummary } from '@rhizom/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { NavLink, Outlet, useLocation, useNavigate, useRouteLoaderData } from 'react-router';
 
 import { api } from '../api/client.js';
 import { LanguageSwitch } from '../components/LanguageSwitch.js';
@@ -15,18 +16,27 @@ import { ThemeSwitch } from '../components/ThemeSwitch.js';
 import { CommandPalette, type PaletteCommand } from '../palette/index.js';
 import { FileTree, OutlinePanel, SearchPanel, SmartFolders, TagList } from '../panels/index.js';
 import { useUiStore } from '../store/ui.js';
+import { useVaultUiStore } from '../store/vault-ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { paletteCommands } from './layout/commands.js';
+import { VaultSwitcher } from './layout/VaultSwitcher.js';
 import { modifierLabel, SIDEBAR_TABS } from './layout/tabs.js';
 import { useNoteCommands } from './layout/useNoteCommands.js';
 import { noteHref, notePathFromLocation } from '../routing/paths.js';
+import { currentVault, stripVault, vaultHref } from '../routing/vault.js';
 import { applyTheme } from './theme.js';
 import { revisionOf, useIndexEvents } from './useIndexEvents.js';
+import type { VaultLoaderData } from './vault-loader.js';
+
+/** Stable, so the palette's command list is not rebuilt on every render without a loader. */
+const NO_VAULTS: VaultSummary[] = [];
 
 export function Layout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const vaults = useRouteLoaderData<VaultLoaderData>('vault')?.vaults ?? NO_VAULTS;
+  const vault = currentVault();
   const openNotePath = notePathFromLocation(location.pathname);
 
   const status = useVaultStore((state) => state.status);
@@ -51,8 +61,8 @@ export function Layout() {
   const leaveZen = useUiStore((state) => state.leaveZen);
   const sidebarTab = useUiStore((state) => state.sidebarTab);
   const setSidebarTab = useUiStore((state) => state.setSidebarTab);
-  const graphTags = useUiStore((state) => state.graphTags);
-  const toggleGraphTag = useUiStore((state) => state.toggleGraphTag);
+  const graphTags = useVaultUiStore((state) => state.graphTags);
+  const toggleGraphTag = useVaultUiStore((state) => state.toggleGraphTag);
   const paletteOpen = useUiStore((state) => state.paletteOpen);
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen);
   const requestRename = useUiStore((state) => state.requestRename);
@@ -102,6 +112,8 @@ export function Layout() {
         toggleSplitView,
         toggleVimMode,
         toggleZen,
+        vault,
+        vaults,
       }),
     [
       daily,
@@ -123,6 +135,8 @@ export function Layout() {
       toggleSplitView,
       toggleVimMode,
       toggleZen,
+      vault,
+      vaults,
     ],
   );
 
@@ -170,7 +184,7 @@ export function Layout() {
     };
   }, [leaveZen, vimMode, zen]);
 
-  const isGraph = location.pathname.startsWith('/graph');
+  const isGraph = stripVault(location.pathname).startsWith('/graph');
 
   return (
     <div className={`rz-app${sidebarOpen ? '' : ' rz-app-collapsed'}${zen ? ' rz-app-zen' : ''}`}>
@@ -182,19 +196,23 @@ export function Layout() {
         <button type="button" className="rz-icon-button" onClick={toggleSidebar}>
           {t('sidebar.toggle')}
         </button>
-        <NavLink to="/" className="rz-brand">
+        <NavLink to={vaultHref('/')} className="rz-brand">
           {info?.name ?? t('app.name')}
         </NavLink>
+        <VaultSwitcher vaults={vaults} current={vault} />
         <nav className="rz-nav">
           <NavLink
-            to={
-              openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`
-            }
+            to={vaultHref(
+              openNotePath === null ? '/graph' : `/graph?note=${encodeURIComponent(openNotePath)}`,
+            )}
             className={isGraph ? 'active' : ''}
           >
             {t('graph.title')}
           </NavLink>
-          <NavLink to="/glossary" className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink
+            to={vaultHref('/glossary')}
+            className={({ isActive }) => (isActive ? 'active' : '')}
+          >
             {t('glossary.title')}
           </NavLink>
           {openNotePath === null ? null : (

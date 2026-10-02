@@ -50,7 +50,7 @@ afterAll(async () => {
 async function run(body: string, fields?: string[]): Promise<QueryResult> {
   const res = await app.inject({
     method: 'POST',
-    url: '/api/query',
+    url: '/api/v/default/query',
     payload: fields === undefined ? { body } : { body, fields },
   });
   expect(res.statusCode).toBe(200);

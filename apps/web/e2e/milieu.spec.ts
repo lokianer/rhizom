@@ -81,7 +81,7 @@ async function screenPosition(
 }
 
 async function frontmatterOf(page: Page, path: string): Promise<Record<string, unknown>> {
-  const url = `/api/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const url = `/api/v/default/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
   const response = await page.request.get(url);
   expect(response.ok(), `could not read ${path}`).toBeTruthy();
   const doc = (await response.json()) as { frontmatter: Record<string, unknown> };
@@ -121,7 +121,7 @@ test('dragging a bubble writes its position into the note', async ({ page }) => 
   const written = page.waitForResponse(
     (response) =>
       response.request().method() === 'PUT' &&
-      response.url().includes('/api/notes/') &&
+      response.url().includes('/api/v/default/notes/') &&
       response.ok(),
     { timeout: 15_000 },
   );
@@ -153,7 +153,7 @@ test('dragging a bubble writes its position into the note', async ({ page }) => 
 
   // Put the vault back, so a retry and the specs after this one see the note the manifest
   // describes. Through the API, because the suite shares one vault for the whole run.
-  const url = `/api/notes/${SABLE.split('/').map(encodeURIComponent).join('/')}`;
+  const url = `/api/v/default/notes/${SABLE.split('/').map(encodeURIComponent).join('/')}`;
   const doc = (await (await page.request.get(url)).json()) as { content: string };
   const restored = doc.content
     .replace(/^outlook: .*$/m, `outlook: ${String(SABLE_AT.outlook)}`)

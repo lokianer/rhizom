@@ -26,21 +26,8 @@ export interface UiState {
    * types, and someone who uses Vim uses it tomorrow as well.
    */
   vimMode: boolean;
-  /** Folders opened in the file tree, as vault paths. */
-  expandedFolders: string[];
   clusterBy: ClusterBy;
   graphLayout: GraphLayout;
-  /**
-   * Vault path of the `type: axes` note the milieu field is drawn from, or null for whichever
-   * the vault lists first. Remembered, but never trusted: the field is only drawn from it while
-   * the vault still lists that note, so a field somebody deleted cannot strand them in an empty
-   * view they have no control to get out of.
-   */
-  milieuPath: string | null;
-  /** 0 shows the whole vault; 1–3 show the neighbourhood of the open note. */
-  graphDepth: number;
-  /** Tags the graph is filtered by; empty means every note. */
-  graphTags: string[];
   paletteOpen: boolean;
   /**
    * Bumped whenever something asks for the open note to be renamed. A counter rather than a
@@ -60,14 +47,8 @@ export interface UiState {
   toggleZen: () => void;
   leaveZen: () => void;
   toggleVimMode: () => void;
-  toggleFolder: (path: string) => void;
-  expandFolders: (paths: readonly string[]) => void;
   setClusterBy: (clusterBy: ClusterBy) => void;
   setGraphLayout: (layout: GraphLayout) => void;
-  setMilieuPath: (path: string) => void;
-  setGraphDepth: (depth: number) => void;
-  toggleGraphTag: (tag: string) => void;
-  clearGraphTags: () => void;
   setPaletteOpen: (open: boolean) => void;
   requestRename: () => void;
   requestBlockLink: () => void;
@@ -82,12 +63,8 @@ export const useUiStore = create<UiState>()(
       splitView: false,
       zen: false,
       vimMode: false,
-      expandedFolders: [],
       clusterBy: 'folder',
       graphLayout: 'bubbles',
-      milieuPath: null,
-      graphDepth: 0,
-      graphTags: [],
       paletteOpen: false,
       renameRequest: 0,
       blockLinkRequest: 0,
@@ -112,42 +89,11 @@ export const useUiStore = create<UiState>()(
       toggleVimMode: () => {
         set((state) => ({ vimMode: !state.vimMode }));
       },
-      toggleFolder: (path) => {
-        set((state) => ({
-          expandedFolders: state.expandedFolders.includes(path)
-            ? state.expandedFolders.filter((folder) => folder !== path)
-            : [...state.expandedFolders, path],
-        }));
-      },
-      expandFolders: (paths) => {
-        set((state) => ({
-          expandedFolders: [
-            ...state.expandedFolders,
-            ...paths.filter((path) => !state.expandedFolders.includes(path)),
-          ],
-        }));
-      },
       setClusterBy: (clusterBy) => {
         set({ clusterBy });
       },
       setGraphLayout: (graphLayout) => {
         set({ graphLayout });
-      },
-      setMilieuPath: (milieuPath) => {
-        set({ milieuPath });
-      },
-      setGraphDepth: (graphDepth) => {
-        set({ graphDepth });
-      },
-      toggleGraphTag: (tag) => {
-        set((state) => ({
-          graphTags: state.graphTags.includes(tag)
-            ? state.graphTags.filter((entry) => entry !== tag)
-            : [...state.graphTags, tag],
-        }));
-      },
-      clearGraphTags: () => {
-        set({ graphTags: [] });
       },
       setPaletteOpen: (paletteOpen) => {
         set({ paletteOpen });
@@ -161,18 +107,18 @@ export const useUiStore = create<UiState>()(
     }),
     {
       name: 'rhizom.ui',
-      version: 1,
+      // Version 2 moved the open folders, the milieu field and the graph depth to vault-ui.ts,
+      // one store per vault. What an older version saved of them is dropped on the next write.
+      version: 2,
+      migrate: (persisted) => persisted as UiState,
       // The open palette and the sidebar tab are per-visit; the rest is worth remembering.
       partialize: (state) => ({
         theme: state.theme,
         sidebarOpen: state.sidebarOpen,
         splitView: state.splitView,
         vimMode: state.vimMode,
-        expandedFolders: state.expandedFolders,
         clusterBy: state.clusterBy,
         graphLayout: state.graphLayout,
-        milieuPath: state.milieuPath,
-        graphDepth: state.graphDepth,
       }),
     },
   ),

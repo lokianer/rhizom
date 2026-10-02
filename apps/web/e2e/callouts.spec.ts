@@ -5,11 +5,11 @@ import { expect, test, type Page } from '@playwright/test';
 // `[!note]` would arrive as `[!note]]`.
 async function writeNote(page: Page, path: string, lines: string[]): Promise<void> {
   const content = `${lines.join('\n')}\n`;
-  const created = await page.request.post('/api/notes', { data: { path, content } });
+  const created = await page.request.post('/api/v/default/notes', { data: { path, content } });
   if (created.ok()) {
     return;
   }
-  const url = `/api/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const url = `/api/v/default/notes/${path.split('/').map(encodeURIComponent).join('/')}`;
   const saved = await page.request.put(url, { data: { content } });
   expect(saved.ok(), `could not write ${path}`).toBeTruthy();
 }

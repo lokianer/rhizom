@@ -12,6 +12,7 @@ import { downloadBlob, GraphCanvas, type GraphCanvasHandle } from '../graph/inde
 import { MilieuLayout } from '../milieu/MilieuLayout.js';
 import { matchesTags } from '../panels/tag-model.js';
 import { useUiStore } from '../store/ui.js';
+import { useVaultUiStore } from '../store/vault-ui.js';
 import { useVaultStore } from '../store/vault.js';
 import { GraphLayoutSelect } from './GraphLayoutSelect.js';
 import { noteHref } from '../routing/paths.js';
@@ -31,9 +32,9 @@ function BubbleLayout(): JSX.Element {
   const notes = useVaultStore((state) => state.notes);
   const clusterBy = useUiStore((state) => state.clusterBy);
   const setClusterBy = useUiStore((state) => state.setClusterBy);
-  const depth = useUiStore((state) => state.graphDepth);
-  const setGraphDepth = useUiStore((state) => state.setGraphDepth);
-  const graphTags = useUiStore((state) => state.graphTags);
+  const depth = useVaultUiStore((state) => state.graphDepth);
+  const setGraphDepth = useVaultUiStore((state) => state.setGraphDepth);
+  const graphTags = useVaultUiStore((state) => state.graphTags);
 
   const [graph, setGraph] = useState<GraphResponse | null>(null);
   const [error, setError] = useState('');
