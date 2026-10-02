@@ -1,0 +1,108 @@
+/* A stat block: the creature's numbers, set apart from the prose the way the books set them —
+   a rule above and below in the campaign's ochre, the name in the serif, the six scores in a row.
+   Every word at reading size: a stat block is read across the table at arm's length, and muted
+   small text is the first thing to go in Humus. */
+.rz-statblock-host {
+  margin: var(--rz-space-5) 0;
+}
+
+.rz-statblock {
+  max-width: 38rem;
+  padding: var(--rz-space-3) var(--rz-space-4);
+  border-top: 3px solid var(--rz-ochre);
+  border-bottom: 3px solid var(--rz-ochre);
+  background: var(--rz-surface-raised);
+  font-size: var(--rz-text-md);
+  line-height: var(--rz-leading-normal);
+}
+
+.rz-statblock p {
+  margin: 0;
+}
+
+.rz-statblock-name {
+  font-family: var(--rz-font-serif);
+  font-size: var(--rz-text-xl);
+  font-weight: 700;
+  color: var(--rz-ochre-strong);
+}
+
+.rz-statblock-meta {
+  color: var(--rz-text-muted);
+  margin-bottom: var(--rz-space-2);
+}
+
+.rz-statblock-lines {
+  margin: var(--rz-space-2) 0;
+  padding-top: var(--rz-space-2);
+  border-top: 1px solid var(--rz-border-strong);
+}
+
+.rz-statblock-lines > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rz-space-2);
+}
+
+.rz-statblock-lines dt {
+  font-weight: 700;
+  color: var(--rz-ochre-strong);
+}
+
+.rz-statblock-lines dd {
+  margin: 0;
+}
+
+.rz-statblock-abilities {
+  width: 100%;
+  margin: var(--rz-space-2) 0;
+  padding-top: var(--rz-space-2);
+  border-top: 1px solid var(--rz-border-strong);
+  border-collapse: collapse;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.rz-statblock-abilities th {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--rz-ochre-strong);
+}
+
+/* Not the boxed grid of a Markdown table: six numbers in a row, centred under their names. */
+.rz-statblock .rz-statblock-abilities th,
+.rz-statblock .rz-statblock-abilities td {
+  padding: var(--rz-space-1);
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.rz-statblock-section {
+  margin-top: var(--rz-space-3);
+}
+
+.rz-statblock-section p + p {
+  margin-top: var(--rz-space-2);
+}
+
+.rz-statblock-section-title {
+  font-family: var(--rz-font-serif);
+  font-size: var(--rz-text-lg);
+  font-weight: 700;
+  color: var(--rz-ochre-strong);
+  border-bottom: 1px solid var(--rz-ochre);
+  margin-bottom: var(--rz-space-2);
+}
+
+/* A block that could not be read: the notice in the warning colour, then the fence as written,
+   so the author can see what to fix. */
+.rz-statblock-problem {
+  margin: var(--rz-space-4) 0;
+}
+
+.rz-statblock-problem > p {
+  color: var(--rz-warning);
+  font-weight: 600;
+  margin-bottom: var(--rz-space-2);
+}

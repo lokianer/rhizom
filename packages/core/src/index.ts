@@ -61,6 +61,22 @@ export {
   type AxesSettings,
 } from './vault/axes.js';
 export {
+  campaignTypeOf,
+  findCampaign,
+  inCampaign,
+  CAMPAIGN_TYPES,
+  type CampaignInfo,
+  type CampaignType,
+} from './vault/campaign.js';
+export {
+  builtInTemplate,
+  campaignTemplateChoices,
+  BUILT_IN_TEMPLATE_PREFIX,
+  CAMPAIGN_TEMPLATES,
+  type CampaignTemplate,
+} from './vault/campaign-templates.js';
+export type { StatblockLabels } from './render/statblock-view.js';
+export {
   findFrontmatter,
   frontmatterFields,
   setFrontmatter,

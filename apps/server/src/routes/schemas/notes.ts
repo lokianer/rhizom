@@ -34,6 +34,17 @@ export const VaultSummarySchema = Type.Object(
   { $id: 'VaultSummary' },
 );
 
+export const CampaignInfoSchema = Type.Object(
+  {
+    path: Type.String({ description: 'Vault path of the campaign note' }),
+    folder: Type.String({ description: 'The folder it scopes; empty for the vault root' }),
+    system: Type.Union([Type.String(), Type.Null()], {
+      description: 'The game system as the note names it',
+    }),
+  },
+  { $id: 'CampaignInfo' },
+);
+
 export const VaultInfoSchema = Type.Object(
   {
     name: Type.String({ description: 'Folder name of the vault' }),
@@ -41,6 +52,7 @@ export const VaultInfoSchema = Type.Object(
     indexedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
     templates: TemplateSettingsSchema,
     daily: DailySettingsSchema,
+    campaign: Type.Union([CampaignInfoSchema, Type.Null()]),
   },
   { $id: 'VaultInfo' },
 );

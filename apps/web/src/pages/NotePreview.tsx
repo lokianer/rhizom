@@ -8,6 +8,7 @@ import {
   renderNoteWithEmbeds,
   renderQueryResult,
   type CalloutLabels,
+  type StatblockLabels,
   type EmbedLabels,
   type LinkKind,
   type QueryLabels,
@@ -46,6 +47,29 @@ function decodeSlug(raw: string): string {
 
 // A stable identity, so a keystroke does not look like a different vault to the renderer.
 const assetUrlOf = (vaultPath: string): string => api.assetUrl(vaultPath);
+
+/** The stat-block keys the interface has words for; see `statblock.fields` in the locales. */
+const STATBLOCK_FIELDS = [
+  'ac',
+  'hp',
+  'speed',
+  'saves',
+  'skillsaves',
+  'damage_vulnerabilities',
+  'damage_resistances',
+  'damage_immunities',
+  'condition_immunities',
+  'senses',
+  'languages',
+  'cr',
+  'traits',
+  'actions',
+  'bonus_actions',
+  'reactions',
+  'legendary_actions',
+] as const;
+
+const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 
 /** A failure shown where the answer would be: the reader reads the reason, not an empty list. */
 function failedQuery(message: string): QueryResult {
@@ -190,6 +214,19 @@ export function NotePreview({
     [t],
   );
 
+  // The words a stat block is drawn with. The keys are the ones the Fantasy Statblocks layout
+  // names; a key outside this list is shown as it was written.
+  const statblockLabels = useMemo<StatblockLabels>(
+    () => ({
+      fields: Object.fromEntries(
+        STATBLOCK_FIELDS.map((key) => [key, t(`statblock.fields.${key}`)]),
+      ),
+      abilities: ABILITIES.map((key) => t(`statblock.abilities.${key}`)),
+      problem: (message) => t('statblock.problem', { message }),
+    }),
+    [t],
+  );
+
   const { html, wanted, queryKey } = useMemo(() => {
     const rendered = renderNoteWithEmbeds(content, {
       sourcePath: path,
@@ -201,6 +238,7 @@ export function NotePreview({
       renderQuery,
       queryLoading: queryLabels.loading,
       calloutLabels,
+      statblockLabels,
     });
     // The renderer reports what it asked for and did not get; the effects below fetch it and
     // the next render fills the placeholders in. The query bodies travel as one string so that
@@ -212,6 +250,7 @@ export function NotePreview({
     };
   }, [
     calloutLabels,
+    statblockLabels,
     content,
     labels,
     matcher,

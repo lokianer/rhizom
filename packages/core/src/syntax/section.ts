@@ -242,6 +242,40 @@ export function findBlockMarkers(tree: Root, markdown: string): BlockMarker[] {
 }
 
 /**
+ * The first ` ```statblock ` fence of a note, fences included, or undefined when it has none.
+ * This is what `![[Note#statblock]]` embeds when the note has no heading of that name: the block
+ * alone, not the section it happens to stand in. Found through the parser rather than by matching
+ * lines, so a `~~~~` fence, a longer one and a fence inside a callout or a list are all found.
+ */
+export function sliceStatblock(markdown: string): string | undefined {
+  const find = (node: Nodes): Nodes | undefined => {
+    if (node.type === 'code' && node.lang?.trim().toLowerCase() === 'statblock') {
+      return node;
+    }
+    if ('children' in node) {
+      for (const child of node.children) {
+        const found = find(child);
+        if (found !== undefined) {
+          return found;
+        }
+      }
+    }
+    return undefined;
+  };
+  const found = find(parser.parse(markdown));
+  if (found?.type !== 'code') {
+    return undefined;
+  }
+  // Rebuilt from what the parser read rather than cut out of the file: a fence inside a callout
+  // or a nested list carries the container's `>` or indent on every line, and cut out with them
+  // its closing fence would no longer close. The new fence is one longer than any run of
+  // backticks inside, so nothing in the block can end it early.
+  const longest = Math.max(0, ...[...found.value.matchAll(/`+/g)].map((run) => run[0].length));
+  const fence = '`'.repeat(Math.max(3, longest + 1));
+  return `${fence}statblock\n${found.value}\n${fence}`;
+}
+
+/**
  * The source of the block carrying this id, or undefined when the note carries no such id.
  *
  * The `^id` comes with it. This hands back the block as it stands in the file — the renderer is

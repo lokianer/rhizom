@@ -154,7 +154,10 @@ function formatted(
 function codeRanges(markdown: string): Range[] {
   const ranges: Range[] = [];
   const walk = (node: Nodes): void => {
-    if (node.type === 'code' || node.type === 'inlineCode') {
+    // A stat block is a fence, but what it holds is data like the frontmatter: a template that
+    // names its creature after the new note is the point of one.
+    const isStatblock = node.type === 'code' && node.lang?.trim().toLowerCase() === 'statblock';
+    if ((node.type === 'code' || node.type === 'inlineCode') && !isStatblock) {
       const start = node.position?.start.offset;
       const end = node.position?.end.offset;
       if (start !== undefined && end !== undefined) {

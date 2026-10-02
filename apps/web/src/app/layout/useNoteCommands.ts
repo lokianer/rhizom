@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 
 import {
+  builtInTemplate,
+  campaignTemplateChoices,
   DEFAULT_DATE_FORMAT,
   DEFAULT_TIME_FORMAT,
   ensureMarkdownExtension,
@@ -37,8 +39,9 @@ async function templateText(
     return '';
   }
   try {
-    const source = await api.note(template);
-    return expandTemplate(source.content, {
+    // A built-in campaign template is text in hand; anything else is a note of the vault's.
+    const content = builtInTemplate(template, locale) ?? (await api.note(template)).content;
+    return expandTemplate(content, {
       title: noteNameOf(path),
       path,
       now: new Date(),
@@ -59,12 +62,13 @@ async function templateText(
  * location, and duplicating a note needs to know which one is open.
  */
 export function useNoteCommands(openNotePath: string | null) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const notes = useVaultStore((state) => state.notes);
   const refresh = useVaultStore((state) => state.refresh);
   const daily = useVaultStore((state) => state.info?.daily);
   const templates = useVaultStore((state) => state.info?.templates);
+  const campaign = useVaultStore((state) => state.info?.campaign ?? null);
 
   const [newNoteFolder, setNewNoteFolder] = useState<string | null>(null);
 
@@ -149,16 +153,24 @@ export function useNoteCommands(openNotePath: string | null) {
 
   // The notes a new one can start from: the vault's template folder, by file name, because that
   // is the name the slash menu offers them under and the name their own heading does not give.
-  const templateChoices = useMemo(
-    () =>
+  // After them, while the vault has a campaign and the note is made inside it, the templates the
+  // campaign module brings — unless the vault has one of the same name, which then stands for it.
+  const templateChoices = useMemo(() => {
+    const own =
       templates === undefined
         ? []
         : templateNotes(notes, templates).map((note) => ({
             path: note.path,
             name: noteNameOf(note.path),
-          })),
-    [notes, templates],
-  );
+          }));
+    const builtIn = campaignTemplateChoices({
+      campaign,
+      folder: newNoteFolder ?? '',
+      vaultTemplateNames: own.map((choice) => choice.name),
+      language: i18n.language,
+    }).map((choice) => ({ ...choice, name: t('note.builtInTemplate', { name: choice.name }) }));
+    return [...own, ...builtIn];
+  }, [campaign, i18n.language, newNoteFolder, notes, t, templates]);
 
   return {
     openNote,

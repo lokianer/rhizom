@@ -14,6 +14,15 @@ export const MERMAID_LANGUAGE = 'mermaid';
 /** The class the app looks the diagram containers up by. Exported so it cannot drift apart. */
 export const MERMAID_CLASS = 'rz-mermaid';
 
+/** The info string of a fence that holds a stat block, in the Fantasy Statblocks layout. */
+export const STATBLOCK_LANGUAGE = 'statblock';
+
+/**
+ * The element a drawn stat block is put into, and the one a block that could not be read is shown
+ * in. The block itself is built by statblock-view.ts after sanitising, like a query answer.
+ */
+export const STATBLOCK_CLASSES: string[] = ['rz-statblock-host', 'rz-statblock-problem'];
+
 /**
  * Every class a callout can carry. Derived from `CALLOUT_KINDS` rather than written out again, so
  * that a kind added there cannot become the one whose colour the sanitiser quietly strips.

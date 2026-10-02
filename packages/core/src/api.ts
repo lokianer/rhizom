@@ -2,6 +2,7 @@
 // Paths are vault paths (see paths.ts). Timestamps are ISO 8601 strings. Every route of a vault
 // lives under `/api/v/{vault}`; the comments below leave the `v/{vault}` out.
 
+import type { CampaignInfo } from './vault/campaign.js';
 import type { GraphData } from './vault/graph.js';
 import type { Mention } from './vault/mentions.js';
 import type { QueryProblem, QueryView } from './query/language.js';
@@ -31,6 +32,8 @@ export interface VaultInfo {
   templates: TemplateSettings;
   /** Where this vault keeps its daily notes, and what a day is called. */
   daily: DailySettings;
+  /** The campaign that switches the D&D module on, or null when the vault has none. */
+  campaign: CampaignInfo | null;
 }
 
 /**

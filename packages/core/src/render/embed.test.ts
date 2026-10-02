@@ -34,6 +34,33 @@ const VAULT: Record<string, string> = {
     '- a lantern ^lantern',
     '- a ledger ^ledger',
   ].join('\n'),
+  'Mira.md': [
+    '# Mira',
+    '',
+    'A moneylender.',
+    '',
+    '## Stats',
+    '',
+    'Before the block.',
+    '',
+    '~~~~statblock',
+    'name: Mira Voss',
+    'ac: 15',
+    '~~~~',
+    '',
+    'After the block.',
+  ].join('\n'),
+  'Titled.md': ['# Titled', '', '## Statblock', '', 'The section itself.'].join('\n'),
+  'Callout.md': ['> [!note] Vex', '> ```statblock', '> name: Vex', '> ac: 13', '> ```'].join('\n'),
+  'Nested.md': [
+    '- Wren',
+    '  - stats',
+    '',
+    '    ```statblock',
+    '    name: Wren',
+    '    ac: 11',
+    '    ```',
+  ].join('\n'),
   'Quote.md': ['> ![[Quote#^quote]]', '>', '> and round again ^quote'].join('\n'),
 };
 
@@ -248,6 +275,32 @@ describe('renderNoteWithEmbeds', () => {
 
   it('says which block is missing when the note is there but the id is not', () => {
     expect(render('![[Ledger#^nowhere]]')).toContain('no section ^nowhere in Ledger');
+  });
+
+  it('embeds the first stat block of a note, and nothing around it, as #statblock', () => {
+    const html = render('![[Mira#statblock]]');
+    expect(html).toContain('class="rz-statblock"');
+    expect(html).toContain('Mira Voss');
+    expect(html).not.toContain('Before the block.');
+    expect(html).not.toContain('After the block.');
+  });
+
+  it('embeds a stat block that stands in a callout or a nested list as the block alone', () => {
+    const callout = render('![[Callout#statblock]]');
+    expect(callout).toContain('class="rz-statblock"');
+    expect(callout).toContain('Vex');
+    const nested = render('![[Nested#statblock]]');
+    expect(nested).toContain('class="rz-statblock"');
+    expect(nested).toContain('Wren');
+  });
+
+  it('lets a heading named statblock win, as any heading does', () => {
+    const html = render('![[Titled#statblock]]');
+    expect(html).toContain('The section itself.');
+  });
+
+  it('says the section is missing when the note has no stat block', () => {
+    expect(render('![[Silverstadt#statblock]]')).toContain('no section statblock in Silverstadt');
   });
 
   it('renders two blocks of one note side by side without calling it a cycle', () => {

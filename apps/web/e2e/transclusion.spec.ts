@@ -28,7 +28,8 @@ test('a note embed shows the note itself, in the wiki and beside the editor', as
 test('an embed with a heading shows only that section', async ({ page }) => {
   await page.goto('/wiki/Campaign/Sessions/Session 13 – Ashes and Ink');
 
-  const embed = page.locator('.rz-embed');
+  // The session also embeds Mira's stat block as prep; this test is about the Loot section.
+  const embed = page.locator('.rz-embed[data-path^="Campaign/Sessions/Session 12"]');
   await expect(embed).toHaveAttribute('data-state', 'ready');
   await expect(embed.getByRole('heading', { name: 'Loot' })).toBeVisible();
   await expect(embed.getByText('Brass astrolabe, Archive stamp')).toBeVisible();

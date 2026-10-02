@@ -1222,3 +1222,49 @@ the files are the truth.
 that vault is dropped by a generation counter) and points the per-vault interface state —
 open folders, the milieu field, the graph depth — at that vault's own key in `localStorage`. The
 API client, the event stream and `noteHref` read it, so no component threads the id through.
+
+## 2026-10-03 — The campaign module: a scoped note, a fenced stat block, built-in templates
+
+**The stat block is a fence, not frontmatter.** The roadmap wrote "stat block in frontmatter".
+Building it, the Obsidian plugin Fantasy Statblocks turned out to be what the TTRPG community
+already writes: a ` ```statblock ` fence holding YAML. Following its layout means a vault that
+uses the plugin opens here with its stat blocks drawn, and one written here is drawn there — rule
+2 asks exactly that. A fence can also stand under a heading, which the later "stat blocks that
+change" item needs (`## statblock — after session 12`), and frontmatter cannot hold two versions.
+What is lost: the numbers are not in the index, so "every NPC with a challenge of 5 or more" is
+not a query yet. If that is wanted, the indexer can read the fence later; nothing in the file
+format has to change for it.
+
+**A campaign note scopes its folder.** `type: campaign` switches the module on for the folder the
+note stands in and everything below; at the vault root that is the whole vault. One campaign per
+vault for now — of several, the smallest path wins — but the later "more than one campaign" item
+only adds to this rule, it does not change what an existing campaign note means. The module's six
+types are separate from the four globally reserved ones and are read only inside the scope, so a
+vault that uses `type: npc` for its own purposes outside a campaign loses nothing. In this first
+step the templates write them and nothing reads them yet; `campaignTypeOf` is the one door the
+later sub-projects (the GM gate, the session spine) go through.
+
+**Stat blocks are drawn everywhere.** The fence says what it is, so it is drawn inside or outside a
+campaign, the way the plugin draws it. The 5e layout is chosen by six numeric ability scores;
+without them, every key is laid out in written order, because a system Rhizom has never heard of
+must not be refused. The only number Rhizom computes is the ability modifier the classic block
+prints beside each score, `floor((score − 10) / 2)` — layout, not rules. The block is built as a
+hast tree and put into the page after sanitising, like a query answer: every value is a text
+node.
+
+**`#statblock` addresses the block.** `![[Note#statblock]]` embeds a note's first stat block when
+the note has no heading of that name; a heading called "statblock" wins, as any heading does.
+
+**Templates are built in.** The six templates live in core, in English and German, and the
+new-note dialog offers them while the dialog's folder lies in the campaign, after the vault's own
+templates. Nothing is written to the vault until a note is made from one. A vault template whose
+name matches a built-in one replaces it in the list, so a game master who wants another NPC sheet
+writes a `Templates/NPC.md` and is done; the name is matched in every language, so that file
+stands for the NPC template whether the interface speaks English or German. Placeholders are
+filled inside a ` ```statblock ` fence although they stay literal in every other code block: the
+fence holds data, like the frontmatter, and an NPC template whose stat block is named after the new
+note is the point of it. The name is written `name: "{{title}}"`, because a title may start with
+`[`, `@` or a quote, or carry a `#`, and the server already refuses the one character — `"` — that
+would break the quoting. The template's stat block stands under `## Stats`, not `## Statblock`,
+so `![[New NPC#statblock]]` embeds the block alone. They are data tables rather than i18n strings because
+they become the user's notes, and core carries no i18n library.

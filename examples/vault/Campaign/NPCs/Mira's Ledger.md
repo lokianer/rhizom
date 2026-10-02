@@ -43,3 +43,38 @@ To be the only one in the city who knows what everyone owes. The tidewater chart
 ## Stats
 
 Master Thief stat block, no weapons on her person. Four bodyguards, always in the next room.
+
+```statblock
+name: Mira Voss
+size: Medium
+type: humanoid
+subtype: half-elf
+alignment: lawful evil
+ac: 16
+hp: 84
+hit_dice: 13d8 + 26
+speed: 30 ft.
+stats: [11, 18, 14, 17, 15, 16]
+saves:
+  - dex: 7
+  - int: 6
+skillsaves:
+  - deception: 9
+  - insight: 8
+  - investigation: 6
+senses: passive Perception 12
+languages: Common, Elvish, Thieves' cant
+cr: 5
+ledger_pages: 412
+traits:
+  - name: Cunning Action
+    desc: On each of her turns she can take the Dash, Disengage or Hide action as a bonus action.
+  - name: Every Debt Recorded
+    desc: She knows what anyone in Silverstadt owes, to whom, and since when.
+actions:
+  - name: Hidden Blade
+    desc: "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 7 (1d6 + 4) piercing damage, plus 14 (4d6) if she has advantage."
+reactions:
+  - name: Call the Debt
+    desc: When a creature that owes her money attacks her, it has disadvantage on the roll.
+```

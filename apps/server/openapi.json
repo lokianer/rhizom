@@ -138,7 +138,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["name", "noteCount", "indexedAt", "templates", "daily"],
+                  "required": ["name", "noteCount", "indexedAt", "templates", "daily", "campaign"],
                   "properties": {
                     "name": {
                       "description": "Folder name of the vault",
@@ -214,6 +214,38 @@
                           ]
                         }
                       }
+                    },
+                    "campaign": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": ["path", "folder", "system"],
+                          "properties": {
+                            "path": {
+                              "description": "Vault path of the campaign note",
+                              "type": "string"
+                            },
+                            "folder": {
+                              "description": "The folder it scopes; empty for the vault root",
+                              "type": "string"
+                            },
+                            "system": {
+                              "description": "The game system as the note names it",
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   }
                 }

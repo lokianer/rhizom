@@ -15,7 +15,7 @@ import { blockAnchorId, type BlockMarker } from '../syntax/section.js';
 import type { VaultTerm } from '../vault/terms.js';
 import { renderWikilink, rewriteImage, rewriteLink } from './links.js';
 import type { Context } from './note.js';
-import { embedParagraph, mermaidBlock, queryBlock } from './blocks.js';
+import { embedParagraph, mermaidBlock, queryBlock, statblockBlock } from './blocks.js';
 
 /**
  * Collects the headings and gives each one its id. The text comes from the untouched mdast tree
@@ -93,7 +93,8 @@ export function transform(parent: Parent, context: Context, insideLink: boolean)
       continue;
     }
     if (child.type === 'code') {
-      const block = queryBlock(child, context) ?? mermaidBlock(child);
+      const block =
+        queryBlock(child, context) ?? mermaidBlock(child) ?? statblockBlock(child, context);
       if (block !== undefined) {
         children[index] = block;
       }
