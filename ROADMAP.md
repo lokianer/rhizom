@@ -229,6 +229,61 @@ engine._
       as a single sheet with the images inlined and the wiki chrome gone, and records `handed_out:`
       with the session. One note and the browser's print; the site builder stays in Phase 4
 
+## Phase 3½ — Closer to Obsidian
+
+_Next after Phase 3, before Phase 4; numbered in between so the specs, decisions and changelog
+entries that name Phase 4 to 6 keep meaning what they say. Phase 1 made an Obsidian vault open;
+this phase makes it feel at home. Somebody who works in Obsidian every day should be able to open
+their vault in Rhizom and keep working without reaching for the documentation — the same keys, the
+same views, the same Markdown — and a vault edited in both should show no trace of either._
+
+_Draft for the maintainer's review: the scope (which groups, in which order) is still to be
+chosen. Each group becomes a sub-project with its own spec, plan and review, as in Phase 3._
+
+- [ ] **Workspace.** Tabs: several notes open at once, `Ctrl/Cmd+T`, `+W`, `+Tab`, a tab pinned
+      or moved into a split. Panes split side by side or one above the other, any view in any pane
+      (a note, the graph, the wiki page of another note). The right sidebar holds backlinks,
+      outgoing links, outline and tags beside the note, the way Obsidian has them, instead of
+      below it. The layout is remembered per vault in Rhizom's own state; `.obsidian/workspace.json`
+      is neither read nor written, it changes on every click
+- [ ] **One note, three views.** Source mode, Live Preview and Reading view, switched per tab with
+      `Ctrl/Cmd+E`, with Live Preview as the default editing view. The split preview stays for
+      anyone who likes it, but stops being the only way to see a rendered note while writing
+- [ ] **Navigation the Obsidian way.** A quick switcher on `Ctrl/Cmd+O` for notes (creating one
+      when nothing matches), the palette on `Ctrl/Cmd+P` for commands only; back and forward per
+      tab; page preview: a link hovered with the modifier held shows the note in a popover. The
+      default keymap is Obsidian's default hotkeys, and a hotkeys page lets each one be changed
+- [ ] **Markdown parity.** `==highlight==`; math with `$…$` and `$$…$$` (needs a renderer — KaTeX is
+      the candidate, a larger dependency that needs its justification first); inline footnotes
+      `^[…]`; image sizes `![[map.png|300]]` and `|300x200`; audio, video and PDF embeds,
+      including `![[file.pdf#page=3]]`; `%%comments%%` hidden in the Reading view everywhere, not
+      only behind the GM gate; nested tags shown as a tree. Everything Obsidian renders and Rhizom
+      shows as raw text gets an entry here before this phase closes
+- [ ] **Properties with types.** The frontmatter form becomes Obsidian's Properties: a type per key
+      (text, list, number, checkbox, date, date and time) read from and written to
+      `.obsidian/types.json`, so a key typed in one tool is the same type in the other; property
+      suggestions from the values the vault already uses
+- [ ] **More of `.obsidian`, read.** `app.json` decides where a pasted image goes
+      (`attachmentFolderPath`), where a new note goes (`newFileLocation`) and how a new link is
+      written (`newLinkFormat`, `useMarkdownLinks`), so a vault keeps its own conventions in both
+      tools. `bookmarks.json` becomes a bookmarks panel, and is written back in the same format —
+      the one file in `.obsidian` Rhizom writes besides `types.json`, because a bookmark set in one
+      tool has to be there in the other. Nothing else in `.obsidian` is written
+- [ ] **Canvas.** `.canvas` files in the open JSON Canvas format: shown first — notes, text cards,
+      links, images and groups on a board, a note card opening the note — and edited second.
+      Cards and edges are indexed as links, so a canvas shows in backlinks and in the graph
+- [ ] **Bases.** Obsidian's `.base` files (database views over notes and their properties) read as
+      what `rhizom-query` already is: a question to the index drawn as a table or cards. Which part
+      of the format maps onto the query language, and what is shown as unsupported instead of
+      guessed, is the spec's first question
+- [ ] Acceptance criterion: an Obsidian user's own vault, opened with their usual hotkeys in mind,
+      round-trips through a week of daily use in both tools with no file changed by one that the
+      other did not ask for, and every difference left is listed in `DECISIONS.md` with its reason
+
+Deliberately not part of it: community plugins and their API, Obsidian Sync and Publish, and
+Obsidian's theme CSS. Rhizom keeps its own look and its own module system; what it takes from
+Obsidian is the vault format and the habits of the hands.
+
 ## Phase 4 — Sharing, permissions, history
 
 _Up to here a vault has had one reader, who was also its writer. This phase is about the second
