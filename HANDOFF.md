@@ -5,49 +5,30 @@ session and commit it with the rest of the work.
 
 ## Where it stands
 
-**Phase 3 is in progress**, split into sub-projects, each with its own spec, plan and review:
+**Rhizom is paused.** On 24 October 2026 the maintainer decided to build the D&D part as an
+Obsidian community plugin in a new project, and to use an existing community plugin for
+self-hosting. The handoff for that project is `docs/handoff-obsidian-plugin.md`; it carries the
+file conventions, the gate rules, the open decisions and what to port from here.
+
+Phase 3 stood like this when work stopped:
 
 1. More than one vault — **merged** (PR #7)
 2. Module core: `type: campaign`, the stat block, the templates — **merged** (PR #8)
-3. The GM gate: `> [!gm]`, `%%…%%`, public index side, reveals, the player view — **merged**
-   (PR #9)
-4. At the table: capture bar, dice, tables, decks — **spec written**
-   (`docs/specs/2026-10-04-at-the-table.md`), on `lokianer/feat-at-the-table`; no plan, no code yet
-5. Ties, blocs, axis packs, acquaintance colouring
-6. Campaign time: clocks, the session spine, the improv drawer, the party ledger
-7. The second half of the phase (fourteen items), later
+3. The GM gate, reveals, the player view — **merged** (PR #9)
+4. At the table — spec and plan written (`docs/specs/2026-10-04-at-the-table.md`,
+   `docs/plans/2026-10-04-at-the-table.md`); the **core half of slice 1** is committed on
+   `claude/continue-from-handoff-k1mmac` (`feat(dice): …`): `parseDice`/`rollDice`,
+   `findRollables`/`rollTable`, `{{table:}}`, and the render markers. No web code, no PR.
+5. and later: not started
 
-The maintainer asked to work through without stopping between stages; the phase-end review stop
-from CLAUDE.md still applies when Phase 3 as a whole is done.
+`ROADMAP.md` also gained Phase 3½ (closer to Obsidian), written before the decision to move to a
+plugin; it stays as a draft in case Rhizom is picked up again.
 
-## What this session did
+## If Rhizom is picked up again
 
-- Wrote the spec for sub-project 4. The open fork — which session note is "tonight's" — was
-  settled with option A: the highest-numbered session note; when its `date:` lies before today,
-  the capture bar offers once to make session N+1 from the built-in template.
-- Started a dev server against scratchpad copies of the example vault to try the merged state.
-
-## Sub-project 4, as the spec has it
-
-Three slices, one commit each:
-
-1. **Dice and rollable tables.** `parseDice`/`rollDice` in core (`NdM`, N ≤ 100, M ≤ 1000,
-   `kh`/`kl`, constants, `d%`); `roll()` in `syntax/template.ts` moves onto it, so `{{roll:}}`
-   shares the grammar. `/roll` slash command (`apps/web/src/editor/slash.ts`). An inline
-   `` `dice: 1d8+3` `` chip in the reader that rolls and can record. A heading naming a die makes
-   the first list or table under it rollable (ranges `2–4`, `00` = 100); a Roll button on the
-   heading; `{{table:Note#Heading}}` in templates.
-2. **Decks.** `type: deck` inside the campaign; cards are the first task list's items, ticked =
-   drawn; Draw and Shuffle are text edits of the file.
-3. **Capture bar.** Ctrl/Cmd+J; plain text, `/roll`, `/draw`, `/table`, `/loot`, `/know`, `/npc`;
-   writes go under `## Log` (or `## Loot`) of tonight's session note, saved with the hash it was
-   read with.
-
-Then: a fresh whole-branch review, fixes with failing tests first, the full CI sequence, PR.
-
-## Open, in the order I would take them
-
-1. **Sub-project 4**: plan (`docs/plans/2026-10-04-at-the-table.md`), then the three slices.
+1. Slice 1's web half: `/roll` as a second completion source, `{{table:}}` prefetch, the reader's
+   chips and Roll buttons in `NotePreview`, the session log writer, i18n, the e2e test. Then decks
+   and the capture bar, per the plan. Squash the core commit into the slice commit if wanted.
 2. Minors left by the sub-project 1 review: `VaultPool.get()` after `close()` can reopen a vault
    during shutdown; a request longer than the idle time can see its context closed; the `ui`
    store's move to version 2 drops the open folders, milieu field and graph depth once; a vault
