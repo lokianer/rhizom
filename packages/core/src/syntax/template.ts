@@ -2,7 +2,8 @@
 //
 // The syntax is Obsidian's, because an existing vault's templates have to keep working: `{{title}}`,
 // `{{date}}` and `{{time}}`, each optionally with a format — `{{date:YYYY-MM-DD}}` — in the Moment
-// tokens Obsidian documents. Rhizom adds `{{roll:2d6+3}}`, `{{path}}` and `{{cursor}}`.
+// tokens Obsidian documents. Rhizom adds `{{roll:2d6+3}}`, `{{table:Note#Heading}}`, `{{path}}`
+// and `{{cursor}}`.
 //
 // Anything else in double braces is left exactly as it stands, and so is a placeholder whose
 // format makes no sense. A template is a Markdown file like any other, and files in a vault hold
@@ -22,6 +23,10 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 
+import { rollDice } from './dice.js';
+import { findRollable, findRollables, rollTable } from './rollable.js';
+import { parseWikilink } from './wikilink.js';
+
 /** What a placeholder is filled from. */
 export interface TemplateContext {
   /** The title of the note the text is going into. */
@@ -38,6 +43,12 @@ export interface TemplateContext {
   random?: () => number;
   /** BCP 47 tag for month and weekday names; the numeric formats do not need it. */
   locale?: string;
+  /**
+   * The Markdown of the note a `{{table:Note#Heading}}` names, by the note as written. Expansion
+   * is synchronous, so the caller fetches the notes `tableTargets` lists before it starts; a
+   * note it could not find leaves the placeholder standing.
+   */
+  tables?: (note: string) => string | undefined;
 }
 
 export interface ExpandedTemplate {
@@ -66,12 +77,6 @@ export const DEFAULT_TIME_FORMAT = 'HH:mm';
  * title, and that has to be the same idea of a placeholder in both places.
  */
 export const PLACEHOLDER = /\{\{([a-z]+)(?::([^{}\r\n]*))?\}\}/gi;
-
-/** `2d6`, `1d100`, `3d8+2`, `1d20-1`. Case-insensitive, spaces allowed around the sign. */
-const DICE = /^(\d{1,3})?\s*d\s*(\d{1,4})\s*(?:([+-])\s*(\d{1,4}))?$/i;
-
-/** How many dice one roll may ask for, so a stray `{{roll:999d6}}` cannot hold up a keystroke. */
-const MAX_DICE = 100;
 
 // The same dialect the indexer parses, minus what finding code does not need. Frozen once:
 // `.use()` after the first run throws, and building the pipeline is the expensive part.
@@ -130,9 +135,48 @@ function fill(
       return formatted(context, argument, context.timeFormat ?? DEFAULT_TIME_FORMAT);
     case 'roll':
       return argument === undefined ? undefined : roll(argument, context.random);
+    case 'table':
+      return argument === undefined ? undefined : tableRoll(argument, context);
     default:
       return undefined;
   }
+}
+
+/** The entry a roll on `Note#Heading` picks, or nothing when there is no such table to roll. */
+function tableRoll(argument: string, context: TemplateContext): string | undefined {
+  const { target, heading } = parseWikilink(unbracketed(argument));
+  const markdown = heading === undefined ? undefined : context.tables?.(target);
+  if (markdown === undefined || heading === undefined) {
+    return undefined;
+  }
+  const rollable = findRollable(findRollables(markdown), heading);
+  return rollable === undefined ? undefined : rollTable(rollable, context.random).entry?.text;
+}
+
+/** `Note#Heading`, whether or not it was written as the link it reads like. */
+function unbracketed(argument: string): string {
+  return argument.trim().replace(/^\[\[(.*)\]\]$/, '$1');
+}
+
+/**
+ * The notes a template's `{{table:Note#Heading}}` placeholders name, each once, as written. The
+ * app fetches these before expanding; the ones standing in code are not asked for.
+ */
+export function tableTargets(source: string): string[] {
+  const code = codeRanges(source);
+  const targets = new Set<string>();
+  PLACEHOLDER.lastIndex = 0;
+  for (const match of source.matchAll(PLACEHOLDER)) {
+    const [, name = '', argument] = match;
+    if (name.toLowerCase() !== 'table' || argument === undefined || inCode(code, match.index)) {
+      continue;
+    }
+    const { target, heading } = parseWikilink(unbracketed(argument));
+    if (target !== '' && heading !== undefined) {
+      targets.add(target);
+    }
+  }
+  return [...targets];
 }
 
 /** A formatted date, or nothing when the format says nothing — `{{date:}}` is not a date. */
@@ -367,19 +411,6 @@ function offset(date: Date, separator: string): string {
  * keeps the words it had, which is more use than a zero.
  */
 export function roll(notation: string, random: () => number = Math.random): string | undefined {
-  const match = DICE.exec(notation.trim());
-  if (match === null) {
-    return undefined;
-  }
-  const count = Number(match[1] ?? '1');
-  const sides = Number(match[2]);
-  if (count < 1 || count > MAX_DICE || sides < 1) {
-    return undefined;
-  }
-  let total = 0;
-  for (let die = 0; die < count; die += 1) {
-    total += Math.floor(random() * sides) + 1;
-  }
-  const modifier = match[4] === undefined ? 0 : Number(match[4]);
-  return String(match[3] === '-' ? total - modifier : total + modifier);
+  const result = rollDice(notation, random);
+  return result === undefined ? undefined : String(result.total);
 }

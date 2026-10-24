@@ -540,3 +540,28 @@ describe('renderNote: sanitising', () => {
     expect(html).not.toContain('javascript:');
   });
 });
+
+describe('renderNote: dice and rollable tables', () => {
+  it('draws a dice code span as a chip and leaves other code alone', () => {
+    const { html } = renderNote('Hit: `dice: 1D8 + 3` and `dice: banana` and `1d8`.', options());
+    expect(html).toContain('<span class="rz-dice" data-dice="1d8+3"><code>1D8 + 3</code></span>');
+    expect(html).toContain('<code>dice: banana</code>');
+    expect(html).toContain('<code>1d8</code>');
+  });
+
+  it('marks a heading naming a die and the block it rolls with the same line', () => {
+    const { html } = renderNote(
+      '## Rumours (d6)\n\n- one\n- two\n\n## Weather d4\n\n| d4 | w |\n| --- | --- |\n| 1-4 | fog |\n',
+      options(),
+    );
+    expect(html).toContain('<h2 id="rumours-d6" data-roll="d6" data-roll-line="1">');
+    expect(html).toContain('<ul data-roll-for="1">');
+    expect(html).toContain('<h2 id="weather-d4" data-roll="d4" data-roll-line="6">');
+    expect(html).toContain('<table data-roll-for="6">');
+  });
+
+  it('marks nothing under a heading without a die, or a die with nothing under it', () => {
+    const { html } = renderNote('## Plain\n\n- one\n\n## Empty (d6)\n\nText.\n', options());
+    expect(html).not.toContain('data-roll');
+  });
+});

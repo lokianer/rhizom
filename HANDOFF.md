@@ -1,85 +1,43 @@
-# Handoff — 3 October 2026, early morning
+# Handoff — 24 October 2026
 
 Working notes for whoever picks this up next, on whichever machine. Rewrite it at the end of a
 session and commit it with the rest of the work.
 
 ## Where it stands
 
-**Phase 3 is in progress**, split into sub-projects, each with its own spec, plan and review:
+**Rhizom is paused.** On 24 October 2026 the maintainer decided to build the D&D part as an
+Obsidian community plugin in a new project, and to use an existing community plugin for
+self-hosting. The handoff for that project is `docs/handoff-obsidian-plugin.md`; it carries the
+file conventions, the gate rules, the open decisions and what to port from here.
 
-1. More than one vault — **merged** (PR #7, CI 11/11)
-2. Module core: `type: campaign`, the stat block, the templates — **PR #8, CI 11/11**, waiting
-   for the maintainer's merge
-3. The GM gate: `> [!gm]`, `%%…%%`, public index side, reveals, the player view — **done on
-   `lokianer/feat-gm-gate`**, which is stacked on the PR #8 branch
-4. At the table: capture bar, dice, tables, decks
-5. Ties, blocs, axis packs, acquaintance colouring
-6. Campaign time: clocks, the session spine, the improv drawer, the party ledger
-7. The second half of the phase (fourteen items), later
+Phase 3 stood like this when work stopped:
 
-The maintainer asked to work through without stopping between stages; the phase-end review stop
-from CLAUDE.md still applies when Phase 3 as a whole is done.
+1. More than one vault — **merged** (PR #7)
+2. Module core: `type: campaign`, the stat block, the templates — **merged** (PR #8)
+3. The GM gate, reveals, the player view — **merged** (PR #9)
+4. At the table — spec and plan written (`docs/specs/2026-10-04-at-the-table.md`,
+   `docs/plans/2026-10-04-at-the-table.md`); the **core half of slice 1** is committed on
+   `claude/continue-from-handoff-k1mmac` (`feat(dice): …`): `parseDice`/`rollDice`,
+   `findRollables`/`rollTable`, `{{table:}}`, and the render markers. No web code, no PR.
+5. and later: not started
 
-## What this session did
+`ROADMAP.md` also gained Phase 3½ (closer to Obsidian), written before the decision to move to a
+plugin; it stays as a draft in case Rhizom is picked up again.
 
-**Sub-project 1** (spec `docs/specs/2026-10-02-multi-vault.md`): `RHIZOM_VAULTS`, a vault pool
-with idle close, every vault route under `/api/v/{vault}`, the web app under `/v/<id>`, a
-switcher. A fresh review found six real problems, each fixed with a failing test first. CI's own
-smoke tests still asked `/api/vault` and were fixed in a second commit on the PR.
+## If Rhizom is picked up again
 
-**Sub-project 2** (spec `docs/specs/2026-10-03-campaign-module.md`, reasons in `DECISIONS.md`
-2026-10-03):
-
-- **Core:** `vault/campaign.ts` (the campaign note scopes its folder; module types only inside),
-  `render/statblock.ts` (YAML of a ` ```statblock ` fence → model, 5e or generic layout),
-  `render/statblock-view.ts` (hast → HTML, put in after sanitising like a query answer),
-  `syntax/section.ts` `sliceStatblock` (`![[Note#statblock]]`), `vault/campaign-templates.ts`
-  (six templates, English and German, with the choice rule).
-- **Server:** `store/index/campaign.ts`; `campaign` in the vault info.
-- **Web:** labels in `NotePreview.tsx`, `styles/statblock.css`, built-in templates in
-  `useNoteCommands.ts` (suffix "(built in)").
-- **Example vault:** stat blocks for Mira and Aldric Thane, session 13 embeds Mira's.
-
-A fresh review found, and failing tests now pin: a stat-block key named `constructor` or
-`toString` crashed the note render (labels are read from own properties only); `#statblock` on a
-fence inside a callout or nested list broke the fence (it is rebuilt from the parsed value); the 5e
-layout dropped values that did not fit their slot (they fall through now); `{{title}}` was never
-filled inside the fence and would not have been quoted (fences of stat blocks are filled now,
-`name: "{{title}}"`); the template's `## Statblock` heading defeated `#statblock`; a vault
-template overrode a built-in one only in its own language. Left: YAML merge keys (`<<`) are not
-resolved, and odd nested values flatten oddly.
-
-**Sub-project 3** (spec `docs/specs/2026-10-03-gm-gate.md`, reasons in `DECISIONS.md`
-2026-10-03 "The GM gate"):
-
-- **Core:** `syntax/gm.ts` (`findGates`, `publicMarkdown`, `sessionNumberOf`, `isPublicNote`);
-  `[!gm]` is a callout kind; `ParsedLink.offset`; `RenderedLink.plain`.
-- **Server:** schema 6 — `notes.public_title/public_body/gates`, `notes_public_fts`,
-  `links.public_from`; `store/public-index.ts` is all the player view's routes
-  (`routes/table.ts`) can reach. `table.test.ts` is the leak test: a marker in every gated form,
-  every route, every session.
-- **Web:** `table/TablePage.tsx` and `table/table-model.ts` under `/v/<id>/table`, outside the GM
-  layout; `pages/render-labels.ts` shares the render words with the preview.
-
-An adversarial security review found real leaks, all fixed with failing tests first and added to
-the leak test: a GM callout inside a revealed one; spellings the GM lens drew as GM but the gate
-missed (`[!GM ]`, `[!gm|wide]`, `[&#33;gm]`, setext, a `[!gm]:` reference); frontmatter with
-spaces after the fence; lone `
-` line ends; `\%%`; HTML blocks; the indexer's raw-text
-shortcut; and the player view loading the GM note list. Prep sections now belong in `[!gm]`.
-
-## Open, in the order I would take them
-
-1. **Merge PR #8**, then rebase `lokianer/feat-gm-gate` onto `main`, push it and open its PR.
-2. **Sub-project 4** (at the table: capture bar, dice, tables, decks).
-3. Minors left by the sub-project 1 review: `VaultPool.get()` after `close()` can reopen a vault
+1. Slice 1's web half: `/roll` as a second completion source, `{{table:}}` prefetch, the reader's
+   chips and Roll buttons in `NotePreview`, the session log writer, i18n, the e2e test. Then decks
+   and the capture bar, per the plan. Squash the core commit into the slice commit if wanted.
+2. Minors left by the sub-project 1 review: `VaultPool.get()` after `close()` can reopen a vault
    during shutdown; a request longer than the idle time can see its context closed; the `ui`
    store's move to version 2 drops the open folders, milieu field and graph depth once; a vault
    at a drive root has an empty name in the switcher; the registry's Windows-path test only
    checks the tail of the path.
-4. Older items: an error boundary around the note page; the milieu field still hashes its
+3. Older items: an error boundary around the note page; the milieu field still hashes its
    colours; the two block-reference gaps in `ROADMAP.md`; the zen-mode hint and the rename
-   confirmation; the `NotePage` chunk over 500 kB.
+   confirmation; the `NotePage` chunk over 500 kB; the side-tab border in `callouts.css` that
+   the design hook flags.
 
 ## Traps, so the next session does not walk into them
 
@@ -87,11 +45,13 @@ shortcut; and the player view loading the GM note list. Prep sections now belong
   Python: `\n` arrives as a real newline, `C:\notes` loses its backslash. Use Write/Edit for
   anything with a backslash.
 - **The web unit tests run in Node, without a DOM.** No jsdom, no testing-library: logic worth
-  asserting goes into plain functions (`commands-model.ts`), and `localStorage` is stubbed with
-  `vi.stubGlobal`. A zustand `persist` store grabs its storage when the module loads, so
-  `store/vault-ui.ts` hands it a wrapper that reaches `localStorage` on each call.
+  asserting goes into plain functions (`commands-model.ts`, `table-model.ts`), and `localStorage`
+  is stubbed with `vi.stubGlobal`.
 - **Do not `setState` a persisted store before pointing it at another key**: it saves under the
   old key. `switchVaultUi` resets through the `merge` option instead.
+- **The player view must never load GM data.** `isPlayerView` in `app/vault-loader.ts` keeps the
+  note list out; `e2e/table.spec.ts` audits every request. Anything new under `/v/<id>/table`
+  goes through `store/public-index.ts` and gets a marker in `apps/server/src/table.test.ts`.
 - **`netstat` answers in German.** Never grep for `LISTENING`; match `":3737"`, take the last
   column, verify the port is free afterwards.
 - **The panel's "New note" button uses the focused tree folder**, which on a fresh page is the

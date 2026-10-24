@@ -5,12 +5,14 @@
 // in, the embedded bodies are put back on the way out.
 import GithubSlugger from 'github-slugger';
 import type { Properties, Root as HastRoot } from 'hast';
-import type { List, Parent, Root, RootContent, Text } from 'mdast';
+import type { InlineCode, List, Parent, Root, RootContent, Text } from 'mdast';
 import { visit } from 'unist-util-visit';
 
 import type { Heading } from '../api.js';
 import { applyCallout } from '../syntax/callout.js';
+import { parseDice } from '../syntax/dice.js';
 import { displayText } from '../syntax/parse.js';
+import { rollablePairs } from '../syntax/rollable.js';
 import { blockAnchorId, type BlockMarker } from '../syntax/section.js';
 import type { VaultTerm } from '../vault/terms.js';
 import { renderWikilink, rewriteImage, rewriteLink } from './links.js';
@@ -83,6 +85,7 @@ export function anchorBlocks(markers: readonly BlockMarker[], idPrefix: string):
 
 /** Rewrites every node whose target points into the vault; the rest stays untouched. */
 export function transform(parent: Parent, context: Context, insideLink: boolean): void {
+  markRollables(parent);
   const children = parent.children;
   for (let index = 0; index < children.length; index += 1) {
     const child = children[index];
@@ -97,6 +100,13 @@ export function transform(parent: Parent, context: Context, insideLink: boolean)
         queryBlock(child, context) ?? mermaidBlock(child) ?? statblockBlock(child, context);
       if (block !== undefined) {
         children[index] = block;
+      }
+      continue;
+    }
+    if (child.type === 'inlineCode') {
+      const chip = diceChip(child);
+      if (chip !== undefined) {
+        children[index] = chip;
       }
       continue;
     }
@@ -139,6 +149,46 @@ export function transform(parent: Parent, context: Context, insideLink: boolean)
       );
     }
   }
+}
+
+/**
+ * Marks a heading that names a die and the list or table it rolls. The heading carries its line,
+ * which is what the reader looks the table up by in the note's text; the block carries the same
+ * line, so the reader can find the row a roll picked. No button is drawn here: the player view
+ * renders through this same walk and must not offer to roll, so the reader adds the controls.
+ */
+function markRollables(parent: Parent): void {
+  if (!parent.children.some((child) => child.type === 'heading')) {
+    return;
+  }
+  for (const { heading, block, die } of rollablePairs(parent)) {
+    const line = heading.position?.start.line;
+    if (line === undefined) {
+      continue;
+    }
+    const headingData = (heading.data ??= {});
+    headingData.hProperties = { ...headingData.hProperties, dataRoll: die, dataRollLine: line };
+    const blockData = (block.data ??= {});
+    blockData.hProperties = { ...blockData.hProperties, dataRollFor: line };
+  }
+}
+
+/**
+ * `` `dice: 1d8+3` `` becomes a chip the reader can roll. The code span stays inside it, so the
+ * notation reads as written wherever the chip is not a control; a code span that is not a roll
+ * stays the code span it was.
+ */
+function diceChip(code: InlineCode): RootContent | undefined {
+  const match = /^\s*dice\s*:\s*(.+?)\s*$/i.exec(code.value);
+  const expression = match?.[1] === undefined ? undefined : parseDice(match[1]);
+  if (match?.[1] === undefined || expression === undefined) {
+    return undefined;
+  }
+  return {
+    type: 'emphasis',
+    children: [{ type: 'inlineCode', value: match[1] }],
+    data: { hName: 'span', hProperties: { className: ['rz-dice'], dataDice: expression.notation } },
+  };
 }
 
 /**
