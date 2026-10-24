@@ -189,9 +189,31 @@ export {
   expandTemplate,
   formatDate,
   roll,
+  tableTargets,
   type ExpandedTemplate,
   type TemplateContext,
 } from './syntax/template.js';
+export {
+  describeRoll,
+  parseDice,
+  rollDice,
+  type DiceExpression,
+  type DiceRoll,
+  type DiceTerm,
+  type RolledDie,
+  type RolledTerm,
+} from './syntax/dice.js';
+export {
+  describeTableRoll,
+  dieOfHeading,
+  findRollable,
+  findRollables,
+  parseRange,
+  rollTable,
+  type Rollable,
+  type RollableEntry,
+  type TableRoll,
+} from './syntax/rollable.js';
 export { parseWikilink, type WikilinkTarget } from './syntax/wikilink.js';
 export {
   renderNote,

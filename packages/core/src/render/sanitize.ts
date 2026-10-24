@@ -48,12 +48,20 @@ export const sanitizeSchema: SanitizeSchema = {
     details: allowFor('details', CALLOUT_CLASSES),
     summary: allowFor('summary', ['rz-callout-title']),
     // Task lists: the class the stylesheet drops the bullets by, and the one that says "ticked".
-    ul: allowFor('ul', ['rz-tasks']),
-    ol: allowFor('ol', ['rz-tasks']),
+    // A rollable table: the list or table carries the line of the heading that names its die.
+    ul: allowFor('ul', ['rz-tasks'], 'dataRollFor'),
+    ol: allowFor('ol', ['rz-tasks'], 'dataRollFor'),
+    table: allowFor('table', [], 'dataRollFor'),
+    ...Object.fromEntries(
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].map((tag) => [
+        tag,
+        allowFor(tag, [], 'dataRoll', 'dataRollLine'),
+      ]),
+    ),
     li: allowFor('li', ['rz-task', 'rz-task-done'], 'dataTaskLine'),
     // `span` is an allowed tag in the default schema but has no attribute rules of its own, so
     // without this the element would survive and its class would be filtered away in silence.
-    span: allowFor('span', ['rz-term'], 'dataTerm'),
+    span: allowFor('span', ['rz-term', 'rz-dice'], 'dataTerm', 'dataDice'),
   },
   clobberPrefix: '',
 };

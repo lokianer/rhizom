@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandTemplate, formatDate, roll, type TemplateContext } from './template.js';
+import {
+  expandTemplate,
+  formatDate,
+  roll,
+  tableTargets,
+  type TemplateContext,
+} from './template.js';
 
 // A Thursday afternoon, so that weekday and twelve-hour tokens have something to say.
 const NOW = new Date(2026, 8, 17, 14, 5, 9);
@@ -102,8 +108,38 @@ describe('expandTemplate', () => {
     expect(expand('{{roll:2d6+3}}', { random: () => 0.999 }).text).toBe('15');
   });
 
+  it('rolls on a table another note keeps', () => {
+    const names = '# Names\n\n## Surnames (d4)\n\n- Vale\n- Marsh\n- Thane\n- Wren\n';
+    const tables = (note: string) => (note === 'Tables/Names' ? names : undefined);
+    expect(expand('Orrin {{table:Tables/Names#Surnames (d4)}}', { tables }).text).toBe(
+      'Orrin Thane',
+    );
+    expect(expand('{{table:[[Tables/Names#surnames-d4]]}}', { tables, random: () => 0 }).text).toBe(
+      'Vale',
+    );
+  });
+
+  it('leaves a table placeholder standing when there is nothing to roll', () => {
+    const tables = (note: string) => (note === 'Names' ? '## Plain\n\n- a\n' : undefined);
+    for (const source of ['{{table:Names#Plain}}', '{{table:Gone#X}}', '{{table:Names}}']) {
+      expect(expand(source, { tables }).text).toBe(source);
+    }
+    expect(expand('{{table:Names#Plain}}').text).toBe('{{table:Names#Plain}}');
+  });
+
   it('changes nothing in a text without placeholders', () => {
     expect(expand('# Notes\n\nNothing to fill in.').text).toBe('# Notes\n\nNothing to fill in.');
+  });
+});
+
+describe('tableTargets', () => {
+  it('lists the notes the table placeholders name, once each, outside code', () => {
+    expect(
+      tableTargets(
+        '{{table:Names#First (d6)}} {{table:[[Names#Last (d6)]]}} {{TABLE:Loot#d100}}\n' +
+          '`{{table:Code#d6}}` {{table:NoHeading}} {{roll:d6}}',
+      ),
+    ).toEqual(['Names', 'Loot']);
   });
 });
 
